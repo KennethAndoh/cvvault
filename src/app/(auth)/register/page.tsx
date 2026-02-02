@@ -110,9 +110,10 @@ export default function RegisterPage() {
                     <p className="text-sm text-muted-foreground">Verify credentials and manage talent efficiently.</p>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-4">
-                <Button 
+                </CardContent>
+                <CardFooter className="flex flex-col gap-4 mt-4">
+                  <Button 
+
                   className="w-full h-12 text-lg" 
                   disabled={!role} 
                   onClick={() => setStep(2)}
