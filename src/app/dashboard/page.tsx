@@ -177,7 +177,6 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
-  );
+    );
 }
 
-import { Share2 } from "lucide-react";
