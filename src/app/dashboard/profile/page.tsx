@@ -74,6 +74,7 @@ export default function ProfilePage() {
     const result = await updateProfile(user!.uid, {
       full_name: profile.full_name,
       bio: profile.bio,
+      email: profile.email || user?.email,
       public_profile_enabled: profile.public_profile_enabled,
     });
 

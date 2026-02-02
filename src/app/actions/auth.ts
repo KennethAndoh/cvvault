@@ -1,10 +1,10 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { logAction } from "./audit";
 
 export async function syncUserProfile(uid: string, email: string, fullName: string, role: string = "employee") {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("profiles")
     .upsert({
       id: uid,

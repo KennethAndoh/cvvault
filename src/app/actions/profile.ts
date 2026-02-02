@@ -1,11 +1,11 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 import { logAction } from "./audit";
 
 export async function getProfile(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("profiles")
     .select("*")
     .eq("id", userId)
@@ -23,13 +23,13 @@ export async function getProfile(userId: string) {
 }
 
 export async function updateProfile(userId: string, payload: any) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("profiles")
-    .update({
+    .upsert({
+      id: userId,
       ...payload,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", userId)
     .select()
     .single();
 
@@ -52,7 +52,7 @@ export async function createSharingToken(payload: {
 }) {
   const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
   
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("access_tokens")
     .insert({
       user_id: payload.userId,
@@ -78,7 +78,7 @@ export async function createSharingToken(payload: {
 }
 
 export async function getSharingTokens(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("access_tokens")
     .select("*, documents(name)")
     .eq("user_id", userId)
@@ -93,7 +93,7 @@ export async function getSharingTokens(userId: string) {
 }
 
 export async function deleteSharingToken(tokenId: string, userId: string) {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("access_tokens")
     .delete()
     .eq("id", tokenId);
@@ -115,24 +115,32 @@ export async function uploadAvatar(userId: string, formData: FormData) {
     return { success: false, error: "No file provided" };
   }
 
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-  const filePath = `${fileName}`;
+  // Basic validation
+  if (file.size > 4 * 1024 * 1024) {
+    return { success: false, error: "File too large (max 4MB)" };
+  }
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${userId}-${Date.now()}.${fileExt}`;
+  const filePath = fileName;
+
+  const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
     .from("avatars")
-    .upload(filePath, file);
+    .upload(filePath, file, {
+      upsert: true,
+      contentType: file.type
+    });
 
   if (uploadError) {
     console.error("Error uploading avatar:", uploadError);
     return { success: false, error: uploadError.message };
   }
 
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl } } = supabaseAdmin.storage
     .from("avatars")
     .getPublicUrl(filePath);
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await supabaseAdmin
     .from("profiles")
     .update({ avatar_url: publicUrl })
     .eq("id", userId);

@@ -1,9 +1,9 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export async function logAction(userId: string, action: string, details: any = {}) {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("audit_logs")
     .insert({
       user_id: userId,

@@ -1,6 +1,6 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 import { logAction } from "./audit";
 
@@ -11,7 +11,7 @@ export async function createDocumentRecord(payload: {
   category: string;
   metadata?: any;
 }) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("documents")
     .insert({
       user_id: payload.userId,
@@ -39,7 +39,7 @@ export async function createDocumentRecord(payload: {
 }
 
 export async function getDocuments(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("documents")
     .select("*")
     .eq("user_id", userId)
@@ -55,7 +55,7 @@ export async function getDocuments(userId: string) {
 
 export async function deleteDocument(id: string, storagePath: string, userId: string) {
   // 1. Delete from Storage
-  const { error: storageError } = await supabase.storage
+  const { error: storageError } = await supabaseAdmin.storage
     .from("documents")
     .remove([storagePath]);
 
@@ -65,7 +65,7 @@ export async function deleteDocument(id: string, storagePath: string, userId: st
   }
 
   // 2. Delete from Database
-  const { error: dbError } = await supabase
+  const { error: dbError } = await supabaseAdmin
     .from("documents")
     .delete()
     .eq("id", id);

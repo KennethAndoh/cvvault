@@ -24,13 +24,18 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  turbopack: {
-    rules: {
-      "*.{jsx,tsx}": {
-        loaders: [loaderPath]
+    turbopack: {
+      rules: {
+        "*.{jsx,tsx}": {
+          loaders: [loaderPath]
+        }
       }
+    },
+    experimental: {
+      serverActions: {
+        bodySizeLimit: '4mb',
+      },
     }
-  }
-} as NextConfig;
+  } as NextConfig;
 
 export default nextConfig;
