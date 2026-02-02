@@ -13,7 +13,8 @@ import {
   Search,
   Filter,
   MoreVertical,
-  Loader2
+  Loader2,
+  Eye
 } from "lucide-react";
 import { 
   Dialog, 
@@ -21,7 +22,8 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,6 +146,18 @@ export default function DocumentsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handlePreview = (path: string) => {
+    const { data } = supabase.storage
+      .from("documents")
+      .getPublicUrl(path);
+    
+    if (data.publicUrl) {
+      window.open(data.publicUrl, "_blank");
+    } else {
+      toast.error("Could not generate preview link");
+    }
+  };
+
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === "all" || doc.category === filterCategory;
@@ -262,14 +276,17 @@ export default function DocumentsPage() {
                   <div className="p-2 bg-primary/10 rounded">
                     <FileText className="h-6 w-6 text-primary" />
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc.storage_path, doc.name)}>
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(doc.id, doc.storage_path)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(doc.storage_path)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc.storage_path, doc.name)}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(doc.id, doc.storage_path)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                 </div>
               </CardHeader>
               <CardContent className="p-4 pt-2">

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { 
   LayoutDashboard, 
@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { ModeToggle } from "@/components/mode-toggle";
 
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { getProfile } from "@/app/actions/profile";
@@ -23,6 +25,7 @@ import { useEffect, useState } from "react";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -44,6 +47,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null;
   }
 
+  const navItems = [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Documents", href: "/dashboard/documents", icon: FileText },
+    { label: "Sharing", href: "/dashboard/sharing", icon: Share2 },
+    { label: "Profile", href: "/dashboard/profile", icon: User },
+  ];
+
   const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
 
   return (
@@ -57,28 +67,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         </div>
         <nav className="flex-1 px-4 space-y-1">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium">
-            <LayoutDashboard className="h-5 w-5" />
-            Dashboard
-          </Link>
-          <Link href="/dashboard/documents" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
-            <FileText className="h-5 w-5" />
-            Documents
-          </Link>
-          <Link href="/dashboard/sharing" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
-            <Share2 className="h-5 w-5" />
-            Sharing
-          </Link>
-          <Link href="/dashboard/profile" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
-            <User className="h-5 w-5" />
-            Profile
-          </Link>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link 
+                key={item.href}
+                href={item.href} 
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
+                  isActive 
+                    ? "bg-primary/10 text-primary" 
+                    : "hover:bg-muted text-muted-foreground"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            );
+          })}
           <Separator className="my-4" />
-          <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+          <Link 
+            href="/dashboard/settings" 
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
+              pathname === "/dashboard/settings"
+                ? "bg-primary/10 text-primary"
+                : "hover:bg-muted text-muted-foreground"
+            )}
+          >
             <Settings className="h-5 w-5" />
             Settings
           </Link>
-          <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+          <Link 
+            href="/admin" 
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
+              pathname.startsWith("/admin")
+                ? "bg-primary/10 text-primary"
+                : "hover:bg-muted text-muted-foreground"
+            )}
+          >
             <ShieldCheck className="h-5 w-5" />
             Admin
           </Link>
@@ -96,6 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="h-16 border-b bg-background flex items-center justify-between px-8 sticky top-0 z-10">
           <h2 className="text-sm font-medium text-muted-foreground">Welcome back, {user.displayName || user.email}</h2>
           <div className="flex items-center gap-4">
+             <ModeToggle />
              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                {(user.displayName || user.email || "?")[0].toUpperCase()}
              </div>
