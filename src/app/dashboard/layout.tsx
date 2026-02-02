@@ -31,6 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -38,6 +39,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       getProfile(user.uid).then(res => {
         if (res.success) {
+          if (res.profile) {
+            setUserRole(res.profile.role);
+          }
           if (!res.profile) {
             // Profile missing, sync it
             syncUserProfile(
@@ -46,8 +50,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               user.displayName || "Anonymous User", 
               "employee" // Default to employee
             ).then(syncRes => {
-              if (syncRes.success && isNewRegistration) {
-                setShowOnboarding(true);
+              if (syncRes.success) {
+                setUserRole("employee");
+                if (isNewRegistration) {
+                  setShowOnboarding(true);
+                }
               }
             });
           } else if (!res.profile.onboarding_completed && isNewRegistration) {
@@ -107,32 +114,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
 
         <Separator className="my-4" />
-        <Link 
-          href="/dashboard/settings" 
-          onClick={() => setIsMobileMenuOpen(false)}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
-            pathname === "/dashboard/settings"
-              ? "bg-primary/10 text-primary"
-              : "hover:bg-muted text-muted-foreground"
+          <Link 
+            href="/dashboard/settings" 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
+              pathname === "/dashboard/settings"
+                ? "bg-primary/10 text-primary"
+                : "hover:bg-muted text-muted-foreground"
+            )}
+          >
+            <Settings className="h-5 w-5" />
+            Settings
+          </Link>
+          {userRole === "admin" && (
+            <Link 
+              href="/admin" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
+                pathname.startsWith("/admin")
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-muted text-muted-foreground"
+              )}
+            >
+              <ShieldCheck className="h-5 w-5" />
+              Admin
+            </Link>
           )}
-        >
-          <Settings className="h-5 w-5" />
-          Settings
-        </Link>
-        <Link 
-          href="/admin" 
-          onClick={() => setIsMobileMenuOpen(false)}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
-            pathname.startsWith("/admin")
-              ? "bg-primary/10 text-primary"
-              : "hover:bg-muted text-muted-foreground"
-          )}
-        >
-          <ShieldCheck className="h-5 w-5" />
-          Admin
-        </Link>
       </nav>
       <div className="p-4 border-t">
         <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={() => { logout(); setIsMobileMenuOpen(false); }}>
