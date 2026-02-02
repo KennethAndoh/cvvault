@@ -119,7 +119,7 @@ export default function DocumentsPage() {
   const handleDelete = async (id: string, path: string) => {
     if (!confirm("Are you sure you want to delete this document?")) return;
 
-    const result = await deleteDocument(id, path);
+    const result = await deleteDocument(id, path, user!.uid);
     if (result.success) {
       toast.success("Document deleted");
       fetchDocuments();

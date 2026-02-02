@@ -89,7 +89,7 @@ export default function SharingPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to revoke this access?")) return;
-    const result = await deleteSharingToken(id);
+    const result = await deleteSharingToken(id, user!.uid);
     if (result.success) {
       toast.success("Access revoked");
       fetchData();

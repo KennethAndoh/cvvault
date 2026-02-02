@@ -5,6 +5,7 @@ import { FileText, Lock, AlertCircle, Download, ExternalLink } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { logAction } from "@/app/actions/audit";
 
 export default async function SharedAccessPage({ params }: { params: { token: string } }) {
   const { token } = params;
@@ -12,7 +13,7 @@ export default async function SharedAccessPage({ params }: { params: { token: st
   // 1. Fetch Token and related Data
   const { data: accessToken, error: tokenError } = await supabase
     .from("access_tokens")
-    .select("*, profiles(full_name), documents(*)")
+    .select("*, profiles(id, full_name), documents(*)")
     .eq("token", token)
     .single();
 
@@ -39,7 +40,15 @@ export default async function SharedAccessPage({ params }: { params: { token: st
     );
   }
 
-  // 2. Check Expiry
+  // 2. Log View Action
+  if (accessToken.profiles?.id) {
+    await logAction(accessToken.profiles.id, "TOKEN_VIEW", { 
+      token: token, 
+      docId: accessToken.document_id || "full_profile" 
+    });
+  }
+
+  // 3. Check Expiry
   if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">

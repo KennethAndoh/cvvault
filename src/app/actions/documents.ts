@@ -53,7 +53,7 @@ export async function getDocuments(userId: string) {
   return { success: true, documents: data };
 }
 
-export async function deleteDocument(id: string, storagePath: string) {
+export async function deleteDocument(id: string, storagePath: string, userId: string) {
   // 1. Delete from Storage
   const { error: storageError } = await supabase.storage
     .from("documents")
@@ -74,6 +74,8 @@ export async function deleteDocument(id: string, storagePath: string) {
     console.error("Error deleting from database:", dbError);
     return { success: false, error: dbError.message };
   }
+
+  await logAction(userId, "DOCUMENT_DELETE", { docId: id });
 
   revalidatePath("/dashboard/documents");
   return { success: true };

@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
+import { logAction } from "./audit";
 
 export async function getProfile(userId: string) {
   const { data, error } = await supabase
@@ -30,6 +31,8 @@ export async function updateProfile(userId: string, payload: any) {
     console.error("Error updating profile:", error);
     return { success: false, error: error.message };
   }
+
+  await logAction(userId, "PROFILE_UPDATE", { fields: Object.keys(payload) });
 
   revalidatePath("/dashboard/profile");
   return { success: true, profile: data };
@@ -60,6 +63,11 @@ export async function createSharingToken(payload: {
     return { success: false, error: error.message };
   }
 
+  await logAction(payload.userId, "SHARING_TOKEN_CREATE", { 
+    tokenId: data.id, 
+    docId: payload.documentId || "full_profile" 
+  });
+
   return { success: true, token: data };
 }
 
@@ -78,7 +86,7 @@ export async function getSharingTokens(userId: string) {
   return { success: true, tokens: data };
 }
 
-export async function deleteSharingToken(tokenId: string) {
+export async function deleteSharingToken(tokenId: string, userId: string) {
   const { error } = await supabase
     .from("access_tokens")
     .delete()
@@ -88,6 +96,8 @@ export async function deleteSharingToken(tokenId: string) {
     console.error("Error deleting sharing token:", error);
     return { success: false, error: error.message };
   }
+
+  await logAction(userId, "SHARING_TOKEN_DELETE", { tokenId });
 
   revalidatePath("/dashboard/sharing");
   return { success: true };
