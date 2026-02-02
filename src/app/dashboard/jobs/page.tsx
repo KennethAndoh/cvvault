@@ -35,12 +35,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProfile } from "@/app/actions/profile";
 import { createJob, getJobs, getJobApplications, applyForJob, deleteJob, updateJob } from "@/app/actions/jobs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function JobsPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<any[]>([]);
