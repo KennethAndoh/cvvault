@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getProfile, updateProfile } from "@/app/actions/profile";
+import { getProfile, updateProfile, uploadAvatar } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,13 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, User, Globe, Shield } from "lucide-react";
+import { Loader2, User, Globe, Shield, Camera } from "lucide-react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -36,6 +38,33 @@ export default function ProfilePage() {
       toast.error("Failed to fetch profile");
     }
     setLoading(false);
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const result = await uploadAvatar(user.uid, formData);
+    if (result.success) {
+      toast.success("Avatar updated successfully");
+      setProfile({ ...profile, avatar_url: result.avatarUrl });
+    } else {
+      toast.error(result.error || "Failed to upload avatar");
+    }
+    setUploadingAvatar(false);
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -74,10 +103,47 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-6">
-               <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-primary/20">
-                 <User className="h-12 w-12 text-muted-foreground" />
+               <div className="relative group">
+                 <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center border-2 border-primary/20 overflow-hidden">
+                   {profile?.avatar_url ? (
+                     <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                   ) : (
+                     <User className="h-12 w-12 text-muted-foreground" />
+                   )}
+                   {uploadingAvatar && (
+                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                       <Loader2 className="h-6 w-6 text-white animate-spin" />
+                     </div>
+                   )}
+                 </div>
+                 <button 
+                  type="button"
+                  onClick={handleAvatarClick}
+                  disabled={uploadingAvatar}
+                  className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                   <Camera className="h-4 w-4" />
+                 </button>
                </div>
-               <Button variant="outline" size="sm">Change Avatar</Button>
+               <div className="space-y-1">
+                 <Button 
+                   type="button" 
+                   variant="outline" 
+                   size="sm" 
+                   onClick={handleAvatarClick}
+                   disabled={uploadingAvatar}
+                 >
+                   {uploadingAvatar ? "Uploading..." : "Change Avatar"}
+                 </Button>
+                 <p className="text-xs text-muted-foreground">Recommended: Square image, max 2MB.</p>
+                 <input 
+                   type="file" 
+                   ref={fileInputRef} 
+                   className="hidden" 
+                   accept="image/*" 
+                   onChange={handleFileChange}
+                 />
+               </div>
             </div>
             
             <div className="grid gap-2">
@@ -91,7 +157,7 @@ export default function ProfilePage() {
             
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" value={profile?.email || ""} disabled className="bg-muted" />
+              <Input id="email" value={profile?.email || user?.email || ""} disabled className="bg-muted" />
               <p className="text-[10px] text-muted-foreground">Email cannot be changed here.</p>
             </div>
 

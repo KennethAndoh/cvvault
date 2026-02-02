@@ -25,11 +25,11 @@ export async function getProfile(userId: string) {
 export async function updateProfile(userId: string, payload: any) {
   const { data, error } = await supabase
     .from("profiles")
-    .upsert({
-      id: userId,
+    .update({
       ...payload,
       updated_at: new Date().toISOString(),
     })
+    .eq("id", userId)
     .select()
     .single();
 
@@ -107,4 +107,43 @@ export async function deleteSharingToken(tokenId: string, userId: string) {
 
   revalidatePath("/dashboard/sharing");
   return { success: true };
+}
+
+export async function uploadAvatar(userId: string, formData: FormData) {
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error("Error uploading avatar:", uploadError);
+    return { success: false, error: uploadError.message };
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from("avatars")
+    .getPublicUrl(filePath);
+
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ avatar_url: publicUrl })
+    .eq("id", userId);
+
+  if (updateError) {
+    console.error("Error updating profile avatar:", updateError);
+    return { success: false, error: updateError.message };
+  }
+
+  await logAction(userId, "AVATAR_UPLOAD", { publicUrl });
+
+  revalidatePath("/dashboard/profile");
+  return { success: true, avatarUrl: publicUrl };
 }
