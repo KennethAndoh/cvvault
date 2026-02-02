@@ -106,15 +106,15 @@ export default function SharingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sharing & Access</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Sharing & Access</h1>
           <p className="text-muted-foreground">Manage external access tokens and sharing links.</p>
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 w-full sm:w-auto">
               <Share2 className="h-4 w-4" />
               Create Link
             </Button>
@@ -157,61 +157,108 @@ export default function SharingPage() {
         </Dialog>
       </div>
 
-      <Card>
+      <Card className="border-none bg-transparent shadow-none">
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Target</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Expires</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+          {/* Desktop Table */}
+          <div className="hidden md:block rounded-md border bg-card">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  </TableCell>
+                  <TableHead>Target</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Expires</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : tokens.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No active sharing links found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                tokens.map((token) => (
-                  <TableRow key={token.id}>
-                    <TableCell className="font-medium">
-                      {token.documents?.name || "Full Profile"}
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] rounded-full font-bold">
-                        ACTIVE
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {token.expires_at ? new Date(token.expires_at).toLocaleDateString() : "Never"}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(token.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => copyLink(token.token)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(token.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : tokens.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No active sharing links found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  tokens.map((token) => (
+                    <TableRow key={token.id}>
+                      <TableCell className="font-medium">
+                        {token.documents?.name || "Full Profile"}
+                      </TableCell>
+                      <TableCell>
+                        <span className="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] rounded-full font-bold">
+                          ACTIVE
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {token.expires_at ? new Date(token.expires_at).toLocaleDateString() : "Never"}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(token.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => copyLink(token.token)} title="Copy Link">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(token.id)} title="Revoke">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : tokens.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground bg-card border rounded-lg">
+                No active sharing links found.
+              </div>
+            ) : (
+              tokens.map((token) => (
+                <div key={token.id} className="p-4 bg-card border rounded-lg space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-bold text-sm">{token.documents?.name || "Full Profile"}</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">
+                        Created {new Date(token.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] rounded-full font-bold">
+                      ACTIVE
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t text-xs">
+                    <div className="text-muted-foreground">
+                      Expires: {token.expires_at ? new Date(token.expires_at).toLocaleDateString() : "Never"}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="h-8 gap-2" onClick={() => copyLink(token.token)}>
+                        <Copy className="h-3 w-3" /> Copy
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 gap-2 text-destructive border-destructive/20" onClick={() => handleDelete(token.id)}>
+                        <Trash2 className="h-3 w-3" /> Revoke
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -166,15 +166,15 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Documents</h1>
           <p className="text-muted-foreground">Manage your resumes, CVs, and certificates.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               Upload Document
             </Button>
@@ -228,20 +228,22 @@ export default function DocumentsPage() {
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search documents..." 
-            className="pl-10" 
+            className="pl-10 w-full" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-[180px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="All Categories" />
+          <SelectTrigger className="w-full md:w-[180px]">
+            <div className="flex items-center">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="All Categories" />
+            </div>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
@@ -273,20 +275,21 @@ export default function DocumentsPage() {
             <Card key={doc.id} className="overflow-hidden group">
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-start justify-between">
-                  <div className="p-2 bg-primary/10 rounded">
-                    <FileText className="h-6 w-6 text-primary" />
-                  </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(doc.storage_path)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc.storage_path, doc.name)}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(doc.id, doc.storage_path)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="p-2 bg-primary/10 rounded">
+                      <FileText className="h-6 w-6 text-primary" />
                     </div>
+                      <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(doc.storage_path)} title="Preview">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc.storage_path, doc.name)} title="Download">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(doc.id, doc.storage_path)} title="Delete">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
                 </div>
               </CardHeader>
               <CardContent className="p-4 pt-2">

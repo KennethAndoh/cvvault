@@ -85,13 +85,13 @@ export default function AdminPage() {
   if (!authorized) return null;
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Moderation</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin Moderation</h1>
           <p className="text-muted-foreground">Monitor users and verify credentials.</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-bold">
+        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-bold w-fit">
           <ShieldCheck className="h-4 w-4" />
           Admin Access
         </div>
@@ -129,68 +129,103 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="border-none bg-transparent shadow-none">
+        <CardHeader className="px-0">
           <CardTitle>Document Verification Queue</CardTitle>
           <CardDescription>Review and verify user credentials.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Document</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {documents.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell>
-                    <div className="font-medium">{doc.profiles?.full_name}</div>
-                    <div className="text-xs text-muted-foreground">{doc.profiles?.email}</div>
-                  </TableCell>
-                  <TableCell className="font-medium">{doc.name}</TableCell>
-                  <TableCell>{doc.category}</TableCell>
-                  <TableCell>
-                    {doc.metadata?.verification_status === 'verified' ? (
-                      <span className="flex items-center gap-1 text-green-500 text-xs font-bold">
-                        <CheckCircle className="h-3 w-3" /> VERIFIED
-                      </span>
-                    ) : doc.metadata?.verification_status === 'rejected' ? (
-                      <span className="flex items-center gap-1 text-destructive text-xs font-bold">
-                        <XCircle className="h-3 w-3" /> REJECTED
-                      </span>
-                    ) : (
-                      <span className="text-yellow-500 text-xs font-bold italic">PENDING</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
-                          Verify Document
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')} className="text-destructive">
-                          Reject Document
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          View Original File
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {/* Desktop Table */}
+          <div className="hidden md:block rounded-md border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Document</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {documents.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell>
+                      <div className="font-medium">{doc.profiles?.full_name}</div>
+                      <div className="text-xs text-muted-foreground">{doc.profiles?.email}</div>
+                    </TableCell>
+                    <TableCell className="font-medium">{doc.name}</TableCell>
+                    <TableCell>{doc.category}</TableCell>
+                    <TableCell>
+                      {doc.metadata?.verification_status === 'verified' ? (
+                        <span className="flex items-center gap-1 text-green-500 text-xs font-bold">
+                          <CheckCircle className="h-3 w-3" /> VERIFIED
+                        </span>
+                      ) : doc.metadata?.verification_status === 'rejected' ? (
+                        <span className="flex items-center gap-1 text-destructive text-xs font-bold">
+                          <XCircle className="h-3 w-3" /> REJECTED
+                        </span>
+                      ) : (
+                        <span className="text-yellow-500 text-xs font-bold italic">PENDING</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
+                            Verify Document
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')} className="text-destructive">
+                            Reject Document
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            View Original File
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {documents.map((doc) => (
+              <div key={doc.id} className="p-4 bg-card border rounded-lg space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold text-sm">{doc.name}</div>
+                    <div className="text-xs text-muted-foreground">{doc.profiles?.full_name}</div>
+                  </div>
+                  {doc.metadata?.verification_status === 'verified' ? (
+                    <span className="text-green-500"><CheckCircle className="h-5 w-5" /></span>
+                  ) : doc.metadata?.verification_status === 'rejected' ? (
+                    <span className="text-destructive"><XCircle className="h-5 w-5" /></span>
+                  ) : (
+                    <span className="text-yellow-500 italic text-[10px] font-bold">PENDING</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t text-xs">
+                  <span className="px-2 py-0.5 bg-muted rounded-full">{doc.category}</span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
+                      Verify
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-destructive border-destructive/20" onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')}>
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

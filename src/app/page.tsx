@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Shield, Share2, FolderLock, FileText, CheckCircle, ArrowRight, Star, Zap, Lock } from "lucide-react";
+import { Shield, Share2, FolderLock, FileText, CheckCircle, ArrowRight, Star, Zap, Lock, Menu } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function LandingPage() {
   const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
@@ -23,12 +24,33 @@ export default function LandingPage() {
               <Link href="/register">Get Started</Link>
             </Button>
           </nav>
-          <div className="md:hidden flex items-center gap-4">
-             <ModeToggle />
-             <Button variant="ghost" size="icon" className="md:hidden">
-               <Zap className="h-6 w-6" />
-             </Button>
-          </div>
+            <div className="md:hidden flex items-center gap-2">
+               <ModeToggle />
+               <Sheet>
+                 <SheetTrigger asChild>
+                   <Button variant="ghost" size="icon">
+                     <Menu className="h-6 w-6" />
+                   </Button>
+                 </SheetTrigger>
+                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                   <SheetHeader className="text-left">
+                     <SheetTitle className="flex items-center gap-2">
+                       <img src={logoUrl} alt="Logo" className="h-8 w-8 rounded" />
+                       CVVault
+                     </SheetTitle>
+                   </SheetHeader>
+                   <nav className="flex flex-col gap-4 mt-8">
+                     <Link className="text-lg font-semibold hover:text-primary transition-colors" href="#features">Features</Link>
+                     <Link className="text-lg font-semibold hover:text-primary transition-colors" href="#security">Security</Link>
+                     <Link className="text-lg font-semibold hover:text-primary transition-colors" href="/login">Login</Link>
+                     <Button asChild className="rounded-full w-full mt-4">
+                       <Link href="/register">Get Started</Link>
+                     </Button>
+                   </nav>
+                 </SheetContent>
+               </Sheet>
+            </div>
+
         </div>
       </header>
 

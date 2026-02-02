@@ -103,7 +103,7 @@ export default function ProfilePage() {
             <CardDescription>Basic details shown on your profile.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
                <div className="relative group">
                  <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center border-2 border-primary/20 overflow-hidden">
                    {profile?.avatar_url ? (
@@ -121,12 +121,12 @@ export default function ProfilePage() {
                   type="button"
                   onClick={handleAvatarClick}
                   disabled={uploadingAvatar}
-                  className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                 >
                    <Camera className="h-4 w-4" />
                  </button>
                </div>
-               <div className="space-y-1">
+               <div className="space-y-1 flex flex-col items-center sm:items-start text-center sm:text-left">
                  <Button 
                    type="button" 
                    variant="outline" 
@@ -190,12 +190,12 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             {profile?.public_profile_enabled && (
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Globe className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium">cvvault.com/p/{user?.uid}</span>
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+                  <Globe className="h-5 w-5 text-primary shrink-0" />
+                  <span className="text-sm font-medium truncate">cvvault.com/p/{user?.uid}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => {
+                <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/p/${user?.uid}`);
                   toast.success("Link copied!");
                 }}>
