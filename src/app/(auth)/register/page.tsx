@@ -111,7 +111,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 </CardContent>
-                <CardFooter className="flex flex-col gap-4 mt-4">
+                <CardFooter className="flex flex-col gap-4 mt-8">
                   <Button 
 
                   className="w-full h-12 text-lg" 

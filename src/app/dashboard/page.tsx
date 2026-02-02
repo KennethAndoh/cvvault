@@ -1,6 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDocuments } from "@/app/actions/documents";
+import { getSharingTokens } from "@/app/actions/profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   FileText, 
@@ -8,12 +11,57 @@ import {
   Eye, 
   UploadCloud,
   ArrowUpRight,
-  Plus
+  Plus,
+  Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalDocs: 0,
+    verifiedDocs: 0,
+    profileViews: 0,
+    activeLinks: 0
+  });
+  const [recentDocs, setRecentDocs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    const [docsRes, tokensRes] = await Promise.all([
+      getDocuments(user!.uid),
+      getSharingTokens(user!.uid)
+    ]);
+
+    if (docsRes.success) {
+      const docs = docsRes.documents || [];
+      setRecentDocs(docs.slice(0, 4));
+      const verified = docs.filter((d: any) => d.metadata?.verification_status === 'verified').length;
+      setStats(prev => ({ 
+        ...prev, 
+        totalDocs: docs.length,
+        verifiedDocs: docs.length > 0 ? Math.round((verified / docs.length) * 100) : 0
+      }));
+    }
+
+    if (tokensRes.success) {
+      setStats(prev => ({ 
+        ...prev, 
+        activeLinks: (tokensRes.tokens || []).length 
+      }));
+    }
+    
+    setLoading(false);
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -29,18 +77,18 @@ export default function DashboardPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
+            <div className="text-2xl font-bold">{stats.totalDocs}</div>
+            <p className="text-xs text-muted-foreground">Across all categories</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Verified Status</CardTitle>
-            <ShieldCheck className="h-4 w-4 text-green-500" />
+            <ShieldCheck className={`h-4 w-4 ${stats.verifiedDocs === 100 ? 'text-green-500' : 'text-yellow-500'}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">85%</div>
-            <p className="text-xs text-muted-foreground">5 documents pending review</p>
+            <div className="text-2xl font-bold">{stats.verifiedDocs}%</div>
+            <p className="text-xs text-muted-foreground">Completion rate</p>
           </CardContent>
         </Card>
         <Card>
@@ -49,8 +97,8 @@ export default function DashboardPage() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">124</div>
-            <p className="text-xs text-muted-foreground">+18% from last week</p>
+            <div className="text-2xl font-bold">{stats.profileViews}</div>
+            <p className="text-xs text-muted-foreground">Total external visits</p>
           </CardContent>
         </Card>
         <Card>
@@ -59,8 +107,8 @@ export default function DashboardPage() {
             <UploadCloud className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">Expires in 2 days</p>
+            <div className="text-2xl font-bold">{stats.activeLinks}</div>
+            <p className="text-xs text-muted-foreground">Valid sharing tokens</p>
           </CardContent>
         </Card>
       </div>
@@ -72,24 +120,23 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { name: "Senior_Fullstack_CV.pdf", type: "CV", date: "2 hours ago" },
-                { name: "Bachelor_Degree.jpg", type: "Certificate", date: "Yesterday" },
-                { name: "AWS_Certified_Architect.pdf", type: "Certificate", date: "3 days ago" },
-                { name: "Passport_Copy.pdf", type: "Identity", date: "1 week ago" },
-              ].map((doc, i) => (
+              {recentDocs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">No documents uploaded yet.</div>
+              ) : recentDocs.map((doc, i) => (
                 <div key={i} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-primary/10 rounded">
                       <FileText className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <div className="font-medium">{doc.name}</div>
-                      <div className="text-xs text-muted-foreground">{doc.type} • Uploaded {doc.date}</div>
+                      <div className="font-medium truncate max-w-[200px]">{doc.name}</div>
+                      <div className="text-xs text-muted-foreground">{doc.category} • {new Date(doc.created_at).toLocaleDateString()}</div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon">
-                    <ArrowUpRight className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link href="/dashboard/documents">
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
                   </Button>
                 </div>
               ))}
@@ -105,19 +152,25 @@ export default function DashboardPage() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button className="w-full justify-start gap-2" size="lg">
-              <Plus className="h-5 w-5" />
-              Upload New Document
+            <Button className="w-full justify-start gap-2" size="lg" asChild>
+              <Link href="/dashboard/documents">
+                <Plus className="h-5 w-5" />
+                Upload New Document
+              </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-2" size="lg">
-              <Share2 className="h-5 w-5" />
-              Create Sharing Link
+            <Button variant="outline" className="w-full justify-start gap-2" size="lg" asChild>
+              <Link href="/dashboard/sharing">
+                <Share2 className="h-5 w-5" />
+                Create Sharing Link
+              </Link>
             </Button>
             <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-4 pt-4">
-                <div className="text-sm font-medium mb-1">Public Profile</div>
-                <div className="text-xs text-muted-foreground mb-3">Your profile is currently private. Enable it to showcase your work.</div>
-                <Button size="sm" className="w-full">Enable Profile</Button>
+                <div className="text-sm font-medium mb-1 text-primary">Pro Tip</div>
+                <div className="text-xs text-muted-foreground mb-3">You can share specific documents or your entire verified profile with recruiters.</div>
+                <Button size="sm" className="w-full" variant="secondary" asChild>
+                  <Link href="/dashboard/sharing">Manage Access</Link>
+                </Button>
               </CardContent>
             </Card>
           </CardContent>

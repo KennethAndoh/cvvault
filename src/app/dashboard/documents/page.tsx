@@ -35,6 +35,8 @@ import {
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
+import { FileUpload } from "@/components/FileUpload";
+
 export default function DocumentsPage() {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<any[]>([]);
@@ -46,6 +48,8 @@ export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [category, setCategory] = useState("CV");
   const [docName, setDocName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
 
   useEffect(() => {
     if (user) {
@@ -140,6 +144,12 @@ export default function DocumentsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === "all" || doc.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -183,16 +193,10 @@ export default function DocumentsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="file">File (PDF, DOCX, JPEG, PNG)</Label>
-                <Input 
-                  id="file" 
-                  type="file" 
-                  accept=".pdf,.docx,.jpg,.jpeg,.png"
-                  required
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label>File (PDF, DOCX, JPEG, PNG)</Label>
+                  <FileUpload onFileSelect={setFile} />
+                </div>
               <DialogFooter>
                 <Button type="submit" disabled={uploading} className="w-full">
                   {uploading ? (
@@ -213,34 +217,45 @@ export default function DocumentsPage() {
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search documents..." className="pl-10" />
+          <Input 
+            placeholder="Search documents..." 
+            className="pl-10" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
-        </Button>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="CV">CV / Resume</SelectItem>
+            <SelectItem value="Certificate">Certificate</SelectItem>
+            <SelectItem value="Identity">Identity</SelectItem>
+            <SelectItem value="Other">Other</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : documents.length === 0 ? (
+      ) : filteredDocuments.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <div className="p-4 bg-muted rounded-full mb-4">
               <FileText className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium">No documents yet</h3>
-            <p className="text-muted-foreground mb-6">Upload your first document to get started.</p>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Upload Document
-            </Button>
+            <h3 className="text-lg font-medium">No documents found</h3>
+            <p className="text-muted-foreground mb-6">Try adjusting your search or filters.</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {documents.map((doc) => (
+          {filteredDocuments.map((doc) => (
             <Card key={doc.id} className="overflow-hidden group">
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-start justify-between">

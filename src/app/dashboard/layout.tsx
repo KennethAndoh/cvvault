@@ -16,9 +16,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
+import { OnboardingDialog } from "@/components/OnboardingDialog";
+import { getProfile } from "@/app/actions/profile";
+import { useEffect, useState } from "react";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      getProfile(user.uid).then(res => {
+        if (res.success && !res.profile.onboarding_completed) {
+          setShowOnboarding(true);
+        }
+      });
+    }
+  }, [user]);
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
@@ -86,10 +101,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
              </div>
           </div>
         </header>
-        <div className="p-8">
-          {children}
-        </div>
-      </main>
-    </div>
+          <div className="p-8">
+            {children}
+          </div>
+        </main>
+        <OnboardingDialog 
+          userId={user.uid} 
+          isOpen={showOnboarding} 
+          onClose={() => setShowOnboarding(false)} 
+        />
+      </div>
   );
 }
