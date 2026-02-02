@@ -42,6 +42,9 @@ export function OnboardingDialog({ userId, isOpen, onClose }: OnboardingDialogPr
 
   const handleComplete = async () => {
     await updateProfile(userId, { onboarding_completed: true });
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("cvvault_new_registration");
+    }
     onClose();
   };
 

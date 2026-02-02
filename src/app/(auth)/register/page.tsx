@@ -34,12 +34,16 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: fullName });
       
-      const result = await syncUserProfile(user.uid, email, fullName, role);
-      
-      if (result.success) {
-        toast.success("Account created successfully!");
-        router.push("/dashboard");
-      } else {
+        const result = await syncUserProfile(user.uid, email, fullName, role);
+        
+        if (result.success) {
+          // Set flag for onboarding
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("cvvault_new_registration", "true");
+          }
+          toast.success("Account created successfully!");
+          router.push("/dashboard");
+        } else {
         toast.error("Account created but failed to sync profile.");
       }
     } catch (error: any) {

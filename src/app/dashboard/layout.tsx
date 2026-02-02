@@ -34,6 +34,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (user) {
+      const isNewRegistration = typeof window !== "undefined" && sessionStorage.getItem("cvvault_new_registration") === "true";
+
       getProfile(user.uid).then(res => {
         if (res.success) {
           if (!res.profile) {
@@ -44,11 +46,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               user.displayName || "Anonymous User", 
               "employee" // Default to employee
             ).then(syncRes => {
-              if (syncRes.success) {
+              if (syncRes.success && isNewRegistration) {
                 setShowOnboarding(true);
               }
             });
-          } else if (!res.profile.onboarding_completed) {
+          } else if (!res.profile.onboarding_completed && isNewRegistration) {
             setShowOnboarding(true);
           }
         }
