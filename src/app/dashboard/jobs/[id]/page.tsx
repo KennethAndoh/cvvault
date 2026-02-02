@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { getJobById, getJobApplications, updateApplicationStatus } from "@/app/actions/jobs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -31,7 +31,6 @@ import { formatDistanceToNow } from "date-fns";
 export default function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
-  const { toast } = useToast();
   const [job, setJob] = useState<any>(null);
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,17 +70,14 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
     try {
       const res = await updateApplicationStatus(appId, status, user!.uid);
       if (res.success) {
-        toast({
-          title: "Status Updated",
+        toast.success("Status Updated", {
           description: `Application status changed to ${status}.`
         });
         fetchData();
       }
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Could not update status.",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Could not update status."
       });
     }
   };

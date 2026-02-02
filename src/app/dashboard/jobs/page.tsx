@@ -92,10 +92,8 @@ export default function JobsPage() {
   const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newJob.title || !newJob.company || !newJob.description) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
+      toast.error("Missing fields", {
+        description: "Please fill in all required fields."
       });
       return;
     }
@@ -107,25 +105,20 @@ export default function JobsPage() {
       });
 
       if (res.success) {
-        toast({
-          title: "Job Posted",
+        toast.success("Job Posted", {
           description: "Your job has been successfully posted."
         });
         setIsPostJobOpen(false);
         setNewJob({ title: "", company: "", location: "", salary: "", type: "Full-time", description: "" });
         fetchInitialData();
       } else {
-        toast({
-          title: "Error",
-          description: res.error,
-          variant: "destructive"
+        toast.error("Error", {
+          description: res.error
         });
       }
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Something went wrong.",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Something went wrong."
       });
     }
   };
@@ -138,23 +131,18 @@ export default function JobsPage() {
       });
 
       if (res.success) {
-        toast({
-          title: "Application Sent",
+        toast.success("Application Sent", {
           description: "Your application has been submitted successfully."
         });
         fetchInitialData();
       } else {
-        toast({
-          title: "Error",
-          description: res.error,
-          variant: "destructive"
+        toast.error("Error", {
+          description: res.error
         });
       }
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Could not apply for job.",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Could not apply for job."
       });
     }
   };
@@ -165,11 +153,11 @@ export default function JobsPage() {
     try {
       const res = await deleteJob(jobId, user!.uid);
       if (res.success) {
-        toast({ title: "Deleted", description: "Job post has been removed." });
+        toast.success("Deleted", { description: "Job post has been removed." });
         fetchInitialData();
       }
     } catch (err) {
-      toast({ title: "Error", description: "Could not delete job.", variant: "destructive" });
+      toast.error("Error", { description: "Could not delete job." });
     }
   };
 
