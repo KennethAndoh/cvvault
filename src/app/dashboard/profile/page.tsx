@@ -29,6 +29,9 @@ export default function ProfilePage() {
     const result = await getProfile(user!.uid);
     if (result.success) {
       setProfile(result.profile);
+      if (!result.profile) {
+        toast.info("Profile not found. Creating a default profile for you...");
+      }
     } else {
       toast.error("Failed to fetch profile");
     }
@@ -37,6 +40,7 @@ export default function ProfilePage() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profile) return;
     setUpdating(true);
     const result = await updateProfile(user!.uid, {
       full_name: profile.full_name,

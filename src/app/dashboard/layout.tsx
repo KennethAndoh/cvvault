@@ -20,6 +20,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { getProfile } from "@/app/actions/profile";
+import { syncUserProfile } from "@/app/actions/auth";
 import { useEffect, useState } from "react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -31,8 +32,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (user) {
       getProfile(user.uid).then(res => {
-        if (res.success && !res.profile.onboarding_completed) {
-          setShowOnboarding(true);
+        if (res.success) {
+          if (!res.profile) {
+            // Profile missing, sync it
+            syncUserProfile(
+              user.uid, 
+              user.email || "", 
+              user.displayName || "Anonymous User", 
+              "employee" // Default to employee
+            ).then(syncRes => {
+              if (syncRes.success) {
+                setShowOnboarding(true);
+              }
+            });
+          } else if (!res.profile.onboarding_completed) {
+            setShowOnboarding(true);
+          }
         }
       });
     }
@@ -67,25 +82,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         </div>
         <nav className="flex-1 px-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link 
-                key={item.href}
-                href={item.href} 
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
-                  isActive 
-                    ? "bg-primary/10 text-primary" 
-                    : "hover:bg-muted text-muted-foreground"
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            );
-          })}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <Link 
+                  key={item.href}
+                  href={item.href} 
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
+                    isActive 
+                      ? "bg-primary/10 text-primary shadow-sm" 
+                      : "hover:bg-muted text-muted-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+
           <Separator className="my-4" />
           <Link 
             href="/dashboard/settings" 

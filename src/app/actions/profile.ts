@@ -12,6 +12,9 @@ export async function getProfile(userId: string) {
     .single();
 
   if (error) {
+    if (error.code === "PGRST116") {
+      return { success: true, profile: null };
+    }
     console.error("Error fetching profile:", error);
     return { success: false, error: error.message };
   }
@@ -22,8 +25,11 @@ export async function getProfile(userId: string) {
 export async function updateProfile(userId: string, payload: any) {
   const { data, error } = await supabase
     .from("profiles")
-    .update(payload)
-    .eq("id", userId)
+    .upsert({
+      id: userId,
+      ...payload,
+      updated_at: new Date().toISOString(),
+    })
     .select()
     .single();
 
