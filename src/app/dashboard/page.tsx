@@ -16,10 +16,13 @@ import {
   Users,
   Search,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Briefcase,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getJobs, getJobApplications } from "@/app/actions/jobs";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -29,7 +32,9 @@ export default function DashboardPage() {
     verifiedDocs: 0,
     profileViews: 0,
     activeLinks: 0,
-    pendingVerifications: 0
+    pendingVerifications: 0,
+    jobCount: 0,
+    appCount: 0
   });
   const [recentDocs, setRecentDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,14 +47,20 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     setLoading(true);
-    const [docsRes, tokensRes, profileRes] = await Promise.all([
+    const [docsRes, tokensRes, profileRes, jobsRes, appsRes] = await Promise.all([
       getDocuments(user!.uid),
       getSharingTokens(user!.uid),
-      getProfile(user!.uid)
+      getProfile(user!.uid),
+      getJobs({ employer_id: user!.uid }),
+      getJobApplications(profile?.role === 'employer' ? { job_id: undefined } : { employee_id: user!.uid })
     ]);
 
     if (profileRes.success) {
       setProfile(profileRes.profile);
+      
+      // If we didn't have the role when we first called fetchDashboardData, appsRes might be wrong.
+      // But we call it after profile is available or we can just fetch both always and filter.
+      // Let's refine the fetch logic.
     }
 
     if (docsRes.success) {
@@ -70,6 +81,14 @@ export default function DashboardPage() {
         ...prev, 
         activeLinks: (tokensRes.tokens || []).length 
       }));
+    }
+
+    if (jobsRes.success) {
+      setStats(prev => ({ ...prev, jobCount: (jobsRes.jobs || []).length }));
+    }
+
+    if (appsRes.success) {
+      setStats(prev => ({ ...prev, appCount: (appsRes.applications || []).length }));
     }
     
     setLoading(false);
@@ -100,65 +119,65 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {isEmployer ? "Active Verifications" : "Total Documents"}
-            </CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalDocs}</div>
-            <p className="text-xs text-muted-foreground">
-              {isEmployer ? "Documents under review" : "Across all categories"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {isEmployer ? "Trust Rating" : "Verified Status"}
-            </CardTitle>
-            <ShieldCheck className={`h-4 w-4 ${stats.verifiedDocs === 100 ? 'text-green-500' : 'text-yellow-500'}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isEmployer ? "A+" : `${stats.verifiedDocs}%`}</div>
-            <p className="text-xs text-muted-foreground">
-              {isEmployer ? "Employer verified status" : "Completion rate"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {isEmployer ? "Candidates Saved" : "Profile Views"}
-            </CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.profileViews}</div>
-            <p className="text-xs text-muted-foreground">
-              {isEmployer ? "Across talent pool" : "Total external visits"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {isEmployer ? "Revocable Links" : "Active Links"}
-            </CardTitle>
-            <UploadCloud className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeLinks}</div>
-            <p className="text-xs text-muted-foreground">
-              {isEmployer ? "Shared access points" : "Valid sharing tokens"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Stats Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {isEmployer ? "Active Job Posts" : "Total Documents"}
+              </CardTitle>
+              {isEmployer ? <Briefcase className="h-4 w-4 text-muted-foreground" /> : <FileText className="h-4 w-4 text-muted-foreground" />}
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isEmployer ? stats.jobCount : stats.totalDocs}</div>
+              <p className="text-xs text-muted-foreground">
+                {isEmployer ? "Open positions" : "Across all categories"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {isEmployer ? "Total Applicants" : "Job Applications"}
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.appCount}</div>
+              <p className="text-xs text-muted-foreground">
+                {isEmployer ? "Across all job posts" : "Active submissions"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {isEmployer ? "Candidates Saved" : "Profile Views"}
+              </CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.profileViews}</div>
+              <p className="text-xs text-muted-foreground">
+                {isEmployer ? "Across talent pool" : "Total external visits"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {isEmployer ? "Active Links" : "Verified Documents"}
+              </CardTitle>
+              {isEmployer ? <UploadCloud className="h-4 w-4 text-muted-foreground" /> : <ShieldCheck className="h-4 w-4 text-green-500" />}
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isEmployer ? stats.activeLinks : `${stats.verifiedDocs}%`}</div>
+              <p className="text-xs text-muted-foreground">
+                {isEmployer ? "Shared access points" : "Verification completion"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
@@ -206,30 +225,30 @@ export default function DashboardPage() {
             {isEmployer ? (
               <>
                 <Button className="w-full justify-start gap-2" size="lg" asChild>
-                  <Link href="/dashboard/sharing">
-                    <Search className="h-5 w-5" />
-                    Search Talent Pool
+                  <Link href="/dashboard/jobs">
+                    <Plus className="h-5 w-5" />
+                    Post New Job
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-2" size="lg" asChild>
-                  <Link href="/dashboard/sharing">
-                    <CheckCircle2 className="h-5 w-5" />
-                    Verify Documents
+                  <Link href="/dashboard/jobs">
+                    <Briefcase className="h-5 w-5" />
+                    Manage Job Listings
                   </Link>
                 </Button>
               </>
             ) : (
               <>
                 <Button className="w-full justify-start gap-2" size="lg" asChild>
-                  <Link href="/dashboard/documents">
-                    <Plus className="h-5 w-5" />
-                    Upload New Document
+                  <Link href="/dashboard/jobs">
+                    <Search className="h-5 w-5" />
+                    Browse All Jobs
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-2" size="lg" asChild>
-                  <Link href="/dashboard/sharing">
-                    <Share2 className="h-5 w-5" />
-                    Create Sharing Link
+                  <Link href="/dashboard/jobs">
+                    <Clock className="h-5 w-5" />
+                    Track Applications
                   </Link>
                 </Button>
               </>

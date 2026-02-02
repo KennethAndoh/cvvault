@@ -14,8 +14,9 @@ CVVault is a secure, professional SaaS platform for storing, organizing, and sha
 - `src/app`: Page routes and layouts.
   - `(auth)`: Login and multi-step registration (Role selection).
   - `actions`: Secure Server Actions for DB/Storage operations and audit logging.
-  - `dashboard`: User-specific workspace with role-based content (Employer/Employee).
-  - `admin`: Moderation dashboard for document verification.
+    - `dashboard`: User-specific workspace with role-based content (Employer/Employee).
+    - `dashboard/jobs`: Job board for posting (Employers) and applying (Employees).
+    - `admin`: Moderation dashboard for document verification (Opens in new tab).
   - `p/[id]`: Public professional profile pages.
   - `share/[token]`: Restricted-access sharing pages with expiration logic.
 - `src/lib`: SDK initializations (Firebase Client/Admin, Supabase).

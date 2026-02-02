@@ -12,7 +12,8 @@ import {
   Settings, 
   LogOut,
   ShieldCheck,
-  Menu
+  Menu,
+  Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -77,6 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Documents", href: "/dashboard/documents", icon: FileText },
+    { label: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
     { label: "Sharing", href: "/dashboard/sharing", icon: Share2 },
     { label: "Profile", href: "/dashboard/profile", icon: User },
   ];
@@ -130,6 +132,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {userRole === "admin" && (
             <Link 
               href="/admin" 
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium",
