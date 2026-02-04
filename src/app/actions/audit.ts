@@ -1,6 +1,6 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function logAction(userId: string, action: string, details: any = {}) {
   const { error } = await supabaseAdmin
