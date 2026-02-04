@@ -33,6 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (res.success) {
           if (res.profile) {
             setUserRole(res.profile.role);
+            setAvatarUrl(res.profile.avatar_url || null);
           }
           if (!res.profile) {
             // Profile missing, sync it
@@ -61,10 +63,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           } else if (!res.profile.onboarding_completed && isNewRegistration) {
             setShowOnboarding(true);
           }
+          }
+        });
+      }
+    }, [user]);
+
+  // Refetch avatar when navigating (in case it was updated on profile page)
+  useEffect(() => {
+    if (user && pathname !== "/dashboard/profile") {
+      getProfile(user.uid).then(res => {
+        if (res.success && res.profile) {
+          setAvatarUrl(res.profile.avatar_url || null);
         }
       });
     }
-  }, [user]);
+  }, [pathname]);
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
@@ -188,12 +201,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </h2>
           </div>
           
-          <div className="flex items-center gap-2 md:gap-4">
-             <ModeToggle />
-             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-               {(user.displayName || user.email || "?")[0].toUpperCase()}
-             </div>
-          </div>
+            <div className="flex items-center gap-2 md:gap-4">
+               <ModeToggle />
+               {avatarUrl ? (
+                 <img 
+                   src={avatarUrl} 
+                   alt="Avatar" 
+                   className="h-8 w-8 rounded-full object-cover"
+                 />
+               ) : (
+                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                   {(user.displayName || user.email || "?")[0].toUpperCase()}
+                 </div>
+               )}
+            </div>
         </header>
         <div className="p-4 md:p-8">
           {children}
