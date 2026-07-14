@@ -1,16 +1,17 @@
 import React from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, User, Globe, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import MessageButton from "@/components/MessageButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default async function PublicProfilePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   // 1. Fetch Profile
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
     .select("*")
     .eq("id", id)
@@ -20,12 +21,27 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
     return notFound();
   }
 
-  // 2. Fetch Public Documents (for now all docs if profile is public, or we can add a visibility flag per doc)
-  // In a real app, we'd only show docs marked as "public"
-  const { data: documents } = await supabase
+  // 2. Fetch Public Documents
+  const { data: rawDocuments } = await supabaseAdmin
     .from("documents")
     .select("*")
     .eq("user_id", id);
+
+  const publicDocs = (rawDocuments || []).filter(
+    (doc: any) => doc.metadata?.is_public === true
+  );
+
+  const documentsWithUrls = await Promise.all(
+    publicDocs.map(async (doc: any) => {
+      const { data } = await supabaseAdmin.storage
+        .from("documents")
+        .createSignedUrl(doc.storage_path, 3600); // 1 hour access
+      return {
+        ...doc,
+        url: data?.signedUrl || null,
+      };
+    })
+  );
 
   const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
 
@@ -78,8 +94,8 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
             </h2>
             
             <div className="grid gap-4">
-              {documents && documents.length > 0 ? (
-                documents.map((doc) => (
+              {documentsWithUrls && documentsWithUrls.length > 0 ? (
+                documentsWithUrls.map((doc) => (
                   <Card key={doc.id} className="hover:border-primary/50 transition-colors">
                     <CardContent className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -93,7 +109,14 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
                           </div>
                         </div>
                       </div>
-                      <Button size="sm" variant="ghost">View</Button>
+                      {doc.url ? (
+                        <Button size="sm" variant="ghost" asChild>
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer">View</a>
+                        </Button>
+    <MessageButton seekerId={id} documentId={doc.id} />
+                      ) : (
+                        <Button size="sm" variant="ghost" disabled>Unavailable</Button>
+                      )}
                     </CardContent>
                   </Card>
                 ))

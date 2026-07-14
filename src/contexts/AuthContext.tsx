@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { createSession } from "@/app/actions/settings";
 
 interface AuthContextType {
   user: User | null;
@@ -27,9 +28,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
+      
+      if (user) {
+        const deviceInfo = navigator.userAgent;
+        await createSession(user.uid, deviceInfo, "Client IP");
+      }
     });
 
     return () => unsubscribe();

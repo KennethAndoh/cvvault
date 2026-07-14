@@ -89,6 +89,17 @@ export default function ProfilePage() {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
+  if (!profile) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+        <p className="text-muted-foreground">Your profile is not set up yet.</p>
+        <Button asChild>
+          <a href="/register/role">Complete Setup</a>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>

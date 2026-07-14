@@ -1,20 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { 
-  Bell, 
-  Lock, 
-  Eye, 
-  Trash2, 
-  Smartphone,
-  ShieldAlert
-} from "lucide-react";
+import { Bell, Lock, Eye, Trash2, Smartphone, ShieldAlert, Monitor, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { updateFcmToken, toggle2FA, getActiveSessions, revokeAllSessions, getProfileSettings } from "@/app/actions/settings";
+import { messaging } from "@/lib/firebase";
+import { getToken } from "firebase/messaging";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -23,9 +19,92 @@ export default function SettingsPage() {
     push: false,
     security: true
   });
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
-    toast.success("Settings saved successfully");
+  useEffect(() => {
+    if (user) {
+      fetchSettings();
+    }
+  }, [user]);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    const [settingsRes, sessionsRes] = await Promise.all([
+      getProfileSettings(user!.uid),
+      getActiveSessions(user!.uid)
+    ]);
+
+    if (settingsRes.success && settingsRes.settings) {
+      setTwoFactorEnabled(settingsRes.settings.two_factor_enabled || false);
+      setNotifications(prev => ({ ...prev, push: !!settingsRes.settings.fcm_token }));
+    }
+
+    if (sessionsRes.success) {
+      setSessions(sessionsRes.sessions);
+    }
+    setLoading(false);
+  };
+
+  const handlePushToggle = async (checked: boolean) => {
+    if (!user) return;
+    
+    if (checked) {
+      try {
+        if (!messaging) {
+          toast.error("Push notifications are not supported in this browser.");
+          return;
+        }
+        
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          const token = await getToken(messaging, { 
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY 
+          });
+          
+          if (token) {
+            await updateFcmToken(user.uid, token);
+            setNotifications({ ...notifications, push: true });
+            toast.success("Push notifications enabled!");
+          } else {
+            toast.error("Failed to generate push token.");
+          }
+        } else {
+          toast.error("Notification permission denied.");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Error setting up push notifications. Make sure VAPID key is configured.");
+      }
+    } else {
+      await updateFcmToken(user.uid, "");
+      setNotifications({ ...notifications, push: false });
+      toast.success("Push notifications disabled.");
+    }
+  };
+
+  const handle2FAToggle = async (checked: boolean) => {
+    if (!user) return;
+    setTwoFactorEnabled(checked);
+    const res = await toggle2FA(user.uid, checked);
+    if (res.success) {
+      toast.success(checked ? "2FA Enabled" : "2FA Disabled");
+    } else {
+      setTwoFactorEnabled(!checked);
+      toast.error("Failed to update 2FA settings");
+    }
+  };
+
+  const handleRevokeSessions = async () => {
+    if (!user) return;
+    const res = await revokeAllSessions(user.uid);
+    if (res.success) {
+      toast.success("All other sessions revoked.");
+      fetchSettings();
+    } else {
+      toast.error("Failed to revoke sessions");
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -34,6 +113,8 @@ export default function SettingsPage() {
       toast.error("Account deletion is disabled for demo purposes.");
     }
   };
+
+  if (loading) return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -55,22 +136,12 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Email Notifications</Label>
-                <p className="text-xs text-muted-foreground">Receive updates about your document verifications.</p>
-              </div>
-              <Switch 
-                checked={notifications.email} 
-                onCheckedChange={(val) => setNotifications({...notifications, email: val})} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
                 <Label>Push Notifications</Label>
                 <p className="text-xs text-muted-foreground">Get instant alerts in your browser.</p>
               </div>
               <Switch 
                 checked={notifications.push} 
-                onCheckedChange={(val) => setNotifications({...notifications, push: val})} 
+                onCheckedChange={handlePushToggle} 
               />
             </div>
           </CardContent>
@@ -85,47 +156,44 @@ export default function SettingsPage() {
             </div>
             <CardDescription>Protect your account and credentials.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Two-Factor Authentication</Label>
+                <Label>Two-Factor Authentication (Email OTP)</Label>
                 <p className="text-xs text-muted-foreground">Add an extra layer of security to your account.</p>
               </div>
-              <Button variant="outline" size="sm">Enable</Button>
+              <Switch 
+                checked={twoFactorEnabled} 
+                onCheckedChange={handle2FAToggle} 
+              />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Active Sessions</Label>
-                <p className="text-xs text-muted-foreground">Manage devices currently logged into your account.</p>
-              </div>
-              <Button variant="ghost" size="sm">View All</Button>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Privacy */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" />
-              <CardTitle>Privacy</CardTitle>
-            </div>
-            <CardDescription>Control who can see your activity.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Show Profile in Search</Label>
-                <p className="text-xs text-muted-foreground">Allow recruiters to find your public profile.</p>
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between mb-4">
+                <div className="space-y-0.5">
+                  <Label>Active Sessions</Label>
+                  <p className="text-xs text-muted-foreground">Manage devices currently logged into your account.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleRevokeSessions} className="text-destructive">
+                  Revoke All Sessions
+                </Button>
               </div>
-              <Switch defaultChecked />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Share Verification Status</Label>
-                <p className="text-xs text-muted-foreground">Display if your documents are verified by CVVault.</p>
+              
+              <div className="space-y-3">
+                {sessions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No active sessions tracked yet.</p>
+                ) : (
+                  sessions.map((session) => (
+                    <div key={session.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                      <Monitor className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{session.device_info}</p>
+                        <p className="text-xs text-muted-foreground">IP: {session.ip_address} • Last Active: {new Date(session.last_active).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-              <Switch defaultChecked />
             </div>
           </CardContent>
         </Card>
@@ -152,10 +220,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-end pt-4">
-          <Button onClick={handleSave}>Save Preferences</Button>
-        </div>
       </div>
     </div>
   );

@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDocuments, createDocumentRecord, deleteDocument } from "@/app/actions/documents";
+import { getDocuments, uploadDocument, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument } from "@/app/actions/documents";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { 
   FileText, 
   Plus, 
@@ -14,7 +15,12 @@ import {
   Filter,
   MoreVertical,
   Loader2,
-  Eye
+  Eye,
+  Globe,
+  Lock,
+  CheckCircle2,
+  XCircle,
+  Clock
 } from "lucide-react";
 import { 
   Dialog, 
@@ -34,7 +40,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 import { FileUpload } from "@/components/FileUpload";
@@ -52,6 +57,40 @@ export default function DocumentsPage() {
   const [docName, setDocName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+
+  // Document inline preview states
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState("");
+  const [previewType, setPreviewType] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const handleOpenPreview = async (path: string, name: string, type?: string) => {
+    setPreviewLoading(true);
+    try {
+      const result = await getSignedUrlForDocument(path, user!.uid);
+      if (result.success && result.signedUrl) {
+        setPreviewUrl(result.signedUrl);
+        setPreviewName(name);
+        setPreviewType(type || "application/pdf");
+      } else {
+        toast.error(result.error || "Could not generate preview link");
+      }
+    } catch (error) {
+      toast.error("Failed to generate preview");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return "Unknown size";
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const dm = 1;
+    const sizes = ["Bytes", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  };
 
   useEffect(() => {
     if (user) {
@@ -76,29 +115,12 @@ export default function DocumentsPage() {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-      const filePath = `${user.uid}/${fileName}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("name", docName || file.name);
+      formData.append("category", category);
 
-      // 1. Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // 2. Create Database Record
-      const result = await createDocumentRecord({
-        userId: user.uid,
-        name: docName || file.name,
-        storagePath: filePath,
-        category,
-        metadata: {
-          size: file.size,
-          type: file.type,
-          originalName: file.name
-        }
-      });
+      const result = await uploadDocument(user.uid, formData);
 
       if (result.success) {
         toast.success("Document uploaded successfully!");
@@ -129,32 +151,52 @@ export default function DocumentsPage() {
   };
 
   const handleDownload = async (path: string, name: string) => {
-    const { data, error } = await supabase.storage
-      .from("documents")
-      .download(path);
-    
-    if (error) {
+    try {
+      const result = await getSignedUrlForDocument(path, user!.uid);
+      if (result.success && result.signedUrl) {
+        const response = await fetch(result.signedUrl);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Download started");
+      } else {
+        toast.error(result.error || "Download failed");
+      }
+    } catch (error) {
       toast.error("Download failed");
-      return;
     }
-
-    const url = URL.createObjectURL(data);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
-  const handlePreview = (path: string) => {
-    const { data } = supabase.storage
-      .from("documents")
-      .getPublicUrl(path);
-    
-    if (data.publicUrl) {
-      window.open(data.publicUrl, "_blank");
-    } else {
-      toast.error("Could not generate preview link");
+  const handlePreview = async (path: string) => {
+    try {
+      const result = await getSignedUrlForDocument(path, user!.uid);
+      if (result.success && result.signedUrl) {
+        window.open(result.signedUrl, "_blank");
+      } else {
+        toast.error(result.error || "Could not generate preview link");
+      }
+    } catch (error) {
+      toast.error("Failed to generate preview");
+    }
+  };
+
+  const handleToggleVisibility = async (id: string, currentIsPublic: boolean) => {
+    try {
+      const result = await updateDocumentVisibility(id, user!.uid, !currentIsPublic);
+      if (result.success) {
+        toast.success(`Document made ${!currentIsPublic ? "public" : "private"}`);
+        fetchDocuments();
+      } else {
+        toast.error(result.error || "Failed to update visibility");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
     }
   };
 
@@ -270,43 +312,171 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredDocuments.map((doc) => (
-            <Card key={doc.id} className="overflow-hidden group">
-              <CardHeader className="p-4 pb-2">
-                <div className="flex items-start justify-between">
-                    <div className="p-2 bg-primary/10 rounded">
-                      <FileText className="h-6 w-6 text-primary" />
-                    </div>
-                      <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(doc.storage_path)} title="Preview">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc.storage_path, doc.name)} title="Download">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(doc.id, doc.storage_path)} title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-
+            <Card key={doc.id} className="overflow-hidden border border-border bg-card shadow-xs transition-all duration-300 hover:shadow-md hover:border-primary/20 flex flex-col justify-between">
+              {/* Card visual header (Mock thumbnail representation) */}
+              <div className="relative h-32 bg-muted/40 dark:bg-muted/10 border-b border-border flex items-center justify-center group/thumbnail overflow-hidden">
+                {/* Visual document layout representation */}
+                <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/5 opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <div className="w-16 h-20 bg-card rounded-md shadow-xs border border-border p-2 flex flex-col justify-between transform transition-transform duration-300 group-hover/thumbnail:scale-105 group-hover/thumbnail:-rotate-1 relative">
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="w-4 h-1 bg-primary/20 rounded-full" />
+                    <div className="w-2 h-1 bg-muted rounded-full" />
+                  </div>
+                  <div className="flex-1 flex items-center justify-center my-1.5">
+                    <FileText className="h-8 w-8 text-primary/80" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="w-full h-1 bg-muted rounded-full" />
+                    <div className="w-4/5 h-1 bg-muted rounded-full" />
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-2">
-                <div className="font-bold truncate" title={doc.name}>{doc.name}</div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] px-2 py-0.5 bg-muted rounded-full font-medium">
-                    {doc.category}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {new Date(doc.created_at).toLocaleDateString()}
-                  </span>
+                
+                {/* Overlay actions directly on visual header */}
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center gap-2 opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300">
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="h-8 gap-1.5 shadow-xs" 
+                    onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                  >
+                    <Eye className="h-3.5 w-3.5" /> Preview
+                  </Button>
+                </div>
+
+                {/* Verification Badge */}
+                <div className="absolute top-2.5 right-2.5">
+                  {doc.metadata?.verification_status === "verified" ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 shadow-xs">
+                      <CheckCircle2 className="h-3 w-3" /> Verified
+                    </span>
+                  ) : doc.metadata?.verification_status === "rejected" ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/10 text-destructive border border-destructive/20 shadow-xs">
+                      <XCircle className="h-3 w-3" /> Rejected
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-xs">
+                      <Clock className="h-3 w-3" /> Pending
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Card main content */}
+              <CardContent className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bold text-base truncate flex-1 text-card-foreground" title={doc.name}>
+                      {doc.name}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span className="text-[10px] px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full font-semibold">
+                      {doc.category}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {formatFileSize(doc.metadata?.size)}
+                    </span>
+                    <span className="text-muted-foreground/30">•</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(doc.created_at).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric"
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mt-4 pt-3 border-t border-border">
+                  {/* Share option bar */}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
+                      {doc.metadata?.is_public ? (
+                        <>
+                          <Globe className="h-3.5 w-3.5 text-primary" />
+                          Public Profile
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          Private
+                        </>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={!!doc.metadata?.is_public}
+                        onCheckedChange={() => handleToggleVisibility(doc.id, !!doc.metadata?.is_public)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Actions buttons */}
+                  <div className="flex items-center gap-1.5 w-full pt-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 gap-1 h-8 text-xs font-semibold" 
+                      onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Preview
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => handleDownload(doc.storage_path, doc.name)}
+                      title="Download"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                      onClick={() => handleDelete(doc.id, doc.storage_path)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Lightbox / Previewer Dialog */}
+      <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-6">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold truncate">
+              <FileText className="h-5 w-5 text-primary" />
+              {previewName}
+            </DialogTitle>
+            <DialogDescription>
+              Previewing the uploaded document file.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full min-h-0 relative bg-muted rounded-lg overflow-hidden flex items-center justify-center mt-4 border">
+            {previewUrl && (
+              previewType.startsWith("image/") ? (
+                <img src={previewUrl} alt={previewName} className="max-h-full max-w-full object-contain" />
+              ) : (
+                <iframe 
+                  src={previewUrl}
+                  className="w-full h-full border-none rounded-lg"
+                  title={previewName}
+                />
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

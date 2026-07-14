@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isAdmin, getAllProfiles, getAllDocuments, updateDocumentMetadata } from "@/app/actions/admin";
+import { getSignedUrlForDocument } from "@/app/actions/documents";
 import { useRouter } from "next/navigation";
 import { 
   Table, 
@@ -32,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -40,17 +41,22 @@ export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      checkAuthAndFetch();
+    if (authLoading) return;
+
+    if (!user) {
+      router.push("/login");
+      return;
     }
-  }, [user]);
+
+    checkAuthAndFetch();
+  }, [user, authLoading, router]);
 
   const checkAuthAndFetch = async () => {
     setLoading(true);
     const isUserAdmin = await isAdmin(user!.uid);
     
     if (!isUserAdmin) {
-      toast.error("Unauthorized access");
+      toast.error(`Unauthorized access for ${user?.email || "unknown email"}`);
       router.push("/dashboard");
       return;
     }
@@ -69,7 +75,7 @@ export default function AdminPage() {
 
   const handleVerify = async (id: string, currentMetadata: any, status: 'verified' | 'rejected') => {
     const newMetadata = { ...currentMetadata, verification_status: status };
-    const result = await updateDocumentMetadata(id, newMetadata);
+    const result = await updateDocumentMetadata(id, newMetadata, user!.uid);
     
     if (result.success) {
       toast.success(`Document ${status}`);
@@ -81,7 +87,20 @@ export default function AdminPage() {
     }
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  const handleViewFile = async (path: string) => {
+    try {
+      const result = await getSignedUrlForDocument(path, user!.uid);
+      if (result.success && result.signedUrl) {
+        window.open(result.signedUrl, "_blank");
+      } else {
+        toast.error(result.error || "Failed to view document");
+      }
+    } catch (error) {
+      toast.error("Failed to generate preview URL");
+    }
+  };
+
+  if (authLoading || loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   if (!authorized) return null;
 
   return (
@@ -183,7 +202,7 @@ export default function AdminPage() {
                           <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')} className="text-destructive">
                             Reject Document
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewFile(doc.storage_path)}>
                             View Original File
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -215,6 +234,9 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between pt-2 border-t text-xs">
                   <span className="px-2 py-0.5 bg-muted rounded-full">{doc.category}</span>
                   <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleViewFile(doc.storage_path)}>
+                      View
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
                       Verify
                     </Button>

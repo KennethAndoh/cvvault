@@ -71,7 +71,7 @@ export default function SharingPage() {
 
     const result = await createSharingToken({
       userId: user!.uid,
-      documentId: selectedDoc || undefined,
+      documentId: (selectedDoc && selectedDoc !== "none") ? selectedDoc : undefined,
       expiresAt: expiry || undefined,
     });
 

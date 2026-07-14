@@ -134,7 +134,7 @@ export async function applyForJob(applicationData: {
   return { success: true, application: data };
 }
 
-export async function getJobApplications(filters: { job_id?: string; employee_id?: string }) {
+export async function getJobApplications(filters: { job_id?: string; employee_id?: string; employer_id?: string }) {
   let query = supabaseAdmin
     .from("job_applications")
     .select("*, jobs(*), profiles(*)")
@@ -146,6 +146,19 @@ export async function getJobApplications(filters: { job_id?: string; employee_id
 
   if (filters.employee_id) {
     query = query.eq("employee_id", filters.employee_id);
+  }
+
+  if (filters.employer_id) {
+    const { data: jobs } = await supabaseAdmin
+      .from("jobs")
+      .select("id")
+      .eq("employer_id", filters.employer_id);
+
+    const jobIds = jobs?.map((job) => job.id) || [];
+    if (jobIds.length === 0) {
+      return { success: true, applications: [] };
+    }
+    query = query.in("job_id", jobIds);
   }
 
   const { data, error } = await query;

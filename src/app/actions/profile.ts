@@ -1,6 +1,5 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
 import { logAction } from "./audit";
@@ -26,11 +25,11 @@ export async function getProfile(userId: string) {
 export async function updateProfile(userId: string, payload: any) {
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .upsert({
-      id: userId,
+    .update({
       ...payload,
       updated_at: new Date().toISOString(),
     })
+    .eq("id", userId)
     .select()
     .single();
 
@@ -97,7 +96,8 @@ export async function deleteSharingToken(tokenId: string, userId: string) {
   const { error } = await supabaseAdmin
     .from("access_tokens")
     .delete()
-    .eq("id", tokenId);
+    .eq("id", tokenId)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Error deleting sharing token:", error);
