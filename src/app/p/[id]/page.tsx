@@ -110,10 +110,12 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                         </div>
                       </div>
                       {doc.url ? (
-                        <Button size="sm" variant="ghost" asChild>
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">View</a>
-                        </Button>
-    <MessageButton seekerId={id} documentId={doc.id} />
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="ghost" asChild>
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer">View</a>
+                          </Button>
+                          <MessageButton seekerId={id} documentId={doc.id} />
+                        </div>
                       ) : (
                         <Button size="sm" variant="ghost" disabled>Unavailable</Button>
                       )}

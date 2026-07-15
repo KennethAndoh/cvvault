@@ -173,20 +173,34 @@ export default function AdminPage() {
                       <div className="font-medium">{doc.profiles?.full_name}</div>
                       <div className="text-xs text-muted-foreground">{doc.profiles?.email}</div>
                     </TableCell>
-                    <TableCell className="font-medium">{doc.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{doc.name}</div>
+                      {doc.metadata?.auto_verified_reason && (
+                        <div className="text-[11px] text-muted-foreground font-normal max-w-xs truncate mt-0.5" title={doc.metadata.auto_verified_reason}>
+                          {doc.metadata.auto_verified_reason}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>{doc.category}</TableCell>
                     <TableCell>
-                      {doc.metadata?.verification_status === 'verified' ? (
-                        <span className="flex items-center gap-1 text-green-500 text-xs font-bold">
-                          <CheckCircle className="h-3 w-3" /> VERIFIED
-                        </span>
-                      ) : doc.metadata?.verification_status === 'rejected' ? (
-                        <span className="flex items-center gap-1 text-destructive text-xs font-bold">
-                          <XCircle className="h-3 w-3" /> REJECTED
-                        </span>
-                      ) : (
-                        <span className="text-yellow-500 text-xs font-bold italic">PENDING</span>
-                      )}
+                      <div className="flex flex-col gap-1">
+                        {doc.metadata?.verification_status === 'verified' ? (
+                          <span className="flex items-center gap-1 text-green-500 text-xs font-bold">
+                            <CheckCircle className="h-3 w-3" /> VERIFIED
+                          </span>
+                        ) : doc.metadata?.verification_status === 'rejected' ? (
+                          <span className="flex items-center gap-1 text-destructive text-xs font-bold">
+                            <XCircle className="h-3 w-3" /> REJECTED
+                          </span>
+                        ) : (
+                          <span className="text-yellow-500 text-xs font-bold italic">PENDING</span>
+                        )}
+                        {doc.metadata?.auto_verified && (
+                          <span className="text-[9px] text-muted-foreground font-semibold bg-muted px-1.5 py-0.5 rounded-full w-fit border" title={`Confidence: ${(doc.metadata.auto_verified_confidence * 100).toFixed(0)}%`}>
+                            Auto ({doc.metadata.auto_verified_method === 'gemini-ai' ? 'AI' : 'Heuristics'})
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -218,18 +232,30 @@ export default function AdminPage() {
           <div className="md:hidden space-y-4">
             {documents.map((doc) => (
               <div key={doc.id} className="p-4 bg-card border rounded-lg space-y-3">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-2">
                   <div>
                     <div className="font-bold text-sm">{doc.name}</div>
+                    {doc.metadata?.auto_verified_reason && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5 mb-1 italic">
+                        {doc.metadata.auto_verified_reason}
+                      </div>
+                    )}
                     <div className="text-xs text-muted-foreground">{doc.profiles?.full_name}</div>
                   </div>
-                  {doc.metadata?.verification_status === 'verified' ? (
-                    <span className="text-green-500"><CheckCircle className="h-5 w-5" /></span>
-                  ) : doc.metadata?.verification_status === 'rejected' ? (
-                    <span className="text-destructive"><XCircle className="h-5 w-5" /></span>
-                  ) : (
-                    <span className="text-yellow-500 italic text-[10px] font-bold">PENDING</span>
-                  )}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {doc.metadata?.verification_status === 'verified' ? (
+                      <span className="text-green-500 flex items-center gap-0.5 text-xs font-bold"><CheckCircle className="h-4 w-4" /> VERIFIED</span>
+                    ) : doc.metadata?.verification_status === 'rejected' ? (
+                      <span className="text-destructive flex items-center gap-0.5 text-xs font-bold"><XCircle className="h-4 w-4" /> REJECTED</span>
+                    ) : (
+                      <span className="text-yellow-500 italic text-[10px] font-bold">PENDING</span>
+                    )}
+                    {doc.metadata?.auto_verified && (
+                      <span className="text-[8px] text-muted-foreground font-semibold bg-muted px-1 rounded border">
+                        Auto ({doc.metadata.auto_verified_method === 'gemini-ai' ? 'AI' : 'Heuristics'})
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t text-xs">
                   <span className="px-2 py-0.5 bg-muted rounded-full">{doc.category}</span>

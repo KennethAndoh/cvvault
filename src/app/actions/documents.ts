@@ -3,6 +3,8 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
 import { logAction } from "./audit";
+import { autoVerifyDocument } from "./auto-verify";
+
 
 export async function createDocumentRecord(payload: {
   userId: string;
@@ -82,7 +84,7 @@ export async function uploadDocument(
     return { success: false, error: uploadError.message };
   }
 
-  return createDocumentRecord({
+  const recordResult = await createDocumentRecord({
     userId,
     name: name || file.name,
     storagePath: filePath,
@@ -94,6 +96,13 @@ export async function uploadDocument(
       verification_status: "pending",
     },
   });
+
+  if (recordResult.success && recordResult.document) {
+    // Run automated verification
+    await autoVerifyDocument(recordResult.document.id, userId);
+  }
+
+  return recordResult;
 }
 
 export async function deleteDocument(id: string, storagePath: string, userId: string) {
