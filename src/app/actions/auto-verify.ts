@@ -41,6 +41,7 @@ export async function autoVerifyDocument(docId: string, userId: string) {
     let verificationReason = "";
     let confidence = 0.0;
     let method = "heuristic";
+    let autoVerifyError = "";
 
     const apiKey = process.env.GEMINI_API_KEY;
 
@@ -135,14 +136,23 @@ Return your response strictly in the following JSON format:
               } else {
                 verificationStatus = "pending";
               }
+            } else {
+              autoVerifyError = "Gemini API returned an empty or malformed candidate response.";
             }
           } else {
-            console.warn("Gemini API request failed with status:", response.status);
+            const errorText = await response.text();
+            console.warn("Gemini API request failed with status:", response.status, errorText);
+            autoVerifyError = `Gemini API request failed (${response.status}): ${errorText}`;
           }
+        } else {
+          autoVerifyError = `Unsupported document MIME type for Gemini: ${mimeType}`;
         }
       } catch (err: any) {
         console.error("Gemini auto-verification error, falling back to heuristics:", err.message);
+        autoVerifyError = `Exception during Gemini verification: ${err.message}`;
       }
+    } else {
+      autoVerifyError = "GEMINI_API_KEY environment variable is not defined.";
     }
 
     // B. Heuristic Fallback
@@ -177,7 +187,8 @@ Return your response strictly in the following JSON format:
       auto_verified_method: method,
       auto_verified_confidence: confidence,
       auto_verified_reason: verificationReason,
-      auto_verified_at: new Date().toISOString()
+      auto_verified_at: new Date().toISOString(),
+      auto_verification_error: autoVerifyError || undefined
     };
 
     const { error: updateError } = await supabaseAdmin
