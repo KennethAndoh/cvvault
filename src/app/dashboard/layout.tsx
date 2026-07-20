@@ -15,6 +15,7 @@ import {
   Menu,
   Briefcase,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Documents", href: "/dashboard/documents", icon: FileText },
   { label: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
+  { label: "Messages", href: "/dashboard/chats", icon: MessageSquare },
   { label: "Sharing", href: "/dashboard/sharing", icon: Share2 },
   { label: "Profile", href: "/dashboard/profile", icon: User },
 ];

@@ -35,9 +35,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProfile } from "@/app/actions/profile";
 import { createJob, getJobs, getJobApplications, applyForJob, deleteJob, updateJob } from "@/app/actions/jobs";
+import { getDocuments } from "@/app/actions/documents";
+import { initializeJobChat } from "@/app/actions/chat";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function JobsPage() {
   const { user } = useAuth();
@@ -47,6 +51,14 @@ export default function JobsPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPostJobOpen, setIsPostJobOpen] = useState(false);
+  
+  // Apply Modal State
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [applyingJob, setApplyingJob] = useState<any | null>(null);
+  const [selectedDocId, setSelectedDocId] = useState<string>("");
+  const [coverLetter, setCoverLetter] = useState<string>("");
+  const [applying, setApplying] = useState(false);
+  const router = useRouter();
   
   // Job Form State
   const [newJob, setNewJob] = useState({
@@ -80,6 +92,9 @@ export default function JobsPage() {
           
           const appsRes = await getJobApplications({ employee_id: user!.uid });
           if (appsRes.success) setApplications(appsRes.applications || []);
+          
+          const docsRes = await getDocuments(user!.uid);
+          if (docsRes.success) setDocuments(docsRes.documents || []);
         }
       }
     } catch (err) {
@@ -123,18 +138,43 @@ export default function JobsPage() {
     }
   };
 
-  const handleApply = async (jobId: string) => {
+  const handleApplySubmit = async () => {
+    if (!applyingJob || !selectedDocId) return;
+    setApplying(true);
+
     try {
+      const doc = documents.find(d => d.id === selectedDocId);
+      const docPath = doc?.storage_path || "";
+      const docName = doc?.name || "CV/Resume";
+
+      // 1. Submit the job application
       const res = await applyForJob({
-        job_id: jobId,
+        job_id: applyingJob.id,
         employee_id: user!.uid,
+        resume_url: docPath,
+        cover_letter: coverLetter,
       });
 
       if (res.success) {
+        // 2. Initialize chat & send application details
+        await initializeJobChat(
+          user!.uid,
+          applyingJob.employer_id,
+          selectedDocId,
+          docName,
+          coverLetter
+        );
+
         toast.success("Application Sent", {
-          description: "Your application has been submitted successfully."
+          description: "Your application was submitted and a chat has been opened with the hiring manager."
         });
+        setApplyingJob(null);
+        setSelectedDocId("");
+        setCoverLetter("");
         fetchInitialData();
+        
+        // 3. Go to chat page
+        router.push("/dashboard/chats");
       } else {
         toast.error("Error", {
           description: res.error
@@ -142,8 +182,10 @@ export default function JobsPage() {
       }
     } catch (err) {
       toast.error("Error", {
-        description: "Could not apply for job."
+        description: "Could not submit application."
       });
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -370,7 +412,11 @@ export default function JobsPage() {
                       <Button 
                         className="w-full bg-[#3482BE] hover:bg-[#2a699a]"
                         disabled={applications.some(app => app.job_id === job.id)}
-                        onClick={() => handleApply(job.id)}
+                        onClick={() => {
+                          setApplyingJob(job);
+                          setSelectedDocId("");
+                          setCoverLetter("");
+                        }}
                       >
                         {applications.some(app => app.job_id === job.id) ? "Applied" : "Apply Now"}
                       </Button>
@@ -434,6 +480,72 @@ export default function JobsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Apply for Job Dialog Modal */}
+      <Dialog open={!!applyingJob} onOpenChange={(open) => !open && setApplyingJob(null)}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Apply for {applyingJob?.title}</DialogTitle>
+            <DialogDescription>
+              Submit your CV/Resume and introduce yourself to the hiring manager at {applyingJob?.company}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="resume-select">Select Resume / CV *</Label>
+              {documents.length === 0 ? (
+                <div className="text-sm p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/25 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-500">
+                  You haven't uploaded any documents to your vault yet. Please{" "}
+                  <Link href="/dashboard/documents" className="font-bold underline text-primary">
+                    upload a CV/resume
+                  </Link>{" "}
+                  first.
+                </div>
+              ) : (
+                <Select value={selectedDocId} onValueChange={setSelectedDocId}>
+                  <SelectTrigger id="resume-select">
+                    <SelectValue placeholder="Select a document from your vault" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documents.map((doc) => (
+                      <SelectItem key={doc.id} value={doc.id}>
+                        {doc.name} ({doc.category})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="cover-letter-input">Cover Letter / Introduction Message (Optional)</Label>
+              <Textarea
+                id="cover-letter-input"
+                placeholder="Briefly state why you're a good fit for this role…"
+                className="min-h-[100px]"
+                value={coverLetter}
+                onChange={(e) => setCoverLetter(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setApplyingJob(null)}
+              disabled={applying}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#3482BE] hover:bg-[#2a699a]"
+              disabled={applying || !selectedDocId}
+              onClick={handleApplySubmit}
+            >
+              {applying ? "Submitting…" : "Submit Application"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

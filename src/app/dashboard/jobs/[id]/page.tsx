@@ -11,8 +11,12 @@ import {
   CheckCircle, 
   XCircle, 
   Clock,
-  MoreVertical
+  MoreVertical,
+  MessageSquare
 } from "lucide-react";
+import { getSignedUrlForDocument } from "@/app/actions/documents";
+import { createChat } from "@/app/actions/chat";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +38,8 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
   const [job, setJob] = useState<any>(null);
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chatting, setChatting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (user && id) {
@@ -79,6 +85,38 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
       toast.error("Error", {
         description: "Could not update status."
       });
+    }
+  };
+
+  const handleViewResume = async (resumeUrl: string, applicantId: string) => {
+    try {
+      const res = await getSignedUrlForDocument(resumeUrl, applicantId);
+      if (res.success && res.signedUrl) {
+        window.open(res.signedUrl, "_blank");
+      } else {
+        toast.error("Error", {
+          description: res.error || "Could not generate file access link."
+        });
+      }
+    } catch (err) {
+      toast.error("Error", { description: "Failed to open file." });
+    }
+  };
+
+  const handleChatWithCandidate = async (employeeId: string, fullName: string) => {
+    setChatting(true);
+    try {
+      const res = await createChat(employeeId, user!.uid);
+      if (res.success && res.chat) {
+        toast.success(`Chat opened with ${fullName}`);
+        router.push("/dashboard/chats");
+      } else {
+        toast.error("Error starting chat", { description: res.error });
+      }
+    } catch (err) {
+      toast.error("Error starting chat");
+    } finally {
+      setChatting(false);
     }
   };
 
@@ -141,6 +179,23 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
                             {app.profiles?.email}
                           </span>
                         </div>
+                        {app.resume_url && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-[#3482BE] hover:text-[#2a699a] font-semibold flex items-center gap-1 mt-1 text-xs"
+                            onClick={() => handleViewResume(app.resume_url, app.employee_id)}
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            View Attached CV/Resume
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {app.cover_letter && (
+                          <div className="mt-2 text-xs bg-muted/65 p-3 rounded-xl max-w-lg border border-border/40 text-muted-foreground italic leading-relaxed">
+                            "{app.cover_letter}"
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -182,6 +237,17 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                          </DropdownMenu>
+
+                         <Button 
+                           variant="outline"
+                           size="sm" 
+                           className="gap-2 border-primary/20 text-primary hover:bg-primary/5"
+                           disabled={chatting}
+                           onClick={() => handleChatWithCandidate(app.employee_id, app.profiles?.full_name)}
+                         >
+                           <MessageSquare className="h-4 w-4" />
+                           Chat
+                         </Button>
 
                          <Button size="sm" className="bg-[#3482BE] hover:bg-[#2a699a] gap-2" asChild>
                            <Link href={`/p/${app.employee_id}`} target="_blank">
