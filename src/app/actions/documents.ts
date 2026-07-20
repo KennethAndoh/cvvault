@@ -193,7 +193,7 @@ export async function getSignedUrlForDocument(path: string, userId: string) {
     return { success: false, error: "Document not found" };
   }
 
-  // Check if user is owner or admin
+  // Check if user is owner, admin, or employer (can view applicant docs)
   let authorized = doc.user_id === userId;
   if (!authorized) {
     const { data: profile } = await supabaseAdmin
@@ -201,7 +201,7 @@ export async function getSignedUrlForDocument(path: string, userId: string) {
       .select("role")
       .eq("id", userId)
       .single();
-    if (profile?.role === "admin") {
+    if (profile?.role === "admin" || profile?.role === "employer") {
       authorized = true;
     }
   }

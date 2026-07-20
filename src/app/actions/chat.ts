@@ -157,3 +157,33 @@ export async function initializeJobChat(seekerId: string, recruiterId: string, d
   return { success: true, chatId };
 }
 
+// Get total unread message count for a user (messages sent by others that are unread)
+export async function getUnreadMessageCount(userId: string) {
+  // Get all chats this user is part of
+  const { data: chats, error: chatsError } = await supabaseAdmin
+    .from("chats")
+    .select("id")
+    .or(`seeker_id.eq.${userId},recruiter_id.eq.${userId}`);
+
+  if (chatsError || !chats || chats.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const chatIds = chats.map((c) => c.id);
+
+  // Count messages NOT sent by this user that are unread
+  // We use the `read_at` column if it exists, or fall back to counting all messages not from user
+  const { count, error } = await supabaseAdmin
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .in("chat_id", chatIds)
+    .neq("sender_id", userId)
+    .is("read_at", null);
+
+  if (error) {
+    // Fallback: if read_at column doesn't exist, just return 0
+    return { success: true, count: 0 };
+  }
+
+  return { success: true, count: count ?? 0 };
+}

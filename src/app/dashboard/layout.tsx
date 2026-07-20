@@ -30,6 +30,8 @@ import {
 
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { getProfile } from "@/app/actions/profile";
+import { getUnreadMessageCount } from "@/app/actions/chat";
+import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 
 const navItems = [
@@ -56,6 +58,7 @@ export default function DashboardLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -88,6 +91,35 @@ export default function DashboardLayout({
       });
     }
   }, [pathname]);
+
+  // Fetch unread count and subscribe to real-time new messages
+  useEffect(() => {
+    if (!user) return;
+
+    // Clear badge immediately when user is on the chats page
+    if (pathname === "/dashboard/chats") {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchUnread = async () => {
+      const res = await getUnreadMessageCount(user.uid);
+      if (res.success) setUnreadCount(res.count);
+    };
+
+    fetchUnread();
+
+    const channel = supabase
+      .channel("layout:unread_badge")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => { fetchUnread(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, pathname]);
 
   if (loading) {
     return (
@@ -133,6 +165,7 @@ export default function DashboardLayout({
           const isActive =
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isMessages = item.href === "/dashboard/chats";
           return (
             <Link
               key={item.href}
@@ -145,16 +178,31 @@ export default function DashboardLayout({
                   : "hover:bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon
-                className={cn(
-                  "h-5 w-5 shrink-0",
-                  isActive
-                    ? "text-primary-foreground"
-                    : "text-muted-foreground group-hover:text-foreground"
+              <div className="relative shrink-0">
+                <Icon
+                  className={cn(
+                    "h-5 w-5",
+                    isActive
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground group-hover:text-foreground"
+                  )}
+                />
+                {isMessages && unreadCount > 0 && !isActive && (
+                  <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
                 )}
-              />
+              </div>
               {item.label}
-              {isActive && (
+              {isMessages && unreadCount > 0 && !isActive && (
+                <span className="ml-auto h-5 min-w-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+              {isActive && !isMessages && (
+                <ChevronRight className="h-3.5 w-3.5 ml-auto opacity-70" />
+              )}
+              {isActive && isMessages && (
                 <ChevronRight className="h-3.5 w-3.5 ml-auto opacity-70" />
               )}
             </Link>

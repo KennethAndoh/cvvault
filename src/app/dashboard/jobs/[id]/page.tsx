@@ -250,7 +250,7 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
                          </Button>
 
                          <Button size="sm" className="bg-[#3482BE] hover:bg-[#2a699a] gap-2" asChild>
-                           <Link href={`/p/${app.employee_id}`} target="_blank">
+                           <Link href={`/dashboard/candidate/${app.employee_id}`}>
                              <FileText className="h-4 w-4" />
                              View Profile
                            </Link>
