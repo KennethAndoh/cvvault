@@ -70,8 +70,13 @@ export function NotificationBubble({
   intervalMs = 4000,
   className = "",
 }: NotificationBubbleProps) {
-  const activeList = notifications !== undefined
-    ? (notifications.length > 0 ? notifications : [EMPTY_NOTIFICATION])
+  // If notifications prop is explicitly provided as an empty array, render nothing
+  if (notifications !== undefined && notifications.length === 0) {
+    return null;
+  }
+
+  const activeList = notifications !== undefined && notifications.length > 0
+    ? notifications
     : DEFAULT_NOTIFICATIONS;
 
   const [index, setIndex] = useState(0);
@@ -91,7 +96,7 @@ export function NotificationBubble({
     return () => clearInterval(timer);
   }, [autoRotate, isHovered, activeList.length, intervalMs]);
 
-  const current = activeList[index] || activeList[0] || DEFAULT_NOTIFICATIONS[0];
+  const current = activeList[index] || activeList[0];
 
   const getIcon = (type: NotificationItem["type"]) => {
     switch (type) {
