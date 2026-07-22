@@ -188,3 +188,37 @@ export async function updateApplicationStatus(applicationId: string, status: str
 
   return { success: true, application: data };
 }
+
+export async function retractApplication(applicationId: string, employeeId: string) {
+  // Verify ownership before deleting
+  const { data: app, error: fetchError } = await supabaseAdmin
+    .from("job_applications")
+    .select("id, employee_id, job_id, status")
+    .eq("id", applicationId)
+    .eq("employee_id", employeeId)
+    .single();
+
+  if (fetchError || !app) {
+    return { success: false, error: "Application not found or unauthorized." };
+  }
+
+  // Don't allow retraction of accepted applications
+  if (app.status === "accepted") {
+    return { success: false, error: "You cannot retract an application that has already been accepted." };
+  }
+
+  const { error } = await supabaseAdmin
+    .from("job_applications")
+    .delete()
+    .eq("id", applicationId)
+    .eq("employee_id", employeeId);
+
+  if (error) {
+    console.error("Error retracting application:", error);
+    return { success: false, error: error.message };
+  }
+
+  await logAction(employeeId, "application_retracted", { applicationId, jobId: app.job_id });
+
+  return { success: true };
+}

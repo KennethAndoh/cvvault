@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocuments } from "@/app/actions/documents";
 import { getSharingTokens, getProfile } from "@/app/actions/profile";
+import { getRecentAuditLogs } from "@/app/actions/audit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FileText,
@@ -25,7 +26,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getJobs, getJobApplications } from "@/app/actions/jobs";
 import { motion } from "framer-motion";
-import { NotificationBubble } from "@/components/NotificationBubble";
+import { NotificationBubble, NotificationItem } from "@/components/NotificationBubble";
+import { formatDistanceToNow } from "date-fns";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -50,6 +52,7 @@ export default function DashboardPage() {
   });
   const [recentDocs, setRecentDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -66,7 +69,7 @@ export default function DashboardPage() {
       setProfile(profileRes.profile);
     }
 
-    const [docsRes, tokensRes, jobsRes, appsRes] = await Promise.all([
+    const [docsRes, tokensRes, jobsRes, appsRes, auditRes] = await Promise.all([
       getDocuments(user!.uid),
       getSharingTokens(user!.uid),
       getJobs({ employer_id: user!.uid }),
@@ -75,6 +78,7 @@ export default function DashboardPage() {
           ? { employer_id: user!.uid }
           : { employee_id: user!.uid }
       ),
+      getRecentAuditLogs(user!.uid, 10),
     ]);
 
     if (docsRes.success) {
@@ -116,6 +120,102 @@ export default function DashboardPage() {
         ...prev,
         appCount: (appsRes.applications || []).length,
       }));
+    }
+
+    // Transform audit logs into NotificationItem[]
+    if (auditRes.success && auditRes.logs.length > 0) {
+      const mapped: NotificationItem[] = auditRes.logs
+        .map((log: any): NotificationItem | null => {
+          const timeAgo = formatDistanceToNow(new Date(log.created_at), { addSuffix: true });
+          switch (log.action) {
+            case "DOCUMENT_UPLOAD":
+              return {
+                id: log.id,
+                type: "verify",
+                title: "Document Uploaded",
+                subtitle: log.details?.name
+                  ? `"${log.details.name}" added to your vault`
+                  : "A new document was added to your vault",
+                time: timeAgo,
+                badge: "UPLOADED",
+              };
+            case "TOKEN_VIEW":
+              return {
+                id: log.id,
+                type: "view",
+                title: "Share Link Opened",
+                subtitle: log.details?.docId === "full_profile"
+                  ? "Someone viewed your shared profile"
+                  : "Someone opened your shared document",
+                time: timeAgo,
+                badge: "LIVE VIEW",
+              };
+            case "TOKEN_DOCUMENT_DOWNLOAD":
+              return {
+                id: log.id,
+                type: "share",
+                title: "Document Downloaded",
+                subtitle: "A recipient downloaded a shared document",
+                time: timeAgo,
+                badge: "ACCESSED",
+              };
+            case "SHARING_TOKEN_CREATE":
+              return {
+                id: log.id,
+                type: "share",
+                title: "Share Link Created",
+                subtitle: log.details?.docId === "full_profile"
+                  ? "New link for your full profile"
+                  : "New link for a specific document",
+                time: timeAgo,
+                badge: "SHARED",
+              };
+            case "SHARING_TOKEN_DELETE":
+              return {
+                id: log.id,
+                type: "share",
+                title: "Share Link Revoked",
+                subtitle: "A sharing link was deleted",
+                time: timeAgo,
+                badge: "REVOKED",
+              };
+            case "DOCUMENT_DELETE":
+              return {
+                id: log.id,
+                type: "verify",
+                title: "Document Removed",
+                subtitle: "A document was deleted from your vault",
+                time: timeAgo,
+                badge: "DELETED",
+              };
+            case "PROFILE_UPDATE":
+              return {
+                id: log.id,
+                type: "match",
+                title: "Profile Updated",
+                subtitle: log.details?.fields?.length
+                  ? `Fields updated: ${log.details.fields.slice(0, 2).join(", ")}`
+                  : "Your profile information was updated",
+                time: timeAgo,
+                badge: "UPDATED",
+              };
+            case "AVATAR_UPLOAD":
+              return {
+                id: log.id,
+                type: "match",
+                title: "Profile Photo Updated",
+                subtitle: "Your avatar was successfully changed",
+                time: timeAgo,
+                badge: "UPDATED",
+              };
+            default:
+              return null;
+          }
+        })
+        .filter((n): n is NotificationItem => n !== null)
+        .slice(0, 5);
+
+      setNotifications(mapped);
     }
 
     setLoading(false);
@@ -242,7 +342,12 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <NotificationBubble autoRotate intervalMs={5000} className="hidden lg:block scale-90" />
+          <NotificationBubble
+            notifications={notifications.length > 0 ? notifications : undefined}
+            autoRotate
+            intervalMs={5000}
+            className="hidden lg:block scale-90"
+          />
           {isEmployer ? (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold text-xs border border-primary/20">
               <Users className="h-3.5 w-3.5" />

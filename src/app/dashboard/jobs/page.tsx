@@ -14,7 +14,9 @@ import {
   AlertCircle,
   Building2,
   Trash2,
-  Eye
+  Eye,
+  XCircle,
+  Undo2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProfile } from "@/app/actions/profile";
-import { createJob, getJobs, getJobApplications, applyForJob, deleteJob, updateJob } from "@/app/actions/jobs";
+import { createJob, getJobs, getJobApplications, applyForJob, deleteJob, updateJob, retractApplication } from "@/app/actions/jobs";
 import { getDocuments } from "@/app/actions/documents";
 import { initializeJobChat } from "@/app/actions/chat";
 import { useRouter } from "next/navigation";
@@ -58,6 +60,7 @@ export default function JobsPage() {
   const [selectedDocId, setSelectedDocId] = useState<string>("");
   const [coverLetter, setCoverLetter] = useState<string>("");
   const [applying, setApplying] = useState(false);
+  const [retracting, setRetracting] = useState<string | null>(null);
   const router = useRouter();
   
   // Job Form State
@@ -221,6 +224,27 @@ export default function JobsPage() {
       }
     } catch (err) {
       toast.error("Error", { description: "Could not update job status." });
+    }
+  };
+
+  const handleRetractApplication = async (applicationId: string, jobTitle: string) => {
+    if (!confirm(`Are you sure you want to retract your application for "${jobTitle}"? This cannot be undone.`)) return;
+
+    setRetracting(applicationId);
+    try {
+      const res = await retractApplication(applicationId, user!.uid);
+      if (res.success) {
+        toast.success("Application Retracted", {
+          description: `Your application for "${jobTitle}" has been withdrawn.`,
+        });
+        fetchInitialData();
+      } else {
+        toast.error("Cannot Retract", { description: res.error });
+      }
+    } catch (err) {
+      toast.error("Error", { description: "Could not retract application." });
+    } finally {
+      setRetracting(null);
     }
   };
 
@@ -457,24 +481,45 @@ export default function JobsPage() {
                         <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     ) : (
-                      <Button 
-                        className={cn(
-                          "w-full bg-[#3482BE] hover:bg-[#2a699a]",
-                          job.status === "filled" && "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed"
-                        )}
-                        disabled={job.status === "filled" || applications.some(app => app.job_id === job.id)}
-                        onClick={() => {
-                          setApplyingJob(job);
-                          setSelectedDocId("");
-                          setCoverLetter("");
-                        }}
-                      >
-                        {job.status === "filled" 
-                          ? "Position Filled" 
-                          : applications.some(app => app.job_id === job.id) 
-                            ? "Applied" 
-                            : "Apply Now"}
-                      </Button>
+                      <div className="flex gap-2 w-full">
+                        <Button 
+                          className={cn(
+                            "flex-1 bg-[#3482BE] hover:bg-[#2a699a]",
+                            job.status === "filled" && "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed"
+                          )}
+                          disabled={job.status === "filled" || applications.some(app => app.job_id === job.id)}
+                          onClick={() => {
+                            setApplyingJob(job);
+                            setSelectedDocId("");
+                            setCoverLetter("");
+                          }}
+                        >
+                          {job.status === "filled" 
+                            ? "Position Filled" 
+                            : applications.some(app => app.job_id === job.id) 
+                              ? "Applied ✓" 
+                              : "Apply Now"}
+                        </Button>
+                        {/* Retract button shown only when applied and not accepted */}
+                        {(() => {
+                          const existingApp = applications.find(app => app.job_id === job.id);
+                          if (!existingApp || existingApp.status === "accepted") return null;
+                          return (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              title="Retract application"
+                              className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                              disabled={retracting === existingApp.id}
+                              onClick={() => handleRetractApplication(existingApp.id, job.title)}
+                            >
+                              {retracting === existingApp.id
+                                ? <Clock className="h-4 w-4 animate-spin" />
+                                : <Undo2 className="h-4 w-4" />}
+                            </Button>
+                          );
+                        })()}
+                      </div>
                     )}
                   </CardFooter>
                 </Card>
@@ -495,13 +540,13 @@ export default function JobsPage() {
               </Card>
             ) : (
               applications.map((app) => (
-                <Card key={app.id} className="overflow-hidden">
+                <Card key={app.id} className="overflow-hidden transition-all hover:shadow-md">
                   <div className="flex items-center p-6 gap-6">
                     <div className="hidden sm:flex h-12 w-12 rounded-full bg-primary/10 items-center justify-center text-primary flex-shrink-0">
                       <Building2 className="h-6 w-6" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold text-lg truncate">{app.jobs?.title}</h3>
                         <Badge variant={
                           app.status === "accepted" ? "default" : 
@@ -525,9 +570,29 @@ export default function JobsPage() {
                         </div>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="hidden md:flex">
-                      View Details
-                    </Button>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {app.status !== "accepted" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                          disabled={retracting === app.id}
+                          onClick={() => handleRetractApplication(app.id, app.jobs?.title || "this job")}
+                        >
+                          {retracting === app.id ? (
+                            <Clock className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Undo2 className="h-3.5 w-3.5" />
+                          )}
+                          Retract
+                        </Button>
+                      )}
+                      {app.status === "accepted" && (
+                        <span className="text-xs text-green-600 font-semibold bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20">
+                          Offer Received
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Card>
               ))
