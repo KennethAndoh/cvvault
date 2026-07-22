@@ -119,6 +119,8 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
     } finally {
       setChatting(false);
     }
+  };
+
   const handleToggleJobStatus = async () => {
     if (!job) return;
     const newStatus = job.status === "filled" ? "open" : "filled";
