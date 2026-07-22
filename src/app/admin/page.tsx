@@ -73,7 +73,7 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  const handleVerify = async (id: string, currentMetadata: any, status: 'verified' | 'rejected') => {
+  const handleVerify = async (id: string, currentMetadata: any, status: 'verified' | 'rejected' | 'pending') => {
     const newMetadata = { ...currentMetadata, verification_status: status };
     const result = await updateDocumentMetadata(id, newMetadata, user!.uid);
     

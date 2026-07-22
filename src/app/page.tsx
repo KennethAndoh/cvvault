@@ -39,7 +39,7 @@ const fadeUp = {
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] as const },
   }),
 };
 
@@ -262,7 +262,7 @@ export default function LandingPage() {
             <motion.div
               initial={{ opacity: 0, y: 60, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
               className="mt-20 relative max-w-5xl mx-auto"
             >
               <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 via-violet-500/20 to-cyan-500/20 rounded-3xl blur-xl" />
@@ -587,7 +587,7 @@ export default function LandingPage() {
                 initial={{ opacity: 0, x: 60 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
                 className="relative"
               >
                 <div className="absolute -inset-8 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-full blur-[80px]" />
@@ -658,7 +658,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
               className="relative rounded-3xl overflow-hidden p-12 text-center"
             >
               {/* Gradient background */}

@@ -34,7 +34,7 @@ const fadeUp = {
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.5, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] as const },
   }),
 };
 
@@ -56,12 +56,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      fetchDashboardData();
+      fetchDashboardData(true);
+
+      // Realtime polling every 8 seconds to fetch fresh audit activity & stats
+      const interval = setInterval(() => {
+        fetchDashboardData(false);
+      }, 8000);
+
+      return () => clearInterval(interval);
     }
   }, [user]);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     const profileRes = await getProfile(user!.uid);
     const userRole = profileRes.success ? profileRes.profile?.role : "employee";
 
@@ -126,7 +133,8 @@ export default function DashboardPage() {
     if (auditRes.success && auditRes.logs.length > 0) {
       const mapped: NotificationItem[] = auditRes.logs
         .map((log: any): NotificationItem | null => {
-          const timeAgo = formatDistanceToNow(new Date(log.created_at), { addSuffix: true });
+          const logDate = log.created_at ? new Date(log.created_at) : new Date();
+          const timeAgo = isNaN(logDate.getTime()) ? "Recently" : formatDistanceToNow(logDate, { addSuffix: true });
           switch (log.action) {
             case "DOCUMENT_UPLOAD":
               return {
@@ -207,6 +215,42 @@ export default function DashboardPage() {
                 subtitle: "Your avatar was successfully changed",
                 time: timeAgo,
                 badge: "UPDATED",
+              };
+            case "job_applied":
+              return {
+                id: log.id,
+                type: "match",
+                title: "Job Application Sent",
+                subtitle: "Application submitted to hiring team",
+                time: timeAgo,
+                badge: "APPLIED",
+              };
+            case "job_created":
+              return {
+                id: log.id,
+                type: "share",
+                title: "Job Listing Posted",
+                subtitle: log.details?.title ? `"${log.details.title}" is now active` : "New job posted",
+                time: timeAgo,
+                badge: "POSTED",
+              };
+            case "application_status_updated":
+              return {
+                id: log.id,
+                type: "verify",
+                title: "Application Status Changed",
+                subtitle: `Status updated to ${log.details?.status || "processed"}`,
+                time: timeAgo,
+                badge: "UPDATED",
+              };
+            case "application_retracted":
+              return {
+                id: log.id,
+                type: "share",
+                title: "Application Retracted",
+                subtitle: "Job application was withdrawn",
+                time: timeAgo,
+                badge: "WITHDRAWN",
               };
             default:
               return null;
@@ -343,7 +387,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           <NotificationBubble
-            notifications={notifications.length > 0 ? notifications : undefined}
+            notifications={notifications}
             autoRotate
             intervalMs={5000}
             className="hidden lg:block scale-90"

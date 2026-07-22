@@ -48,6 +48,15 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   },
 ];
 
+const EMPTY_NOTIFICATION: NotificationItem = {
+  id: "empty",
+  title: "Activity Monitor Active",
+  subtitle: "Monitoring profile views & credential checks",
+  time: "Live",
+  type: "verify",
+  badge: "ACTIVE",
+};
+
 interface NotificationBubbleProps {
   notifications?: NotificationItem[];
   autoRotate?: boolean;
@@ -56,25 +65,33 @@ interface NotificationBubbleProps {
 }
 
 export function NotificationBubble({
-  notifications = DEFAULT_NOTIFICATIONS,
+  notifications,
   autoRotate = true,
   intervalMs = 4000,
   className = "",
 }: NotificationBubbleProps) {
+  const activeList = notifications !== undefined
+    ? (notifications.length > 0 ? notifications : [EMPTY_NOTIFICATION])
+    : DEFAULT_NOTIFICATIONS;
+
   const [index, setIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    if (!autoRotate || isHovered || notifications.length <= 1) return;
+    setIndex(0);
+  }, [activeList.length]);
+
+  useEffect(() => {
+    if (!autoRotate || isHovered || activeList.length <= 1) return;
 
     const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % notifications.length);
+      setIndex((prev) => (prev + 1) % activeList.length);
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [autoRotate, isHovered, notifications.length, intervalMs]);
+  }, [autoRotate, isHovered, activeList.length, intervalMs]);
 
-  const current = notifications[index] || DEFAULT_NOTIFICATIONS[0];
+  const current = activeList[index] || activeList[0] || DEFAULT_NOTIFICATIONS[0];
 
   const getIcon = (type: NotificationItem["type"]) => {
     switch (type) {
@@ -125,7 +142,7 @@ export function NotificationBubble({
             initial={{ opacity: 0, y: 10, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.97 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] as const }}
             className="flex items-start gap-3"
           >
             {/* Icon Avatar Container */}
@@ -175,9 +192,9 @@ export function NotificationBubble({
         </AnimatePresence>
 
         {/* Indicator dots for rotation */}
-        {notifications.length > 1 && (
+        {activeList.length > 1 && (
           <div className="flex justify-center gap-1 mt-2.5 pt-1.5 border-t border-border/30">
-            {notifications.map((_, i) => (
+            {activeList.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setIndex(i)}
