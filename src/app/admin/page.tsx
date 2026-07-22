@@ -210,12 +210,24 @@ export default function AdminPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
-                            Verify Document
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')} className="text-destructive">
-                            Reject Document
-                          </DropdownMenuItem>
+                          {/* Only show Verify if NOT already verified */}
+                          {doc.metadata?.verification_status !== 'verified' && (
+                            <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
+                              Verify Document
+                            </DropdownMenuItem>
+                          )}
+                          {/* Only show Reject if NOT already rejected */}
+                          {doc.metadata?.verification_status !== 'rejected' && (
+                            <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')} className="text-destructive">
+                              Reject Document
+                            </DropdownMenuItem>
+                          )}
+                          {/* Allow re-queuing a rejected doc */}
+                          {doc.metadata?.verification_status === 'rejected' && (
+                            <DropdownMenuItem onClick={() => handleVerify(doc.id, doc.metadata, 'pending')}>
+                              Reset to Pending
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleViewFile(doc.storage_path)}>
                             View Original File
                           </DropdownMenuItem>
@@ -263,12 +275,21 @@ export default function AdminPage() {
                     <Button variant="outline" size="sm" onClick={() => handleViewFile(doc.storage_path)}>
                       View
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
-                      Verify
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-destructive border-destructive/20" onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')}>
-                      Reject
-                    </Button>
+                    {doc.metadata?.verification_status !== 'verified' && (
+                      <Button variant="outline" size="sm" onClick={() => handleVerify(doc.id, doc.metadata, 'verified')}>
+                        Verify
+                      </Button>
+                    )}
+                    {doc.metadata?.verification_status !== 'rejected' && (
+                      <Button variant="outline" size="sm" className="text-destructive border-destructive/20" onClick={() => handleVerify(doc.id, doc.metadata, 'rejected')}>
+                        Reject
+                      </Button>
+                    )}
+                    {doc.metadata?.verification_status === 'rejected' && (
+                      <Button variant="outline" size="sm" onClick={() => handleVerify(doc.id, doc.metadata, 'pending')}>
+                        Reset
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
