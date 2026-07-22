@@ -87,7 +87,7 @@ export default function JobsPage() {
           const jobsRes = await getJobs({ employer_id: user!.uid });
           if (jobsRes.success) setJobs(jobsRes.jobs || []);
         } else {
-          const jobsRes = await getJobs({ status: "open" });
+          const jobsRes = await getJobs();
           if (jobsRes.success) setJobs(jobsRes.jobs || []);
           
           const appsRes = await getJobApplications({ employee_id: user!.uid });
@@ -190,16 +190,37 @@ export default function JobsPage() {
   };
 
   const handleDeleteJob = async (jobId: string) => {
-    if (!confirm("Are you sure you want to delete this job post?")) return;
+    if (!confirm("Are you sure you want to delete this job post? This action cannot be undone.")) return;
     
     try {
       const res = await deleteJob(jobId, user!.uid);
       if (res.success) {
         toast.success("Deleted", { description: "Job post has been removed." });
         fetchInitialData();
+      } else {
+        toast.error("Error", { description: res.error });
       }
     } catch (err) {
       toast.error("Error", { description: "Could not delete job." });
+    }
+  };
+
+  const handleToggleJobStatus = async (jobId: string, currentStatus: string) => {
+    const newStatus = currentStatus === "filled" ? "open" : "filled";
+    try {
+      const res = await updateJob(jobId, user!.uid, { status: newStatus });
+      if (res.success) {
+        toast.success(newStatus === "filled" ? "Role Marked as Filled" : "Job Reopened", {
+          description: newStatus === "filled" 
+            ? "This job is now marked as filled/given out." 
+            : "This job listing is now open for applicants."
+        });
+        fetchInitialData();
+      } else {
+        toast.error("Error", { description: res.error });
+      }
+    } catch (err) {
+      toast.error("Error", { description: "Could not update job status." });
     }
   };
 
@@ -358,21 +379,48 @@ export default function JobsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job) => (
-                <Card key={job.id} className="flex flex-col hover:shadow-md transition-shadow">
+                <Card 
+                  key={job.id} 
+                  className={cn(
+                    "flex flex-col hover:shadow-md transition-all relative overflow-hidden",
+                    job.status === "filled" && "bg-muted/40 border-amber-500/30"
+                  )}
+                >
                   <CardHeader>
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge variant="secondary" className="bg-[#3482BE]/10 text-[#3482BE] hover:bg-[#3482BE]/20">
-                        {job.type}
-                      </Badge>
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="secondary" className="bg-[#3482BE]/10 text-[#3482BE] hover:bg-[#3482BE]/20">
+                          {job.type}
+                        </Badge>
+                        {job.status === "filled" ? (
+                          <Badge className="bg-amber-500/15 text-amber-600 border border-amber-500/30 dark:text-amber-400 font-bold">
+                            Role Filled
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-500/15 text-green-600 border border-green-500/30 dark:text-green-400 font-bold">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+
                       {userRole === "employer" && (
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 px-2 text-xs font-semibold"
+                            onClick={() => handleToggleJobStatus(job.id, job.status)}
+                          >
+                            {job.status === "filled" ? "Reopen" : "Mark Filled"}
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-destructive"
+                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
                             onClick={() => handleDeleteJob(job.id)}
+                            title="Delete Job"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       )}
@@ -410,15 +458,22 @@ export default function JobsPage() {
                       </Button>
                     ) : (
                       <Button 
-                        className="w-full bg-[#3482BE] hover:bg-[#2a699a]"
-                        disabled={applications.some(app => app.job_id === job.id)}
+                        className={cn(
+                          "w-full bg-[#3482BE] hover:bg-[#2a699a]",
+                          job.status === "filled" && "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed"
+                        )}
+                        disabled={job.status === "filled" || applications.some(app => app.job_id === job.id)}
                         onClick={() => {
                           setApplyingJob(job);
                           setSelectedDocId("");
                           setCoverLetter("");
                         }}
                       >
-                        {applications.some(app => app.job_id === job.id) ? "Applied" : "Apply Now"}
+                        {job.status === "filled" 
+                          ? "Position Filled" 
+                          : applications.some(app => app.job_id === job.id) 
+                            ? "Applied" 
+                            : "Apply Now"}
                       </Button>
                     )}
                   </CardFooter>

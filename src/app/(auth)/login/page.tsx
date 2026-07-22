@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ── Google colour SVG ──────────────────────────────────────────────────────
 const GoogleIcon = () => (
@@ -75,6 +76,13 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [tempUser, setTempUser] = useState<{uid: string, email: string} | null>(null);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  React.useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, authLoading, router]);
 
   const logoUrl =
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
@@ -291,66 +299,19 @@ export default function LoginPage() {
               <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
             </div>
 
-            {/* ── Social buttons ── */}
-            <div className="space-y-2">
-              {/* Google */}
-              <div className="flex flex-col gap-2 mt-4">
-                <Button
-                  id="login-google"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                >
-                  {/* You can replace with Google icon if available */}
-                  Continue with Google
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2 mt-4">
-              {/* Microsoft */}
-              <button
+            {/* ── Social button ── */}
+            <div className="mt-4">
+              <Button
+                id="login-google"
+                variant="outline"
                 type="button"
-                disabled
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-400 dark:text-gray-500 text-sm font-medium cursor-not-allowed opacity-60"
+                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold transition-all shadow-sm"
+                onClick={handleGoogleLogin}
+                disabled={googleLoading || loading}
               >
-                <svg className="h-5 w-5 shrink-0" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-                  <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
-                  <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
-                  <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
-                </svg>
-                <span className="flex-1 text-center">Continue with Microsoft</span>
-              </button>
-
-              {/* Dropbox */}
-              <button
-                type="button"
-                disabled
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-400 dark:text-gray-500 text-sm font-medium cursor-not-allowed opacity-60"
-              >
-                <svg className="h-5 w-5 shrink-0" viewBox="0 0 43 40" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12.5 0L0 8.1 8.5 15.3l12.5-7.9L12.5 0z" fill="#0061ff"/>
-                  <path d="M0 23.6l12.5 8.1 8.5-7.2-12.5-7.9L0 23.6z" fill="#0061ff"/>
-                  <path d="M21 24.5l8.5 7.2L42 23.6l-8.5-7-12.5 7.9z" fill="#0061ff"/>
-                  <path d="M42 8.1L29.5 0l-8.5 7.4 12.5 7.9L42 8.1z" fill="#0061ff"/>
-                  <path d="M21.1 25.8l-8.6 7.2-3.6-2.4v2.7l12.2 7.3 12.2-7.3v-2.7l-3.6 2.4-8.6-7.2z" fill="#0061ff"/>
-                </svg>
-                <span className="flex-1 text-center">Continue with Dropbox</span>
-              </button>
-
-              {/* OneDrive */}
-              <button
-                type="button"
-                disabled
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-400 dark:text-gray-500 text-sm font-medium cursor-not-allowed opacity-60"
-              >
-                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10.5 6.6C11.7 4.4 14.1 3 16.8 3c3.4 0 6.2 2.5 6.5 5.8.1.1.1.1.2.1 2.5.1 4.5 2.2 4.5 4.7 0 2.6-2.1 4.7-4.7 4.7H6.5C3.5 18.3 1 15.8 1 12.8c0-2.7 1.9-5 4.5-5.5.7-2.3 2.8-3.9 5.3-4.1 0 1.2.4 2.4 1 3.3" fill="#0364b8"/>
-                </svg>
-                <span className="flex-1 text-center">Continue with OneDrive</span>
-              </button>
+                <GoogleIcon />
+                <span>{googleLoading ? "Connecting with Google…" : "Continue with Google"}</span>
+              </Button>
             </div>
 
             {/* ── Footer link ── */}

@@ -14,6 +14,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Mail, Lock, Eye, EyeOff, User, Cloud, Briefcase, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ── Google colour SVG ──────────────────────────────────────────────────────
 const GoogleIcon = () => (
@@ -56,6 +58,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  React.useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, authLoading, router]);
 
   const logoUrl =
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
@@ -261,50 +270,19 @@ export default function RegisterPage() {
               <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
             </div>
 
-            {/* ── Social row ── */}
-            <div className="grid grid-cols-3 gap-2">
-              {/* Google */}
-              <button
+            {/* ── Social button ── */}
+            <div className="mt-4">
+              <Button
                 id="register-google"
+                variant="outline"
                 type="button"
+                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold transition-all shadow-sm"
                 onClick={handleGoogleRegister}
-                disabled={googleLoading}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60"
+                disabled={googleLoading || loading}
               >
                 <GoogleIcon />
-                <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">Google</span>
-              </button>
-
-              {/* Microsoft */}
-              <button
-                type="button"
-                disabled
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 opacity-60 cursor-not-allowed"
-              >
-                <svg className="h-5 w-5 shrink-0" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-                  <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
-                  <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
-                  <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
-                </svg>
-                <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">Microsoft</span>
-              </button>
-
-              {/* Dropbox */}
-              <button
-                type="button"
-                disabled
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 opacity-60 cursor-not-allowed"
-              >
-                <svg className="h-5 w-5 shrink-0" viewBox="0 0 43 40" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12.5 0L0 8.1 8.5 15.3l12.5-7.9L12.5 0z" fill="#0061ff"/>
-                  <path d="M0 23.6l12.5 8.1 8.5-7.2-12.5-7.9L0 23.6z" fill="#0061ff"/>
-                  <path d="M21 24.5l8.5 7.2L42 23.6l-8.5-7-12.5 7.9z" fill="#0061ff"/>
-                  <path d="M42 8.1L29.5 0l-8.5 7.4 12.5 7.9L42 8.1z" fill="#0061ff"/>
-                  <path d="M21.1 25.8l-8.6 7.2-3.6-2.4v2.7l12.2 7.3 12.2-7.3v-2.7l-3.6 2.4-8.6-7.2z" fill="#0061ff"/>
-                </svg>
-                <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">Dropbox</span>
-              </button>
+                <span>{googleLoading ? "Connecting with Google…" : "Continue with Google"}</span>
+              </Button>
             </div>
 
             {/* ── Footer link ── */}

@@ -12,7 +12,8 @@ import {
   XCircle, 
   Clock,
   MoreVertical,
-  MessageSquare
+  MessageSquare,
+  Trash2
 } from "lucide-react";
 import { getSignedUrlForDocument } from "@/app/actions/documents";
 import { createChat } from "@/app/actions/chat";
@@ -26,7 +27,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { getJobById, getJobApplications, updateApplicationStatus } from "@/app/actions/jobs";
+import { getJobById, getJobApplications, updateApplicationStatus, updateJob, deleteJob } from "@/app/actions/jobs";
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -118,6 +119,41 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
     } finally {
       setChatting(false);
     }
+  const handleToggleJobStatus = async () => {
+    if (!job) return;
+    const newStatus = job.status === "filled" ? "open" : "filled";
+    try {
+      const res = await updateJob(job.id, user!.uid, { status: newStatus });
+      if (res.success) {
+        toast.success(newStatus === "filled" ? "Role Marked as Filled" : "Job Reopened", {
+          description: newStatus === "filled"
+            ? "This position is now marked as filled."
+            : "This job listing is now open for applicants."
+        });
+        fetchData();
+      } else {
+        toast.error("Error", { description: res.error });
+      }
+    } catch (err) {
+      toast.error("Error", { description: "Could not update job status." });
+    }
+  };
+
+  const handleDeleteJob = async () => {
+    if (!job) return;
+    if (!confirm("Are you sure you want to delete this job post? This action cannot be undone.")) return;
+
+    try {
+      const res = await deleteJob(job.id, user!.uid);
+      if (res.success) {
+        toast.success("Job Deleted");
+        router.push("/dashboard/jobs");
+      } else {
+        toast.error("Error", { description: res.error });
+      }
+    } catch (err) {
+      toast.error("Error", { description: "Could not delete job post." });
+    }
   };
 
   if (loading) {
@@ -136,9 +172,20 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
         Back to Jobs
       </Link>
 
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border/50 pb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{job.title}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold tracking-tight">{job.title}</h1>
+            {job.status === "filled" ? (
+              <Badge className="bg-amber-500/15 text-amber-600 border border-amber-500/30 dark:text-amber-400 font-bold px-3 py-1">
+                Role Filled
+              </Badge>
+            ) : (
+              <Badge className="bg-green-500/15 text-green-600 border border-green-500/30 dark:text-green-400 font-bold px-3 py-1">
+                Active Listing
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-4 mt-2 text-muted-foreground">
             <span className="font-medium text-foreground">{job.company}</span>
             <span>•</span>
@@ -147,9 +194,30 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
             <Badge variant="outline">{job.type}</Badge>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Posted {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}</p>
-          <p className="text-lg font-bold text-primary mt-1">{applications.length} Applicants</p>
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          <div className="text-right sm:mr-4">
+            <p className="text-xs text-muted-foreground">Posted {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}</p>
+            <p className="text-lg font-bold text-primary">{applications.length} Applicants</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 font-semibold"
+              onClick={handleToggleJobStatus}
+            >
+              {job.status === "filled" ? "Reopen Job Listing" : "Mark Role as Filled"}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              onClick={handleDeleteJob}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Job
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -110,49 +110,70 @@ export async function deleteSharingToken(tokenId: string, userId: string) {
   return { success: true };
 }
 
+async function ensureAvatarsBucketExists() {
+  try {
+    const { data: bucket, error } = await supabaseAdmin.storage.getBucket("avatars");
+    if (error || !bucket) {
+      await supabaseAdmin.storage.createBucket("avatars", { public: true });
+    }
+  } catch (err) {
+    console.warn("Bucket check for avatars:", err);
+  }
+}
+
 export async function uploadAvatar(userId: string, formData: FormData) {
-  const file = formData.get("file") as File;
-  if (!file) {
-    return { success: false, error: "No file provided" };
+  try {
+    const file = formData.get("file") as File;
+    if (!file) {
+      return { success: false, error: "No file provided" };
+    }
+
+    // Basic validation
+    if (file.size > 4 * 1024 * 1024) {
+      return { success: false, error: "File too large (max 4MB)" };
+    }
+
+    await ensureAvatarsBucketExists();
+
+    const fileExt = file.name.split(".").pop() || "jpg";
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const filePath = fileName;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("avatars")
+      .upload(filePath, buffer, {
+        upsert: true,
+        contentType: file.type || "image/jpeg"
+      });
+
+    if (uploadError) {
+      console.error("Error uploading avatar:", uploadError);
+      return { success: false, error: uploadError.message };
+    }
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
+
+    const { error: updateError } = await supabaseAdmin
+      .from("profiles")
+      .update({ avatar_url: publicUrl })
+      .eq("id", userId);
+
+    if (updateError) {
+      console.error("Error updating profile avatar:", updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    await logAction(userId, "AVATAR_UPLOAD", { publicUrl });
+
+    revalidatePath("/dashboard/profile");
+    return { success: true, avatarUrl: publicUrl };
+  } catch (err: any) {
+    console.error("Exception in uploadAvatar server action:", err);
+    return { success: false, error: err?.message || "Failed to upload avatar. Please try again." };
   }
-
-  // Basic validation
-  if (file.size > 4 * 1024 * 1024) {
-    return { success: false, error: "File too large (max 4MB)" };
-  }
-
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${userId}-${Date.now()}.${fileExt}`;
-  const filePath = fileName;
-
-  const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-    .from("avatars")
-    .upload(filePath, file, {
-      upsert: true,
-      contentType: file.type
-    });
-
-  if (uploadError) {
-    console.error("Error uploading avatar:", uploadError);
-    return { success: false, error: uploadError.message };
-  }
-
-  const { data: { publicUrl } } = supabaseAdmin.storage
-    .from("avatars")
-    .getPublicUrl(filePath);
-
-  const { error: updateError } = await supabaseAdmin
-    .from("profiles")
-    .update({ avatar_url: publicUrl })
-    .eq("id", userId);
-
-  if (updateError) {
-    console.error("Error updating profile avatar:", updateError);
-    return { success: false, error: updateError.message };
-  }
-
-  await logAction(userId, "AVATAR_UPLOAD", { publicUrl });
-
-  revalidatePath("/dashboard/profile");
-  return { success: true, avatarUrl: publicUrl };
 }

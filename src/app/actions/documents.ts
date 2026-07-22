@@ -55,54 +55,80 @@ export async function getDocuments(userId: string) {
   return { success: true, documents: data };
 }
 
+async function ensureBucket(bucketName: string, isPublic = true) {
+  try {
+    const { data: bucket, error } = await supabaseAdmin.storage.getBucket(bucketName);
+    if (error || !bucket) {
+      await supabaseAdmin.storage.createBucket(bucketName, { public: isPublic });
+    }
+  } catch (err) {
+    console.warn(`Bucket check for ${bucketName}:`, err);
+  }
+}
+
 export async function uploadDocument(
   userId: string,
   formData: FormData
 ) {
-  const file = formData.get("file") as File | null;
-  const name = (formData.get("name") as string) || "";
-  const category = (formData.get("category") as string) || "Other";
+  try {
+    const file = formData.get("file") as File | null;
+    const name = (formData.get("name") as string) || "";
+    const category = (formData.get("category") as string) || "Other";
 
-  if (!file) {
-    return { success: false, error: "No file provided" };
+    if (!file) {
+      return { success: false, error: "No file provided" };
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return { success: false, error: "File too large (max 10MB)" };
+    }
+
+    await ensureBucket("documents", true);
+
+    const fileExt = file.name.split(".").pop() || "bin";
+    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("documents")
+      .upload(filePath, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("Error uploading document:", uploadError);
+      return { success: false, error: uploadError.message };
+    }
+
+    const recordResult = await createDocumentRecord({
+      userId,
+      name: name || file.name,
+      storagePath: filePath,
+      category,
+      metadata: {
+        size: file.size,
+        type: file.type || "application/octet-stream",
+        originalName: file.name,
+        verification_status: "pending",
+      },
+    });
+
+    if (recordResult.success && recordResult.document) {
+      // Run automated verification asynchronously so it doesn't block upload response
+      autoVerifyDocument(recordResult.document.id, userId).catch((err) => {
+        console.error("Background auto-verification error:", err);
+      });
+    }
+
+    return recordResult;
+  } catch (err: any) {
+    console.error("Exception in uploadDocument server action:", err);
+    return { success: false, error: err?.message || "Failed to upload document. Please try again." };
   }
-
-  if (file.size > 10 * 1024 * 1024) {
-    return { success: false, error: "File too large (max 10MB)" };
-  }
-
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-  const filePath = `${userId}/${fileName}`;
-
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from("documents")
-    .upload(filePath, file, { contentType: file.type });
-
-  if (uploadError) {
-    console.error("Error uploading document:", uploadError);
-    return { success: false, error: uploadError.message };
-  }
-
-  const recordResult = await createDocumentRecord({
-    userId,
-    name: name || file.name,
-    storagePath: filePath,
-    category,
-    metadata: {
-      size: file.size,
-      type: file.type,
-      originalName: file.name,
-      verification_status: "pending",
-    },
-  });
-
-  if (recordResult.success && recordResult.document) {
-    // Run automated verification
-    await autoVerifyDocument(recordResult.document.id, userId);
-  }
-
-  return recordResult;
 }
 
 export async function deleteDocument(id: string, storagePath: string, userId: string) {

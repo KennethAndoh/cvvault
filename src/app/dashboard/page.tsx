@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getJobs, getJobApplications } from "@/app/actions/jobs";
 import { motion } from "framer-motion";
+import { NotificationBubble } from "@/components/NotificationBubble";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -240,19 +241,22 @@ export default function DashboardPage() {
               : `Welcome back${user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""}! Here's what's happening.`}
           </p>
         </div>
-        {isEmployer ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold text-xs border border-primary/20">
-            <Users className="h-3.5 w-3.5" />
-            Verified Employer Account
-          </div>
-        ) : (
-          <Button asChild size="sm" className="rounded-full shadow-sm shadow-primary/20">
-            <Link href="/dashboard/documents">
-              <Plus className="h-4 w-4 mr-1.5" />
-              Upload Document
-            </Link>
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <NotificationBubble autoRotate intervalMs={5000} className="hidden lg:block scale-90" />
+          {isEmployer ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold text-xs border border-primary/20">
+              <Users className="h-3.5 w-3.5" />
+              Verified Employer Account
+            </div>
+          ) : (
+            <Button asChild size="sm" className="rounded-full shadow-sm shadow-primary/20">
+              <Link href="/dashboard/documents">
+                <Plus className="h-4 w-4 mr-1.5" />
+                Upload Document
+              </Link>
+            </Button>
+          )}
+        </div>
       </motion.div>
 
       {/* Stats Grid */}

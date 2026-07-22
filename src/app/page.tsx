@@ -30,6 +30,9 @@ import {
 } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { NotificationBubble } from "@/components/NotificationBubble";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -49,6 +52,14 @@ export default function LandingPage() {
   const logoUrl =
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
   const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -117,7 +128,7 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden md:flex gap-8 items-center">
-            {["Features", "Security"].map((item) => (
+            {["Features", "Pricing", "Security"].map((item) => (
               <Link
                 key={item}
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -154,13 +165,13 @@ export default function LandingPage() {
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col gap-3 mt-8">
-                  {["#features", "#security", "/login"].map((href, i) => (
+                  {["#features", "#pricing", "#security", "/login"].map((href, i) => (
                     <Link
                       key={i}
                       className="text-base font-medium py-2 px-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
                       href={href}
                     >
-                      {["Features", "Security", "Login"][i]}
+                      {["Features", "Pricing", "Security", "Login"][i]}
                     </Link>
                   ))}
                   <Button asChild className="rounded-full w-full mt-4">
@@ -238,7 +249,7 @@ export default function LandingPage() {
 
               {/* Trust indicators */}
               <motion.div variants={fadeUp} custom={4} className="flex items-center justify-center gap-6 mt-10 text-xs text-muted-foreground">
-                {["No credit card", "Free forever plan", "256-bit encrypted"].map((t, i) => (
+                {["No credit card needed", "Free during early access", "256-bit encrypted"].map((t, i) => (
                   <span key={i} className="flex items-center gap-1.5">
                     <CheckCircle className="h-3.5 w-3.5 text-green-500" />
                     {t}
@@ -400,6 +411,134 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── PRICING ── */}
+        <section id="pricing" className="w-full py-28 relative overflow-hidden border-t border-border/40">
+          <div className="container px-4 mx-auto">
+            <motion.div
+              className="text-center max-w-2xl mx-auto mb-20"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              variants={staggerContainer}
+            >
+              <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-6">
+                <Sparkles className="h-3 w-3" />
+                TRANSPARENT PRICING
+              </motion.div>
+              <motion.h2 variants={fadeUp} custom={1} className="text-4xl md:text-5xl font-black mb-5 leading-tight">
+                Free Today, <span className="gradient-text">Built for Scale</span>
+              </motion.h2>
+              <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-lg leading-relaxed">
+                CVVault is currently free during early access. As the platform matures, optional paid plans will be introduced for advanced features and corporate hiring.
+              </motion.p>
+            </motion.div>
+
+            <motion.div
+              className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              variants={staggerContainer}
+            >
+              {/* Early Access / Free Plan */}
+              <motion.div variants={fadeUp} custom={0} className="relative rounded-3xl border-2 border-primary bg-card p-8 shadow-xl flex flex-col justify-between card-premium">
+                <div className="absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md">
+                  ACTIVE PLAN
+                </div>
+                <div>
+                  <div className="text-xl font-bold mb-2">Early Access</div>
+                  <p className="text-xs text-muted-foreground mb-6">100% free for all users during current Beta.</p>
+                  <div className="flex items-baseline gap-1 mb-6">
+                    <span className="text-5xl font-black">$0</span>
+                    <span className="text-sm text-muted-foreground">/ month</span>
+                  </div>
+                  <ul className="space-y-3 text-sm mb-8">
+                    {[
+                      "Unlimited Document Vault Storage",
+                      "Smart Sharing Links with Expiration",
+                      "Automated Credential Verification",
+                      "Vanity Profile URL (cvvault.com/p/you)",
+                      "Full Activity Auditing & Access Logs",
+                    ].map((f, i) => (
+                      <li key={i} className="flex items-center gap-2.5">
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Button asChild className="w-full rounded-full h-11 font-semibold">
+                  <Link href="/register">Get Started Free</Link>
+                </Button>
+              </motion.div>
+
+              {/* Pro Plan (Coming Soon) */}
+              <motion.div variants={fadeUp} custom={1} className="relative rounded-3xl border border-border/70 bg-card/60 p-8 flex flex-col justify-between opacity-95">
+                <div className="absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-muted border border-border text-muted-foreground text-xs font-semibold">
+                  COMING SOON
+                </div>
+                <div>
+                  <div className="text-xl font-bold mb-2">Pro Professional</div>
+                  <p className="text-xs text-muted-foreground mb-6">Designed for advanced job seekers and freelancers.</p>
+                  <div className="flex items-baseline gap-1 mb-6">
+                    <span className="text-4xl font-black text-muted-foreground">$9</span>
+                    <span className="text-sm text-muted-foreground">/ month (planned)</span>
+                  </div>
+                  <ul className="space-y-3 text-sm mb-8">
+                    {[
+                      "Everything in Early Access",
+                      "Custom Domain Support",
+                      "Advanced View Analytics & Heatmaps",
+                      "Priority AI Credential Verification",
+                      "Password-Protected Shared Links",
+                    ].map((f, i) => (
+                      <li key={i} className="flex items-center gap-2.5 text-muted-foreground">
+                        <CheckCircle className="h-4 w-4 text-primary/60 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Button variant="outline" disabled className="w-full rounded-full h-11 font-semibold">
+                  Paid Tier Coming Soon
+                </Button>
+              </motion.div>
+
+              {/* Employer / Enterprise Plan (Coming Soon) */}
+              <motion.div variants={fadeUp} custom={2} className="relative rounded-3xl border border-border/70 bg-card/60 p-8 flex flex-col justify-between opacity-95">
+                <div className="absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-muted border border-border text-muted-foreground text-xs font-semibold">
+                  COMING SOON
+                </div>
+                <div>
+                  <div className="text-xl font-bold mb-2">Employer & Teams</div>
+                  <p className="text-xs text-muted-foreground mb-6">For recruiters, HR teams, and business hiring.</p>
+                  <div className="flex items-baseline gap-1 mb-6">
+                    <span className="text-4xl font-black text-muted-foreground">$29</span>
+                    <span className="text-sm text-muted-foreground">/ seat / month (planned)</span>
+                  </div>
+                  <ul className="space-y-3 text-sm mb-8">
+                    {[
+                      "Candidate Credential Search",
+                      "Bulk Verification Reports & Export",
+                      "Multi-user Team Permission Controls",
+                      "ATS & HRIS System Integration",
+                      "Dedicated Account Manager",
+                    ].map((f, i) => (
+                      <li key={i} className="flex items-center gap-2.5 text-muted-foreground">
+                        <CheckCircle className="h-4 w-4 text-primary/60 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Button variant="outline" disabled className="w-full rounded-full h-11 font-semibold">
+                  Employer Tier Coming Soon
+                </Button>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
         {/* ── SECURITY / PROFILE ── */}
         <section id="security" className="w-full py-28 bg-muted/20 overflow-hidden">
           <div className="container px-4 mx-auto">
@@ -506,17 +645,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Floating notification */}
-                <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                  className="absolute -top-4 -right-4 glass rounded-2xl px-4 py-3 shadow-lg border border-border/50"
-                >
-                  <div className="flex items-center gap-2 text-xs font-semibold">
-                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    Recruiter viewed your CV
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">2 minutes ago</div>
-                </motion.div>
+                <NotificationBubble className="absolute -top-6 -right-4 sm:-right-6" />
               </motion.div>
             </div>
           </div>
@@ -583,10 +712,15 @@ export default function LandingPage() {
             <div>
               <h4 className="font-bold text-sm mb-5 text-foreground">Platform</h4>
               <ul className="space-y-3 text-sm">
-                {["How it works", "Pricing", "Enterprise", "Changelog"].map((l) => (
-                  <li key={l}>
-                    <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      {l}
+                {[
+                  { label: "Features", href: "#features" },
+                  { label: "Pricing", href: "#pricing" },
+                  { label: "Security", href: "#security" },
+                  { label: "Enterprise", href: "#pricing" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} className="text-muted-foreground hover:text-primary transition-colors">
+                      {item.label}
                     </Link>
                   </li>
                 ))}
