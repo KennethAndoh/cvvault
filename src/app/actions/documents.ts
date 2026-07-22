@@ -309,3 +309,30 @@ export async function getSignedUrlForShareToken(token: string, documentId?: stri
 
   return { success: true, signedUrl: data.signedUrl };
 }
+
+export async function verifyApplicantDocument(documentId: string, recruiterUserId: string) {
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("role")
+    .eq("id", recruiterUserId)
+    .single();
+
+  if (!profile || (profile.role !== "employer" && profile.role !== "admin")) {
+    return { success: false, error: "Only authorized recruiters or admins can verify candidate document authenticity." };
+  }
+
+  const { data: doc, error: fetchErr } = await supabaseAdmin
+    .from("documents")
+    .select("*")
+    .eq("id", documentId)
+    .single();
+
+  if (fetchErr || !doc) {
+    return { success: false, error: "Document not found." };
+  }
+
+  const result = await autoVerifyDocument(documentId, doc.user_id);
+  await logAction(recruiterUserId, "RECRUITER_DOCUMENT_VERIFIED", { documentId, applicantId: doc.user_id });
+
+  return result;
+}

@@ -12,6 +12,17 @@ export async function createJob(jobData: {
   salary?: string;
   type?: string;
 }) {
+  // Check if user is an employer/recruiter
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("role")
+    .eq("id", jobData.employer_id)
+    .single();
+
+  if (profile?.role === "employee") {
+    return { success: false, error: "Employee accounts are not authorized to post jobs." };
+  }
+
   const { data, error } = await supabaseAdmin
     .from("jobs")
     .insert([jobData])
@@ -106,12 +117,33 @@ export async function applyForJob(applicationData: {
   resume_url?: string;
   cover_letter?: string;
 }) {
+  // Check user role: recruiters/employers cannot apply for jobs
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("role")
+    .eq("id", applicationData.employee_id)
+    .single();
+
+  if (profile?.role === "employer") {
+    return { success: false, error: "Recruiter accounts cannot apply for job listings." };
+  }
+
   // Check if already applied
   const { data: existing } = await supabaseAdmin
     .from("job_applications")
     .select("id")
     .eq("job_id", applicationData.job_id)
     .eq("employee_id", applicationData.employee_id)
+    .single();
+
+  if (existing) {
+    return { success: false, error: "You have already applied for this job." };
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("job_applications")
+    .insert([applicationData])
+    .select()
     .single();
 
   if (existing) {

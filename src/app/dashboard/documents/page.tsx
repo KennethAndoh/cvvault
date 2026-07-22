@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocuments, uploadDocument, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument } from "@/app/actions/documents";
+import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -44,8 +45,30 @@ import { toast } from "sonner";
 
 import { FileUpload } from "@/components/FileUpload";
 
+const EMPLOYEE_CATEGORIES = [
+  { value: "CV / Resume", label: "CV / Resume" },
+  { value: "Certificate", label: "Certificates" },
+  { value: "National ID", label: "National ID" },
+  { value: "Passport", label: "Passport" },
+  { value: "Recommendation Letter", label: "Recommendation Letter" },
+  { value: "Cover Letter", label: "Cover Letter" },
+  { value: "Other Supporting Document", label: "Other Supporting Document" },
+];
+
+const RECRUITER_CATEGORIES = [
+  { value: "Job Description", label: "Job Description" },
+  { value: "Employment Contract", label: "Employment Contract" },
+  { value: "Offer Letter", label: "Offer Letter" },
+  { value: "Company Policy", label: "Company Policy" },
+  { value: "NDA", label: "NDA (Non-Disclosure Agreement)" },
+  { value: "Interview Instructions", label: "Interview Instructions" },
+  { value: "Onboarding Document", label: "Onboarding Document" },
+  { value: "Other Company Document", label: "Other Company Document" },
+];
+
 export default function DocumentsPage() {
   const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string>("employee");
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -53,7 +76,7 @@ export default function DocumentsPage() {
   
   // Form state
   const [file, setFile] = useState<File | null>(null);
-  const [category, setCategory] = useState("CV");
+  const [category, setCategory] = useState("CV / Resume");
   const [docName, setDocName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -100,9 +123,19 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     setLoading(true);
-    const result = await getDocuments(user!.uid);
-    if (result.success) {
-      setDocuments(result.documents || []);
+    const [docsRes, profileRes] = await Promise.all([
+      getDocuments(user!.uid),
+      getProfile(user!.uid),
+    ]);
+
+    if (profileRes.success && profileRes.profile?.role) {
+      const role = profileRes.profile.role;
+      setUserRole(role);
+      setCategory(role === "employer" ? "Job Description" : "CV / Resume");
+    }
+
+    if (docsRes.success) {
+      setDocuments(docsRes.documents || []);
     } else {
       toast.error("Failed to fetch documents");
     }
@@ -206,31 +239,47 @@ export default function DocumentsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const categoriesList = userRole === "employer" ? RECRUITER_CATEGORIES : EMPLOYEE_CATEGORIES;
+  const isEmployer = userRole === "employer";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Documents</h1>
-          <p className="text-muted-foreground">Manage your resumes, CVs, and certificates.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {isEmployer ? "Company Documents Vault" : "Personal Documents Vault"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEmployer
+              ? "Manage company job descriptions, employment contracts, offer letters, policies, NDAs, and onboarding files."
+              : "Manage your resumes, certificates, national ID, passport, recommendation letters, and personal credentials."}
+          </p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
-              Upload Document
+              {isEmployer ? "Upload Company Document" : "Upload Personal Document"}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Upload New Document</DialogTitle>
+              <DialogTitle>
+                {isEmployer ? "Upload Company Document" : "Upload Personal Document"}
+              </DialogTitle>
+              <DialogDescription>
+                {isEmployer
+                  ? "Upload recruitment files, contracts, or policies for candidate distribution."
+                  : "Upload personal career documents and identity credentials to your secure vault."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleUpload} className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="doc-name">Document Name</Label>
                 <Input 
                   id="doc-name" 
-                  placeholder="e.g. Software Engineer CV" 
+                  placeholder={isEmployer ? "e.g. Senior Dev Job Description v2" : "e.g. Updated Resume 2026"} 
                   value={docName}
                   onChange={(e) => setDocName(e.target.value)}
                 />
@@ -242,10 +291,11 @@ export default function DocumentsPage() {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CV">CV / Resume</SelectItem>
-                    <SelectItem value="Certificate">Certificate</SelectItem>
-                    <SelectItem value="Identity">Identity</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    {categoriesList.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -289,10 +339,11 @@ export default function DocumentsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="CV">CV / Resume</SelectItem>
-            <SelectItem value="Certificate">Certificate</SelectItem>
-            <SelectItem value="Identity">Identity</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
+            {categoriesList.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

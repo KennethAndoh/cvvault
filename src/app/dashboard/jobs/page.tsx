@@ -476,10 +476,16 @@ export default function JobsPage() {
                   </CardContent>
                   <CardFooter className="pt-4 border-t">
                     {userRole === "employer" ? (
-                      <Button variant="outline" className="w-full gap-2 group" onClick={() => window.location.href = `/dashboard/jobs/${job.id}`}>
-                        View Applications
-                        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+                      job.employer_id === user!.uid ? (
+                        <Button variant="outline" className="w-full gap-2 group" onClick={() => window.location.href = `/dashboard/jobs/${job.id}`}>
+                          View Applications
+                          <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      ) : (
+                        <Button variant="outline" disabled className="w-full text-xs cursor-not-allowed opacity-60">
+                          Recruiter Account (Cannot Apply)
+                        </Button>
+                      )
                     ) : (
                       <div className="flex gap-2 w-full">
                         <Button 
