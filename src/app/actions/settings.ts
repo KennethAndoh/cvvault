@@ -16,7 +16,8 @@ export async function toggle2FA(userId: string, enabled: boolean) {
   try {
     const { error } = await supabaseAdmin
       .from("profiles")
-      .upsert({ id: userId, two_factor_enabled: enabled, updated_at: new Date().toISOString() }, { onConflict: "id" });
+      .update({ two_factor_enabled: enabled, updated_at: new Date().toISOString() })
+      .eq("id", userId);
       
     if (error) {
       console.error("toggle2FA error:", error);
