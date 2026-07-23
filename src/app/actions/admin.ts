@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
 import { sendDocumentStatusEmail } from "@/lib/email";
+import { sendDocumentStatusNotification } from "@/lib/novu";
 
 export async function isAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -90,7 +91,16 @@ export async function updateDocumentMetadata(id: string, metadata: any, adminUse
         .single();
 
       if (profileData && profileData.email) {
-        // Fire and forget the email sending to avoid blocking the response
+        // Trigger in-app / Novu notification workflow
+        sendDocumentStatusNotification(
+          docData.user_id,
+          profileData.email,
+          docData.name,
+          metadata.verification_status,
+          profileData.full_name
+        ).catch(err => console.error("Failed to trigger Novu document notification:", err));
+
+        // Fire and forget the fallback email sending to avoid blocking the response
         sendDocumentStatusEmail(
           profileData.email,
           docData.name,

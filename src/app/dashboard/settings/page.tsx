@@ -59,9 +59,8 @@ export default function SettingsPage() {
         
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
-          const token = await getToken(messaging, { 
-            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY 
-          });
+          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "BMWrQ375VUgCiXBdnkdpk8-GpEV-yLVrTK1hNMLIsuiNEXR448EVn4ELPvqXu1zvBGFMYW6NQIbtxVsyXhwija0";
+          const token = await getToken(messaging, { vapidKey });
           
           if (token) {
             await updateFcmToken(user.uid, token);
@@ -73,9 +72,11 @@ export default function SettingsPage() {
         } else {
           toast.error("Notification permission denied.");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        toast.error("Error setting up push notifications. Make sure VAPID key is configured.");
+        toast.error("Error setting up push notifications", {
+          description: error?.message || "Please check browser permissions and VAPID configuration."
+        });
       }
     } else {
       await updateFcmToken(user.uid, "");
@@ -107,10 +108,38 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    const confirmed = confirm("Are you sure you want to delete your account? This action is permanent and all your documents will be deleted.");
-    if (confirmed) {
-      toast.error("Account deletion is disabled for demo purposes.");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    const confirmed = confirm(
+      "⚠️ ARE YOU SURE?\n\nThis will permanently delete:\n• Your profile and all personal data\n• All uploaded documents\n• Job posts and applications\n• Chat history\n• Sharing links\n\nThis action CANNOT be undone."
+    );
+    if (!confirmed) return;
+
+    const doubleConfirm = confirm(
+      "FINAL CONFIRMATION\n\nType OK to permanently delete your account. There is no recovery."
+    );
+    if (!doubleConfirm) return;
+
+    setDeleting(true);
+    try {
+      const { deleteUserAccount } = await import("@/app/actions/auth");
+      const res = await deleteUserAccount(user.uid);
+      if (res.success) {
+        toast.success("Account deleted successfully. Goodbye!");
+        // Sign out from Firebase client-side
+        const { signOut } = await import("firebase/auth");
+        const { auth } = await import("@/lib/firebase");
+        await signOut(auth);
+        window.location.href = "/";
+      } else {
+        toast.error("Failed to delete account", { description: res.error });
+      }
+    } catch (err: any) {
+      toast.error("Error deleting account", { description: err.message || "An unexpected error occurred." });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -213,9 +242,13 @@ export default function SettingsPage() {
                 <Label className="text-destructive">Delete Account</Label>
                 <p className="text-xs text-destructive/70">Once deleted, you will lose access to all your data.</p>
               </div>
-              <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+              <Button variant="destructive" size="sm" onClick={handleDeleteAccount} disabled={deleting}>
+                {deleting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                {deleting ? "Deleting..." : "Delete"}
               </Button>
             </div>
           </CardContent>

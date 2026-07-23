@@ -2,6 +2,10 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { logAction } from "./audit";
+import { 
+  sendJobApplicationReceivedNotification, 
+  sendApplicationStatusUpdatedNotification 
+} from "@/lib/novu";
 
 export async function createJob(jobData: {
   employer_id: string;
@@ -146,22 +150,44 @@ export async function applyForJob(applicationData: {
     .select()
     .single();
 
-  if (existing) {
-    return { success: false, error: "You have already applied for this job." };
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from("job_applications")
-    .insert([applicationData])
-    .select()
-    .single();
-
   if (error) {
     console.error("Error applying for job:", error);
     return { success: false, error: error.message };
   }
 
   await logAction(applicationData.employee_id, "job_applied", { jobId: applicationData.job_id, applicationId: data.id });
+
+  // Trigger Novu notification to employer
+  try {
+    const { data: job } = await supabaseAdmin
+      .from("jobs")
+      .select("title, employer_id")
+      .eq("id", applicationData.job_id)
+      .single();
+
+    const { data: applicant } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", applicationData.employee_id)
+      .single();
+
+    if (job?.employer_id) {
+      const { data: employer } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", job.employer_id)
+        .single();
+
+      sendJobApplicationReceivedNotification(
+        job.employer_id,
+        employer?.email,
+        job.title || "Job Listing",
+        applicant?.full_name || "An Applicant"
+      ).catch((err) => console.error("Novu notification error:", err));
+    }
+  } catch (notifyErr) {
+    console.error("Failed to notify employer via Novu:", notifyErr);
+  }
 
   return { success: true, application: data };
 }
@@ -217,6 +243,32 @@ export async function updateApplicationStatus(applicationId: string, status: str
   }
 
   await logAction(employerId, "application_status_updated", { applicationId, status });
+
+  // Trigger Novu notification to candidate
+  try {
+    if (data?.employee_id) {
+      const { data: job } = await supabaseAdmin
+        .from("jobs")
+        .select("title")
+        .eq("id", data.job_id)
+        .single();
+
+      const { data: candidate } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", data.employee_id)
+        .single();
+
+      sendApplicationStatusUpdatedNotification(
+        data.employee_id,
+        candidate?.email,
+        job?.title || "Job Listing",
+        status
+      ).catch((err) => console.error("Novu notification error:", err));
+    }
+  } catch (notifyErr) {
+    console.error("Failed to notify applicant via Novu:", notifyErr);
+  }
 
   return { success: true, application: data };
 }

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sheet";
 
 import { OnboardingDialog } from "@/components/OnboardingDialog";
+import NotificationInbox from "@/components/NotificationInbox";
 import { getProfile } from "@/app/actions/profile";
 import { getUnreadMessageCount } from "@/app/actions/chat";
 import { supabase } from "@/lib/supabase";
@@ -329,6 +330,7 @@ export default function DashboardLayout({
 
           <div className="flex items-center gap-2">
             <ModeToggle />
+            <NotificationInbox subscriberId={user.uid} />
             <Link href="/dashboard/profile">
               {avatarUrl ? (
                 <img

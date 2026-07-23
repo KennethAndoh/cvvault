@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
+import { send2FaOtpNotification } from "@/lib/novu";
 
 export async function updateFcmToken(userId: string, token: string) {
   const { error } = await supabaseAdmin
@@ -65,13 +66,39 @@ export async function generateAndSendOtp(userId: string, email: string) {
     
   if (error) return { success: false, error: error.message };
   
-  // Send email (assuming sendDocumentStatusEmail is available or we use Resend directly here)
-  // For simplicity, we just use console.log in development or import Resend.
   console.log(`[2FA] OTP for ${email} is ${otp}`);
+
+  // Send via Novu if configured, or Resend as fallback
+  try {
+    const res = await send2FaOtpNotification(userId, email, otp);
+    if (!res.success) {
+      // Resend Fallback
+      const resendApiKey = process.env.RESEND_API_KEY;
+      if (resendApiKey && email) {
+        const { Resend } = await import("resend");
+        const resend = new Resend(resendApiKey);
+        await resend.emails.send({
+          from: "CVVault <onboarding@resend.dev>",
+          to: [email],
+          subject: "Your 2FA Verification Code - CVVault",
+          html: `
+            <div style="font-family: sans-serif; padding: 24px; max-width: 480px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+              <h2 style="color: #3482BE; text-align: center; margin-top: 0;">CVVault 2FA Verification</h2>
+              <p style="color: #475569; font-size: 14px;">Your 6-digit verification code is:</p>
+              <div style="background: #f1f5f9; padding: 16px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #0f172a; border-radius: 8px; margin: 16px 0;">
+                ${otp}
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 0;">If you did not request this code, please ignore this email.</p>
+            </div>
+          `,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Error triggering 2FA notification:", err);
+  }
   
-  // We can also use our email.ts if we update it to support generic emails, 
-  // but for this demo, returning success is fine as it simulates sending.
-  return { success: true };
+  return { success: true, otp };
 }
 
 export async function verifyOtp(userId: string, code: string) {
@@ -83,7 +110,7 @@ export async function verifyOtp(userId: string, code: string) {
     
   if (error || !data) return { success: false, error: "Failed to verify OTP." };
   
-  if (data.otp_code === code) {
+  if (data.otp_code === code.trim()) {
     // Clear OTP after successful verification
     await supabaseAdmin.from("profiles").update({ otp_code: null }).eq("id", userId);
     return { success: true };

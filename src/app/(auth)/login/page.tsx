@@ -79,10 +79,10 @@ export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
 
   React.useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !showOtpForm) {
       router.replace("/dashboard");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, showOtpForm]);
 
   const logoUrl =
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
@@ -97,9 +97,11 @@ export default function LoginPage() {
       const res = await getProfileSettings(credential.user.uid);
       if (res.success && res.settings?.two_factor_enabled) {
         setTempUser({ uid: credential.user.uid, email: credential.user.email || "" });
-        await generateAndSendOtp(credential.user.uid, credential.user.email || "");
+        const otpRes = await generateAndSendOtp(credential.user.uid, credential.user.email || "");
         setShowOtpForm(true);
-        toast.info("Please enter the 6-digit code sent to your email (check console logs).");
+        toast.info("2FA Code Sent!", {
+          description: `Enter the 6-digit verification code sent to ${credential.user.email}`
+        });
       } else {
         const redirect = await getPostAuthRedirect(credential.user.uid);
         toast.success("Logged in successfully!");
