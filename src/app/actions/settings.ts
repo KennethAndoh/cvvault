@@ -20,6 +20,12 @@ export async function toggle2FA(userId: string, enabled: boolean) {
       
     if (error) {
       console.error("toggle2FA error:", error);
+      if (error.message?.includes("two_factor_enabled") || error.code === "PGRST204") {
+        return { 
+          success: false, 
+          error: "Database column 'two_factor_enabled' missing. Please run the Supabase SQL migration." 
+        };
+      }
       return { success: false, error: error.message };
     }
     revalidatePath("/dashboard/settings");
@@ -56,12 +62,27 @@ export async function revokeAllSessions(userId: string) {
 }
 
 export async function getProfileSettings(userId: string) {
+  try {
     const { data, error } = await supabaseAdmin
-        .from("profiles")
-        .select("fcm_token, two_factor_enabled")
-        .eq("id", userId)
-        .single();
-    return { success: !error, settings: data, error: error?.message };
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+      
+    if (error) {
+      return { success: false, settings: { two_factor_enabled: false, fcm_token: null }, error: error.message };
+    }
+
+    return { 
+      success: true, 
+      settings: {
+        fcm_token: data?.fcm_token || null,
+        two_factor_enabled: !!data?.two_factor_enabled,
+      } 
+    };
+  } catch (err: any) {
+    return { success: false, settings: { two_factor_enabled: false, fcm_token: null }, error: err?.message };
+  }
 }
 
 export async function generateAndSendOtp(userId: string, email: string) {
@@ -73,7 +94,12 @@ export async function generateAndSendOtp(userId: string, email: string) {
     .update({ otp_code: otp })
     .eq("id", userId);
     
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    if (error.message?.includes("otp_code")) {
+      return { success: false, error: "Database column 'otp_code' missing in Supabase profiles table." };
+    }
+    return { success: false, error: error.message };
+  }
   
   console.log(`[2FA] OTP for ${email} is ${otp}`);
 
