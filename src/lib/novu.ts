@@ -1,11 +1,11 @@
-import { Novu } from "@novu/node";
+import { Novu } from "@novu/api";
 
 const novuSecretKey = process.env.NOVU_SECRET_KEY;
 let novuInstance: Novu | null = null;
 
 if (novuSecretKey) {
   try {
-    novuInstance = new Novu(novuSecretKey);
+    novuInstance = new Novu({ secretKey: novuSecretKey });
   } catch (err) {
     console.error("[Novu] Failed to initialize Novu client:", err);
   }
@@ -30,7 +30,8 @@ export async function triggerNovuNotification(params: NovuTriggerParams): Promis
   }
 
   try {
-    await novuInstance.trigger(params.workflowId, {
+    await novuInstance.trigger({
+      name: params.workflowId,
       to: {
         subscriberId: params.subscriberId,
         email: params.email,
