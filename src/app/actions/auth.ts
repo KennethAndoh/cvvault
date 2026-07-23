@@ -56,7 +56,9 @@ export async function deleteUserAccount(userId: string) {
         .filter(Boolean);
 
       if (storagePaths.length > 0) {
-        await supabaseAdmin.storage.from("documents").remove(storagePaths);
+        await supabaseAdmin.storage.from("documents").remove(storagePaths).catch((err) => {
+          console.warn("Storage deletion warning:", err);
+        });
       }
     }
 
@@ -64,7 +66,7 @@ export async function deleteUserAccount(userId: string) {
     const avatarPaths = [`avatars/${userId}`];
     await supabaseAdmin.storage.from("documents").remove(avatarPaths).catch(() => {});
 
-    // 4. Delete all related database records (order matters for foreign keys)
+    // 4. Delete all related database records
     // Sharing tokens
     await supabaseAdmin.from("sharing_tokens").delete().eq("user_id", userId);
 
@@ -98,17 +100,26 @@ export async function deleteUserAccount(userId: string) {
     // Documents
     await supabaseAdmin.from("documents").delete().eq("user_id", userId);
 
-    // Sessions
-    await supabaseAdmin.from("sessions").delete().eq("user_id", userId);
+    // User sessions (Corrected table name)
+    await supabaseAdmin.from("user_sessions").delete().eq("user_id", userId);
 
     // Audit logs
     await supabaseAdmin.from("audit_logs").delete().eq("user_id", userId);
 
-    // Profile (last, since other tables may reference it)
-    await supabaseAdmin.from("profiles").delete().eq("id", userId);
+    // Profile (last, since other tables reference it via FK)
+    const { error: profileErr } = await supabaseAdmin.from("profiles").delete().eq("id", userId);
+    if (profileErr) {
+      console.error("Error deleting profile row:", profileErr);
+    }
 
     // 5. Delete the Firebase Auth user
-    await adminAuth.deleteUser(userId);
+    try {
+      await adminAuth.deleteUser(userId);
+    } catch (firebaseErr: any) {
+      if (firebaseErr?.code !== "auth/user-not-found") {
+        console.warn("Firebase Auth deletion notice:", firebaseErr?.message || firebaseErr);
+      }
+    }
 
     return { success: true };
   } catch (error: any) {

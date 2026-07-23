@@ -11,6 +11,17 @@ import { toast } from "sonner";
 import { updateFcmToken, toggle2FA, getActiveSessions, revokeAllSessions, getProfileSettings } from "@/app/actions/settings";
 import { messaging } from "@/lib/firebase";
 import { getToken } from "firebase/messaging";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -112,22 +123,13 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = async () => {
     if (!user) return;
-    const confirmed = confirm(
-      "⚠️ ARE YOU SURE?\n\nThis will permanently delete:\n• Your profile and all personal data\n• All uploaded documents\n• Job posts and applications\n• Chat history\n• Sharing links\n\nThis action CANNOT be undone."
-    );
-    if (!confirmed) return;
-
-    const doubleConfirm = confirm(
-      "FINAL CONFIRMATION\n\nType OK to permanently delete your account. There is no recovery."
-    );
-    if (!doubleConfirm) return;
 
     setDeleting(true);
     try {
       const { deleteUserAccount } = await import("@/app/actions/auth");
       const res = await deleteUserAccount(user.uid);
       if (res.success) {
-        toast.success("Account deleted successfully. Goodbye!");
+        toast.success("Account deleted successfully.");
         // Sign out from Firebase client-side
         const { signOut } = await import("firebase/auth");
         const { auth } = await import("@/lib/firebase");
@@ -240,16 +242,47 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label className="text-destructive">Delete Account</Label>
-                <p className="text-xs text-destructive/70">Once deleted, you will lose access to all your data.</p>
+                <p className="text-xs text-destructive/70">Once deleted, all your data, documents, and credentials will be permanently removed.</p>
               </div>
-              <Button variant="destructive" size="sm" onClick={handleDeleteAccount} disabled={deleting}>
-                {deleting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
-                )}
-                {deleting ? "Deleting..." : "Delete"}
-              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={deleting}>
+                    {deleting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    {deleting ? "Deleting..." : "Delete Account"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                      <ShieldAlert className="h-5 w-5" /> Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-2 text-sm text-muted-foreground pt-2">
+                      <p>This action <strong>cannot be undone</strong>. This will permanently delete your account and remove all associated data, including:</p>
+                      <ul className="list-disc list-inside space-y-1 text-foreground/80 pt-1">
+                        <li>Your profile and account credentials</li>
+                        <li>All uploaded documents and storage files</li>
+                        <li>Your job postings and applications</li>
+                        <li>Active chat sessions and messages</li>
+                        <li>Active profile sharing links</li>
+                      </ul>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="pt-4">
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Permanently Delete Account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardContent>
         </Card>
