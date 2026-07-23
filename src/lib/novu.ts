@@ -31,7 +31,7 @@ export async function triggerNovuNotification(params: NovuTriggerParams): Promis
 
   try {
     await novuInstance.trigger({
-      name: params.workflowId,
+      workflowId: params.workflowId,
       to: {
         subscriberId: params.subscriberId,
         email: params.email,
