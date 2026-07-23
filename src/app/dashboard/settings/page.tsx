@@ -104,7 +104,9 @@ export default function SettingsPage() {
       toast.success(checked ? "2FA Enabled" : "2FA Disabled");
     } else {
       setTwoFactorEnabled(!checked);
-      toast.error("Failed to update 2FA settings");
+      toast.error("Failed to update 2FA settings", {
+        description: res.error || "Could not save setting to database."
+      });
     }
   };
 

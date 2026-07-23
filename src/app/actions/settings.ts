@@ -13,12 +13,21 @@ export async function updateFcmToken(userId: string, token: string) {
 }
 
 export async function toggle2FA(userId: string, enabled: boolean) {
-  const { error } = await supabaseAdmin
-    .from("profiles")
-    .update({ two_factor_enabled: enabled })
-    .eq("id", userId);
-  revalidatePath("/dashboard/settings");
-  return { success: !error, error: error?.message };
+  try {
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: userId, two_factor_enabled: enabled, updated_at: new Date().toISOString() }, { onConflict: "id" });
+      
+    if (error) {
+      console.error("toggle2FA error:", error);
+      return { success: false, error: error.message };
+    }
+    revalidatePath("/dashboard/settings");
+    return { success: true };
+  } catch (err: any) {
+    console.error("toggle2FA exception:", err);
+    return { success: false, error: err?.message || "Failed to update 2FA" };
+  }
 }
 
 export async function getActiveSessions(userId: string) {
