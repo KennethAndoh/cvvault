@@ -18,14 +18,25 @@ export async function getPostAuthRedirect(userId: string) {
   return { success: true, path: "/dashboard" as const };
 }
 
-export async function syncUserProfile(uid: string, email: string, fullName: string, role: string = "employee") {
+export async function syncUserProfile(uid: string, email: string, fullName: string, role?: string) {
+  // Check if profile already exists to preserve existing role (e.g. recruiter/employer)
+  const { data: existingProfile } = await supabaseAdmin
+    .from("profiles")
+    .select("role, full_name, email")
+    .eq("id", uid)
+    .single();
+
+  // Keep existing role if profile exists, unless explicitly specified otherwise
+  const finalRole = existingProfile?.role || role || "employee";
+  const finalFullName = fullName || existingProfile?.full_name || "User";
+
   const { data, error } = await supabaseAdmin
     .from("profiles")
     .upsert({
       id: uid,
-      email: email,
-      full_name: fullName,
-      role: role,
+      email: email || existingProfile?.email || "",
+      full_name: finalFullName,
+      role: finalRole,
       updated_at: new Date().toISOString(),
     })
     .select()
@@ -36,7 +47,7 @@ export async function syncUserProfile(uid: string, email: string, fullName: stri
     return { success: false, error: error.message };
   }
 
-  await logAction(uid, "USER_SYNC", { email, fullName });
+  await logAction(uid, "USER_SYNC", { email, fullName, role: finalRole });
 
   return { success: true, profile: data };
 }

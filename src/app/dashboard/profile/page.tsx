@@ -75,6 +75,7 @@ export default function ProfilePage() {
       full_name: profile.full_name,
       bio: profile.bio,
       email: profile.email || user?.email,
+      role: profile.role,
       public_profile_enabled: profile.public_profile_enabled,
     });
 
@@ -183,6 +184,46 @@ export default function ProfilePage() {
                 onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle>Account Role</CardTitle>
+                <CardDescription>Switch between Recruiter (Employer) and Job Seeker (Employee) dashboard modes.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setProfile({ ...profile, role: "employee" })}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                    (profile?.role || "employee") === "employee"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Job Seeker
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProfile({ ...profile, role: "employer" })}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                    profile?.role === "employer"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Recruiter
+                </button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Currently active: <strong className="text-foreground capitalize">{profile?.role === "employer" ? "Recruiter / Employer" : "Job Seeker / Employee"}</strong>. Saving changes will instantly update your dashboard features.
+            </p>
           </CardContent>
         </Card>
 

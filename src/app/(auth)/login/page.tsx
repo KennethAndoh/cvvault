@@ -92,7 +92,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
-      await syncUserProfile(credential.user.uid, credential.user.email ?? "", credential.user.displayName ?? "", "employee");
+      await syncUserProfile(credential.user.uid, credential.user.email ?? "", credential.user.displayName ?? "");
       
       const res = await getProfileSettings(credential.user.uid);
       if (res.success && res.settings?.two_factor_enabled) {

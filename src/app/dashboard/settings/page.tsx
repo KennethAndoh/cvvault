@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Bell, Lock, Eye, Trash2, Smartphone, ShieldAlert, Monitor, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { updateFcmToken, toggle2FA, getActiveSessions, revokeAllSessions, getProfileSettings } from "@/app/actions/settings";
+import { updateFcmToken, toggle2FA, getActiveSessions, revokeAllSessions, getProfileSettings, generateAndSendOtp, verifyOtp } from "@/app/actions/settings";
 import { messaging } from "@/lib/firebase";
 import { getToken } from "firebase/messaging";
 import {
@@ -22,6 +23,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -33,6 +42,12 @@ export default function SettingsPage() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 2FA OTP verification state
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -60,19 +75,13 @@ export default function SettingsPage() {
 
   const handlePushToggle = async (checked: boolean) => {
     if (!user) return;
-    
     if (checked) {
       try {
-        if (!messaging) {
-          toast.error("Push notifications are not supported in this browser.");
-          return;
-        }
-        
         const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "BMWrQ375VUgCiXBdnkdpk8-GpEV-yLVrTK1hNMLIsuiNEXR448EVn4ELPvqXu1zvBGFMYW6NQIbtxVsyXhwija0";
-          const token = await getToken(messaging, { vapidKey });
-          
+        if (permission === "granted" && messaging) {
+          const token = await getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+          });
           if (token) {
             await updateFcmToken(user.uid, token);
             setNotifications({ ...notifications, push: true });
@@ -98,14 +107,62 @@ export default function SettingsPage() {
 
   const handle2FAToggle = async (checked: boolean) => {
     if (!user) return;
-    setTwoFactorEnabled(checked);
-    const res = await toggle2FA(user.uid, checked);
-    if (res.success) {
-      toast.success(checked ? "2FA Enabled" : "2FA Disabled");
+
+    if (checked) {
+      // Enabling 2FA: send OTP first, then verify before enabling
+      setOtpSending(true);
+      const email = user.email || "";
+      const res = await generateAndSendOtp(user.uid, email);
+      setOtpSending(false);
+
+      if (res.success) {
+        setOtpCode("");
+        setOtpDialogOpen(true);
+        toast.info("A 6-digit verification code has been sent to your email.");
+      } else {
+        toast.error("Failed to send verification code", {
+          description: res.error || "Could not generate OTP."
+        });
+      }
     } else {
-      setTwoFactorEnabled(!checked);
-      toast.error("Failed to update 2FA settings", {
-        description: res.error || "Could not save setting to database."
+      // Disabling 2FA: no verification needed
+      const res = await toggle2FA(user.uid, false);
+      if (res.success) {
+        setTwoFactorEnabled(false);
+        toast.success("2FA Disabled");
+      } else {
+        toast.error("Failed to disable 2FA", {
+          description: res.error || "Could not save setting."
+        });
+      }
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!user || !otpCode.trim()) return;
+
+    setOtpVerifying(true);
+    const verifyRes = await verifyOtp(user.uid, otpCode.trim());
+
+    if (verifyRes.success) {
+      // OTP verified — now enable 2FA
+      const toggleRes = await toggle2FA(user.uid, true);
+      setOtpVerifying(false);
+
+      if (toggleRes.success) {
+        setTwoFactorEnabled(true);
+        setOtpDialogOpen(false);
+        setOtpCode("");
+        toast.success("2FA Enabled! Your account is now more secure.");
+      } else {
+        toast.error("OTP verified but failed to enable 2FA", {
+          description: toggleRes.error
+        });
+      }
+    } else {
+      setOtpVerifying(false);
+      toast.error("Invalid verification code", {
+        description: verifyRes.error || "Please check the code and try again."
       });
     }
   };
@@ -130,18 +187,21 @@ export default function SettingsPage() {
     try {
       const { deleteUserAccount } = await import("@/app/actions/auth");
       const res = await deleteUserAccount(user.uid);
+
       if (res.success) {
-        toast.success("Account deleted successfully.");
-        // Sign out from Firebase client-side
-        const { signOut } = await import("firebase/auth");
-        const { auth } = await import("@/lib/firebase");
-        await signOut(auth);
-        window.location.href = "/";
+        toast.success("Your account has been permanently deleted.");
+        const { getAuth, signOut } = await import("firebase/auth");
+        await signOut(getAuth());
+        window.location.href = "/login";
       } else {
-        toast.error("Failed to delete account", { description: res.error });
+        toast.error("Failed to delete account", {
+          description: res.error || "An unexpected error occurred.",
+        });
       }
     } catch (err: any) {
-      toast.error("Error deleting account", { description: err.message || "An unexpected error occurred." });
+      toast.error("Account deletion failed", {
+        description: err?.message || "Please try again later.",
+      });
     } finally {
       setDeleting(false);
     }
@@ -197,7 +257,8 @@ export default function SettingsPage() {
               </div>
               <Switch 
                 checked={twoFactorEnabled} 
-                onCheckedChange={handle2FAToggle} 
+                onCheckedChange={handle2FAToggle}
+                disabled={otpSending}
               />
             </div>
 
@@ -289,6 +350,67 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 2FA OTP Verification Dialog */}
+      <Dialog open={otpDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setOtpDialogOpen(false);
+          setOtpCode("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" />
+              Verify Your Identity
+            </DialogTitle>
+            <DialogDescription>
+              Enter the 6-digit verification code sent to <strong>{user?.email}</strong> to enable Two-Factor Authentication.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="Enter 6-digit code"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              maxLength={6}
+              className="text-center text-2xl tracking-[0.5em] font-mono"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && otpCode.length === 6) {
+                  handleVerifyOtp();
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground text-center">
+              Didn&apos;t receive the code?{" "}
+              <button
+                type="button"
+                className="text-primary hover:underline font-medium"
+                onClick={() => handle2FAToggle(true)}
+                disabled={otpSending}
+              >
+                {otpSending ? "Sending..." : "Resend code"}
+              </button>
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setOtpDialogOpen(false); setOtpCode(""); }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleVerifyOtp} 
+              disabled={otpCode.length !== 6 || otpVerifying}
+            >
+              {otpVerifying ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying...</>
+              ) : (
+                "Verify & Enable 2FA"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

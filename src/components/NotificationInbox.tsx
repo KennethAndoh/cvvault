@@ -1,6 +1,7 @@
 'use client';
 
 import { Inbox } from '@novu/nextjs';
+import { dark } from '@novu/nextjs/themes';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function NotificationInbox({ subscriberId }: { subscriberId?: string }) {
@@ -13,7 +14,7 @@ export default function NotificationInbox({ subscriberId }: { subscriberId?: str
       applicationIdentifier={applicationIdentifier}
       subscriberId={activeSubscriberId}
       appearance={{
-        baseTheme: 'dark',
+        baseTheme: dark,
         variables: {
           colorPrimary: '#3482BE',
           colorPrimaryForeground: '#ffffff',

@@ -157,10 +157,10 @@ Return your response strictly in the following JSON format:
 
     // B. Heuristic Fallback
     if (verificationStatus === "pending" && method === "heuristic") {
-      const nameParts = fullName.toLowerCase().split(/\s+/).filter(part => part.length > 2);
+      const nameParts = (fullName as string).toLowerCase().split(/\s+/).filter((part: string) => part.length > 2);
       const docNameLower = docName.toLowerCase();
       
-      const containsName = nameParts.some(part => docNameLower.includes(part));
+      const containsName = nameParts.some((part: string) => docNameLower.includes(part));
       
       if (category.toLowerCase() === "resume" || category.toLowerCase() === "cv") {
         // Resumes are lower risk, auto-verify if name matches or matches keywords
