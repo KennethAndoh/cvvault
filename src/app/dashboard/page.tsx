@@ -235,13 +235,21 @@ export default function DashboardPage() {
                 badge: "POSTED",
               };
             case "application_status_updated":
+              const isAccepted = log.details?.status === "accepted";
+              const isRejected = log.details?.status === "rejected";
               return {
                 id: log.id,
-                type: "verify",
-                title: "Application Status Changed",
-                subtitle: `Status updated to ${log.details?.status || "processed"}`,
+                type: isAccepted ? "verify" : isRejected ? "share" : "match",
+                title: isAccepted
+                  ? "Job Offer Accepted!"
+                  : isRejected
+                  ? "Application Declined"
+                  : "Application Status Changed",
+                subtitle: log.details?.jobTitle
+                  ? `Your application for "${log.details.jobTitle}" was ${log.details.status}.`
+                  : `Status updated to ${log.details?.status || "processed"}`,
                 time: timeAgo,
-                badge: "UPDATED",
+                badge: (log.details?.status || "UPDATED").toUpperCase(),
               };
             case "application_retracted":
               return {

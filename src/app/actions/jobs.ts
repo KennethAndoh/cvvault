@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { logAction } from "./audit";
+import { createChat, sendMessage } from "./chat";
 import { 
   sendJobApplicationReceivedNotification, 
   sendApplicationStatusUpdatedNotification 
@@ -15,6 +16,7 @@ export async function createJob(jobData: {
   location?: string;
   salary?: string;
   type?: string;
+  employees_needed?: number;
 }) {
   // Check if user is an employer/recruiter
   const { data: profile } = await supabaseAdmin
@@ -27,18 +29,39 @@ export async function createJob(jobData: {
     return { success: false, error: "Employee accounts are not authorized to post jobs." };
   }
 
-  const { data, error } = await supabaseAdmin
+  let data: any = null;
+  let error: any = null;
+
+  const insertRes = await supabaseAdmin
     .from("jobs")
     .insert([jobData])
     .select()
     .single();
+
+  if (insertRes.error && insertRes.error.message.includes("employees_needed")) {
+    const { employees_needed, ...fallbackJobData } = jobData as any;
+    const fallbackRes = await supabaseAdmin
+      .from("jobs")
+      .insert([fallbackJobData])
+      .select()
+      .single();
+    data = fallbackRes.data;
+    error = fallbackRes.error;
+  } else {
+    data = insertRes.data;
+    error = insertRes.error;
+  }
 
   if (error) {
     console.error("Error creating job:", error);
     return { success: false, error: error.message };
   }
 
-  await logAction(jobData.employer_id, "job_created", { jobId: data.id, title: jobData.title });
+  await logAction(jobData.employer_id, "job_created", { 
+    jobId: data.id, 
+    title: jobData.title, 
+    employeesNeeded: jobData.employees_needed || 1 
+  });
 
   return { success: true, job: data };
 }
@@ -242,11 +265,11 @@ export async function updateApplicationStatus(applicationId: string, status: str
     return { success: false, error: error.message };
   }
 
+  // Log action for employer
   await logAction(employerId, "application_status_updated", { applicationId, status });
 
-  // Trigger Novu notification to candidate
-  try {
-    if (data?.employee_id) {
+  if (data?.employee_id) {
+    try {
       const { data: job } = await supabaseAdmin
         .from("jobs")
         .select("title")
@@ -255,19 +278,84 @@ export async function updateApplicationStatus(applicationId: string, status: str
 
       const { data: candidate } = await supabaseAdmin
         .from("profiles")
-        .select("email")
+        .select("email, full_name")
         .eq("id", data.employee_id)
         .single();
 
+      const candidateName = candidate?.full_name || "User";
+      const jobTitle = job?.title || "Job Listing";
+
+      // Log action for candidate so real-time notification feed displays it immediately
+      await logAction(data.employee_id, "application_status_updated", { 
+        applicationId, 
+        status, 
+        jobTitle, 
+        employerId 
+      });
+
+      // Send automated message in chat for accepted or rejected status
+      if (status === "accepted" || status === "rejected") {
+        const chatRes = await createChat(data.employee_id, employerId, data.document_id);
+        if (chatRes.success && chatRes.chat) {
+          const autoChatMessage = status === "accepted"
+            ? `Hi ${candidateName}, your application was received successfully and has been accepted.`
+            : `Hi ${candidateName}, your application was reviewed and has been rejected.`;
+          await sendMessage(chatRes.chat.id, employerId, autoChatMessage);
+        }
+      }
+
+      // Trigger Novu notification to candidate
       sendApplicationStatusUpdatedNotification(
         data.employee_id,
         candidate?.email,
-        job?.title || "Job Listing",
+        jobTitle,
         status
       ).catch((err) => console.error("Novu notification error:", err));
+
+    } catch (notifyErr) {
+      console.error("Failed to notify applicant or send automated chat message:", notifyErr);
     }
-  } catch (notifyErr) {
-    console.error("Failed to notify applicant via Novu:", notifyErr);
+  }
+
+  // Automatic Job Closing / Re-opening based on employees_needed limit
+  if (data?.job_id) {
+    try {
+      const { data: job } = await supabaseAdmin
+        .from("jobs")
+        .select("*")
+        .eq("id", data.job_id)
+        .single();
+
+      if (job) {
+        const positionsNeeded = Number(job.employees_needed || job.positions_needed || 1);
+
+        const { count: acceptedCount } = await supabaseAdmin
+          .from("job_applications")
+          .select("id", { count: "exact", head: true })
+          .eq("job_id", data.job_id)
+          .eq("status", "accepted");
+
+        const accepted = acceptedCount || 0;
+
+        if (accepted >= positionsNeeded && job.status !== "closed" && job.status !== "filled") {
+          await supabaseAdmin
+            .from("jobs")
+            .update({ status: "closed" })
+            .eq("id", data.job_id);
+
+          await logAction(employerId, "job_auto_closed", { jobId: data.job_id, accepted, positionsNeeded });
+        } else if (accepted < positionsNeeded && (job.status === "closed" || job.status === "filled")) {
+          await supabaseAdmin
+            .from("jobs")
+            .update({ status: "open" })
+            .eq("id", data.job_id);
+
+          await logAction(employerId, "job_auto_reopened", { jobId: data.job_id, accepted, positionsNeeded });
+        }
+      }
+    } catch (autoErr) {
+      console.error("Error during automatic job status check:", autoErr);
+    }
   }
 
   return { success: true, application: data };

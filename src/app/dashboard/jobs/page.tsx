@@ -16,7 +16,8 @@ import {
   Trash2,
   Eye,
   XCircle,
-  Undo2
+  Undo2,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,7 +71,8 @@ export default function JobsPage() {
     location: "",
     salary: "",
     type: "Full-time",
-    description: ""
+    description: "",
+    employees_needed: 1,
   });
 
   useEffect(() => {
@@ -127,7 +129,7 @@ export default function JobsPage() {
           description: "Your job has been successfully posted."
         });
         setIsPostJobOpen(false);
-        setNewJob({ title: "", company: "", location: "", salary: "", type: "Full-time", description: "" });
+        setNewJob({ title: "", company: "", location: "", salary: "", type: "Full-time", description: "", employees_needed: 1 });
         fetchInitialData();
       } else {
         toast.error("Error", {
@@ -330,7 +332,7 @@ export default function JobsPage() {
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="grid gap-2">
                       <Label htmlFor="location">Location</Label>
                       <Input 
@@ -347,6 +349,18 @@ export default function JobsPage() {
                         placeholder="e.g. $80k - $120k" 
                         value={newJob.salary}
                         onChange={e => setNewJob({...newJob, salary: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="employees_needed">Positions *</Label>
+                      <Input 
+                        id="employees_needed" 
+                        type="number"
+                        min={1}
+                        placeholder="1" 
+                        value={newJob.employees_needed}
+                        onChange={e => setNewJob({...newJob, employees_needed: Math.max(1, parseInt(e.target.value) || 1)})}
+                        required
                       />
                     </div>
                   </div>
@@ -467,6 +481,10 @@ export default function JobsPage() {
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <DollarSign className="h-3.5 w-3.5" />
                         {job.salary || "N/A"}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Users className="h-3.5 w-3.5 text-primary" />
+                        {job.employees_needed || job.positions_needed || 1} {(job.employees_needed || job.positions_needed || 1) === 1 ? "Position Needed" : "Positions Needed"}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Clock className="h-3.5 w-3.5" />

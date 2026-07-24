@@ -209,9 +209,9 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
         <div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-bold tracking-tight">{job.title}</h1>
-            {job.status === "filled" ? (
+            {job.status === "filled" || job.status === "closed" ? (
               <Badge className="bg-amber-500/15 text-amber-600 border border-amber-500/30 dark:text-amber-400 font-bold px-3 py-1">
-                Role Filled
+                Closed (All Slots Filled)
               </Badge>
             ) : (
               <Badge className="bg-green-500/15 text-green-600 border border-green-500/30 dark:text-green-400 font-bold px-3 py-1">
@@ -225,12 +225,18 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
             <span>{job.location}</span>
             <span>•</span>
             <Badge variant="outline">{job.type}</Badge>
+            <span>•</span>
+            <span className="text-xs text-primary font-semibold">
+              {job.employees_needed || job.positions_needed || 1} {(job.employees_needed || job.positions_needed || 1) === 1 ? "Position Needed" : "Positions Needed"}
+            </span>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
           <div className="text-right sm:mr-4">
             <p className="text-xs text-muted-foreground">Posted {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}</p>
-            <p className="text-lg font-bold text-primary">{applications.length} Applicants</p>
+            <p className="text-sm font-bold text-primary">
+              {applications.filter((a: any) => a.status === "accepted").length} / {job.employees_needed || job.positions_needed || 1} Hired ({applications.length} Applicants)
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
