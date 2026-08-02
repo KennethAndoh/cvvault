@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function JobsPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<any[]>([]);
@@ -76,31 +76,35 @@ export default function JobsPage() {
   });
 
   useEffect(() => {
+    if (profile?.role) {
+      setUserRole(profile.role);
+    }
+  }, [profile]);
+
+  useEffect(() => {
     if (user) {
       fetchInitialData();
     }
-  }, [user]);
+  }, [user, userRole]);
 
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const profileRes = await getProfile(user!.uid);
-      if (profileRes.success) {
-        setUserRole(profileRes.profile?.role || "employee");
-        
-        if (profileRes.profile?.role === "employer") {
-          const jobsRes = await getJobs({ employer_id: user!.uid });
-          if (jobsRes.success) setJobs(jobsRes.jobs || []);
-        } else {
-          const jobsRes = await getJobs();
-          if (jobsRes.success) setJobs(jobsRes.jobs || []);
-          
-          const appsRes = await getJobApplications({ employee_id: user!.uid });
-          if (appsRes.success) setApplications(appsRes.applications || []);
-          
-          const docsRes = await getDocuments(user!.uid);
-          if (docsRes.success) setDocuments(docsRes.documents || []);
-        }
+      const activeRole = userRole || profile?.role || "employee";
+
+      if (activeRole === "employer") {
+        const jobsRes = await getJobs({ employer_id: user!.uid });
+        if (jobsRes.success) setJobs(jobsRes.jobs || []);
+      } else {
+        const [jobsRes, appsRes, docsRes] = await Promise.all([
+          getJobs(),
+          getJobApplications({ employee_id: user!.uid }),
+          getDocuments(user!.uid),
+        ]);
+
+        if (jobsRes.success) setJobs(jobsRes.jobs || []);
+        if (appsRes.success) setApplications(appsRes.applications || []);
+        if (docsRes.success) setDocuments(docsRes.documents || []);
       }
     } catch (err) {
       console.error(err);

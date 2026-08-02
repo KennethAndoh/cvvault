@@ -39,8 +39,8 @@ const fadeUp = {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
+  const { user, profile: cachedProfile } = useAuth();
+  const [profile, setProfile] = useState<any>(cachedProfile);
   const [stats, setStats] = useState({
     totalDocs: 0,
     verifiedDocs: 0,
@@ -55,13 +55,19 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
+    if (cachedProfile) {
+      setProfile(cachedProfile);
+    }
+  }, [cachedProfile]);
+
+  useEffect(() => {
     if (user) {
       fetchDashboardData(true);
 
-      // Realtime polling every 8 seconds to fetch fresh audit activity & stats
+      // Lightweight background sync every 45 seconds
       const interval = setInterval(() => {
         fetchDashboardData(false);
-      }, 8000);
+      }, 45000);
 
       return () => clearInterval(interval);
     }
@@ -69,14 +75,10 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async (isInitial = false) => {
     if (isInitial) setLoading(true);
-    const profileRes = await getProfile(user!.uid);
-    const userRole = profileRes.success ? profileRes.profile?.role : "employee";
+    const userRole = profile?.role || cachedProfile?.role || "employee";
 
-    if (profileRes.success) {
-      setProfile(profileRes.profile);
-    }
-
-    const [docsRes, tokensRes, jobsRes, appsRes, auditRes] = await Promise.all([
+    const [profileRes, docsRes, tokensRes, jobsRes, appsRes, auditRes] = await Promise.all([
+      getProfile(user!.uid),
       getDocuments(user!.uid),
       getSharingTokens(user!.uid),
       getJobs({ employer_id: user!.uid }),
@@ -87,6 +89,10 @@ export default function DashboardPage() {
       ),
       getRecentAuditLogs(user!.uid, 10),
     ]);
+
+    if (profileRes.success && profileRes.profile) {
+      setProfile(profileRes.profile);
+    }
 
     if (docsRes.success) {
       const docs = docsRes.documents || [];

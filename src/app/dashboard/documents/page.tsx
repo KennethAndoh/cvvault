@@ -21,7 +21,8 @@ import {
   Lock,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  QrCode
 } from "lucide-react";
 import { 
   Dialog, 
@@ -42,6 +43,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 import { FileUpload } from "@/components/FileUpload";
 
@@ -67,7 +69,7 @@ const RECRUITER_CATEGORIES = [
 ];
 
 export default function DocumentsPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [userRole, setUserRole] = useState<string>("employee");
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +82,7 @@ export default function DocumentsPage() {
   const [docName, setDocName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [activeQrDoc, setActiveQrDoc] = useState<{ id: string; name: string; status?: string } | null>(null);
 
   // Document inline preview states
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -116,6 +119,13 @@ export default function DocumentsPage() {
   };
 
   useEffect(() => {
+    if (profile?.role) {
+      setUserRole(profile.role);
+      setCategory(profile.role === "employer" ? "Job Description" : "CV / Resume");
+    }
+  }, [profile]);
+
+  useEffect(() => {
     if (user) {
       fetchDocuments();
     }
@@ -123,16 +133,7 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     setLoading(true);
-    const [docsRes, profileRes] = await Promise.all([
-      getDocuments(user!.uid),
-      getProfile(user!.uid),
-    ]);
-
-    if (profileRes.success && profileRes.profile?.role) {
-      const role = profileRes.profile.role;
-      setUserRole(role);
-      setCategory(role === "employer" ? "Job Description" : "CV / Resume");
-    }
+    const docsRes = await getDocuments(user!.uid);
 
     if (docsRes.success) {
       setDocuments(docsRes.documents || []);
@@ -478,6 +479,15 @@ export default function DocumentsPage() {
                     <Button 
                       variant="outline" 
                       size="icon" 
+                      className="h-8 w-8 text-primary hover:bg-primary/10"
+                      onClick={() => setActiveQrDoc({ id: doc.id, name: doc.name, status: doc.metadata?.verification_status })}
+                      title="Verify QR Proof"
+                    >
+                      <QrCode className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
                       onClick={() => handleDownload(doc.storage_path, doc.name)}
                       title="Download"
@@ -499,6 +509,17 @@ export default function DocumentsPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* QR Proof Modal */}
+      {activeQrDoc && (
+        <QRCodeModal
+          isOpen={!!activeQrDoc}
+          onClose={() => setActiveQrDoc(null)}
+          documentId={activeQrDoc.id}
+          documentName={activeQrDoc.name}
+          verificationStatus={activeQrDoc.status}
+        />
       )}
 
       {/* Lightbox / Previewer Dialog */}

@@ -52,46 +52,30 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logout } = useAuth();
+  const { user, profile, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const userRole = profile?.role || "employee";
+  const avatarUrl = profile?.avatar_url || null;
+
   useEffect(() => {
-    if (user) {
+    if (user && profile) {
       const isNewRegistration =
         typeof window !== "undefined" &&
         sessionStorage.getItem("cvvault_new_registration") === "true";
 
-      getProfile(user.uid).then((res) => {
-        if (res.success) {
-          if (res.profile) {
-            setUserRole(res.profile.role);
-            setAvatarUrl(res.profile.avatar_url || null);
-            if (!res.profile.onboarding_completed && isNewRegistration) {
-              setShowOnboarding(true);
-            }
-          } else {
-            router.push("/register/role");
-          }
-        }
-      });
+      if (!profile.onboarding_completed && isNewRegistration) {
+        setShowOnboarding(true);
+      }
+    } else if (user && profile === null && !loading) {
+      // Role not selected yet
+      router.push("/register/role");
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (user && pathname !== "/dashboard/profile") {
-      getProfile(user.uid).then((res) => {
-        if (res.success && res.profile) {
-          setAvatarUrl(res.profile.avatar_url || null);
-        }
-      });
-    }
-  }, [pathname]);
+  }, [user, profile, loading, router]);
 
   // Fetch unread count and subscribe to real-time new messages
   useEffect(() => {

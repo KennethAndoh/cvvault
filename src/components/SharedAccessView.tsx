@@ -3,15 +3,17 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Download, ExternalLink, Loader2 } from "lucide-react";
+import { FileText, Download, ExternalLink, Loader2, QrCode } from "lucide-react";
 import { getSignedUrlForShareToken } from "@/app/actions/documents";
 import { toast } from "sonner";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 interface Document {
   id: string;
   name: string;
   category: string;
   created_at: string;
+  verification_status?: string;
 }
 
 interface SharedAccessViewProps {
@@ -31,6 +33,7 @@ export function SharedAccessView({
 }: SharedAccessViewProps) {
   const [loadingDocId, setLoadingDocId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<"preview" | "download" | null>(null);
+  const [activeQrDoc, setActiveQrDoc] = useState<{ id: string; name: string; status?: string } | null>(null);
 
   const handleAction = async (docId: string | undefined, type: "preview" | "download", docName: string) => {
     setLoadingDocId(docId || "single");
@@ -77,7 +80,7 @@ export function SharedAccessView({
           Category: {singleDoc.category}
         </p>
 
-        <div className="flex gap-3 mt-8 w-full">
+        <div className="flex gap-3 mt-8 w-full flex-wrap sm:flex-nowrap">
           <Button
             className="flex-1 gap-2 bg-[#3482BE] hover:bg-[#2a699a]"
             disabled={isLoader}
@@ -88,7 +91,7 @@ export function SharedAccessView({
             ) : (
               <Download className="h-4 w-4" />
             )}
-            Download Securely
+            Download
           </Button>
           <Button
             variant="outline"
@@ -103,7 +106,24 @@ export function SharedAccessView({
             )}
             Preview
           </Button>
+          <Button
+            variant="secondary"
+            className="gap-2 text-primary"
+            onClick={() => setActiveQrDoc({ id: singleDoc.id, name: singleDoc.name, status: singleDoc.verification_status })}
+          >
+            <QrCode className="h-4 w-4" /> Verify QR
+          </Button>
         </div>
+
+        {activeQrDoc && (
+          <QRCodeModal
+            isOpen={!!activeQrDoc}
+            onClose={() => setActiveQrDoc(null)}
+            documentId={activeQrDoc.id}
+            documentName={activeQrDoc.name}
+            verificationStatus={activeQrDoc.status}
+          />
+        )}
       </div>
     );
   }
@@ -140,6 +160,15 @@ export function SharedAccessView({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      onClick={() => setActiveQrDoc({ id: doc.id, name: doc.name, status: doc.verification_status })}
+                      title="Verify QR Proof"
+                    >
+                      <QrCode className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
                       disabled={isLoader}
                       onClick={() => handleAction(doc.id, "preview", doc.name)}
                       title="Preview"
@@ -170,6 +199,16 @@ export function SharedAccessView({
             );
           })}
         </div>
+      )}
+
+      {activeQrDoc && (
+        <QRCodeModal
+          isOpen={!!activeQrDoc}
+          onClose={() => setActiveQrDoc(null)}
+          documentId={activeQrDoc.id}
+          documentName={activeQrDoc.name}
+          verificationStatus={activeQrDoc.status}
+        />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, User, Globe, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MessageButton from "@/components/MessageButton";
+import { PortfolioShowcase } from "@/components/PortfolioShowcase";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -128,6 +129,13 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                 </div>
               )}
             </div>
+
+            {/* Rich Media & Portfolio Showcase */}
+            {profile.portfolio_items && profile.portfolio_items.length > 0 && (
+              <div className="pt-6">
+                <PortfolioShowcase items={profile.portfolio_items} />
+              </div>
+            )}
           </div>
         </div>
       </div>

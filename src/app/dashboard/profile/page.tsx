@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, User, Globe, Shield, Camera } from "lucide-react";
+import { Loader2, User, Globe, Shield, Camera, Sparkles, Printer, Briefcase, Code, FileText, Code2 } from "lucide-react";
+import { TailoredResumeBuilder } from "@/components/TailoredResumeBuilder";
+import { PortfolioEditor, PortfolioItem } from "@/components/PortfolioEditor";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -18,6 +20,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(false);
+  const [isPortfolioEditorOpen, setIsPortfolioEditorOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,6 +42,17 @@ export default function ProfilePage() {
       toast.error("Failed to fetch profile");
     }
     setLoading(false);
+  };
+
+  const handleSavePortfolio = async (items: PortfolioItem[]) => {
+    if (!profile) return;
+    const result = await updateProfile(user!.uid, {
+      ...profile,
+      portfolio_items: items,
+    });
+    if (result.success) {
+      setProfile(result.profile);
+    }
   };
 
   const handleAvatarClick = () => {
@@ -103,9 +118,17 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
-        <p className="text-muted-foreground">Manage your personal information and profile visibility.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
+          <p className="text-muted-foreground">Manage your personal information, credentials, and profile visibility.</p>
+        </div>
+        <Button 
+          onClick={() => setIsResumeBuilderOpen(true)}
+          className="gap-2 bg-[#3482BE] hover:bg-[#2a699a] w-full sm:w-auto shadow-sm"
+        >
+          <Sparkles className="h-4 w-4" /> Export ATS Resume
+        </Button>
       </div>
 
       <form onSubmit={handleUpdate} className="space-y-6">
@@ -231,6 +254,40 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2">
+                  <Code2 className="h-5 w-5 text-primary" /> Rich Media & Portfolio Showcase
+                </CardTitle>
+                <CardDescription>Manage GitHub repositories, Figma portfolios, and publications displayed on your public profile.</CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPortfolioEditorOpen(true)}
+              >
+                Manage Portfolio ({profile?.portfolio_items?.length || 0})
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {profile?.portfolio_items?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {profile.portfolio_items.map((item: any, i: number) => (
+                  <span key={i} className="text-xs px-2.5 py-1 bg-secondary rounded-full font-medium flex items-center gap-1.5">
+                    <span className="capitalize text-primary font-bold">{item.type}:</span> {item.title}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No portfolio artifacts added yet. Add repositories or publications to showcase your work.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
                 <CardTitle>Public Profile</CardTitle>
                 <CardDescription>Allow others to view your professional profile via a public link.</CardDescription>
               </div>
@@ -264,6 +321,25 @@ export default function ProfilePage() {
           </Button>
         </div>
       </form>
+
+      {/* Portfolio Editor Modal */}
+      <PortfolioEditor
+        isOpen={isPortfolioEditorOpen}
+        onClose={() => setIsPortfolioEditorOpen(false)}
+        items={profile?.portfolio_items || []}
+        onSave={handleSavePortfolio}
+      />
+
+      {/* Tailored ATS Resume Builder */}
+      {user && (
+        <TailoredResumeBuilder
+          isOpen={isResumeBuilderOpen}
+          onClose={() => setIsResumeBuilderOpen(false)}
+          userId={user.uid}
+          userName={profile?.full_name || user.email || "Candidate"}
+          userEmail={profile?.email || user.email || ""}
+        />
+      )}
     </div>
   );
 }
