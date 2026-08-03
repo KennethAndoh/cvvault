@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential } from "firebase/auth";
+import { Capacitor } from "@capacitor/core";
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { getPostAuthRedirect, syncUserProfile } from "@/app/actions/auth";
@@ -79,6 +81,21 @@ export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
 
   React.useEffect(() => {
+    getRedirectResult(auth).then(async (credential) => {
+      if (credential?.user) {
+        await syncUserProfile(credential.user.uid, credential.user.email ?? "", credential.user.displayName ?? "");
+        const redirect = await getPostAuthRedirect(credential.user.uid);
+        toast.success("Logged in with Google!");
+        router.push(redirect.success ? redirect.path : "/dashboard");
+      }
+    }).catch((err) => {
+      if (err.code !== "auth/missing-initial-state") {
+        console.error("Google redirect result error:", err);
+      }
+    });
+  }, [router]);
+
+  React.useEffect(() => {
     if (!authLoading && user && !showOtpForm) {
       router.replace("/dashboard");
     }
@@ -98,17 +115,19 @@ export default function LoginPage() {
       if (res.success && res.settings?.two_factor_enabled) {
         setTempUser({ uid: credential.user.uid, email: credential.user.email || "" });
         const otpRes = await generateAndSendOtp(credential.user.uid, credential.user.email || "");
-        setShowOtpForm(true);
-        toast.info("2FA Code Sent!", {
-          description: `Enter the 6-digit verification code sent to ${credential.user.email}`
-        });
+        if (otpRes.success) {
+          setShowOtpForm(true);
+          toast.info("2FA code sent to your email.");
+        } else {
+          toast.error(otpRes.error || "Failed to send 2FA OTP.");
+        }
       } else {
         const redirect = await getPostAuthRedirect(credential.user.uid);
         toast.success("Logged in successfully!");
         router.push(redirect.success ? redirect.path : "/dashboard");
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to login");
+      toast.error("An error occurred");
     } finally {
       setLoading(false);
     }
@@ -137,14 +156,27 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      const credential = await signInWithPopup(auth, provider);
-      const redirect = await getPostAuthRedirect(credential.user.uid);
-      toast.success("Logged in with Google!");
-      router.push(redirect.success ? redirect.path : "/dashboard");
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        const idToken = googleUser.authentication.idToken;
+        const credential = GoogleAuthProvider.credential(idToken);
+        const userCredential = await signInWithCredential(auth, credential);
+
+        await syncUserProfile(userCredential.user.uid, userCredential.user.email ?? "", userCredential.user.displayName ?? "");
+        const redirect = await getPostAuthRedirect(userCredential.user.uid);
+        toast.success("Logged in with Google!");
+        router.push(redirect.success ? redirect.path : "/dashboard");
+      } else {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        const credential = await signInWithPopup(auth, provider);
+        await syncUserProfile(credential.user.uid, credential.user.email ?? "", credential.user.displayName ?? "");
+        const redirect = await getPostAuthRedirect(credential.user.uid);
+        toast.success("Logged in with Google!");
+        router.push(redirect.success ? redirect.path : "/dashboard");
+      }
     } catch (error: any) {
-      if (error.code !== "auth/popup-closed-by-user") {
+      if (error.code !== "auth/popup-closed-by-user" && error.code !== "auth/cancelled-popup-request") {
         toast.error(error.message || "Google login failed");
       }
     } finally {

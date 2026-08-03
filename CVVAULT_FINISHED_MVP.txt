@@ -156,6 +156,17 @@ multi-channel notifications, and comprehensive audit logging.
 - api/candidate-profile     : REST API for candidate data lookup.
 - api/signed-url            : Secure Supabase storage signed URL generation.
 
+--------------------------------------------------------------------------------
+5. MOBILE APP & CAPACITOR ANDROID INTEGRATION
+--------------------------------------------------------------------------------
+- Framework: Capacitor v8 (@capacitor/core, @capacitor/android, @capacitor/cli)
+- Configuration: capacitor.config.json configured to wrap live deployment (https://cvvault.vercel.app)
+- App Icon & Branding: Custom icon script (scripts/fetch-logo-and-set-icons.mjs) downloads official CVVault logo from Supabase storage and populates Android launcher mipmap resources (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi).
+- Native Gestures: Native SwipeRefreshLayout integrated into MainActivity.java to enable Pull-to-Refresh gesture across all pages when scrolled to the top.
+- Native Google Auth: Integrated @codetrix-studio/capacitor-google-auth plugin and Play Services Auth (server_client_id in strings.xml and capacitor.config.json) to trigger native Android Google Account picker bottom-sheet without opening any browser.
+- Build Commands: `npm run setup:icon`, `cd android; .\gradlew.bat assembleDebug`
+
 ================================================================================
 CVVault Implementation - Complete, Extended and Operational.
 ================================================================================
+

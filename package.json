@@ -6,11 +6,13 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup:icon": "node scripts/fetch-logo-and-set-icons.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
     "@capacitor/core": "^8.5.0",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0",
     "@hookform/resolvers": "^5.2.2",
     "@novu/api": "^3.18.2",
     "@novu/nextjs": "^3.18.0",

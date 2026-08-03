@@ -6,7 +6,12 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signInWithCredential,
 } from "firebase/auth";
+import { Capacitor } from "@capacitor/core";
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { getPostAuthRedirect } from "@/app/actions/auth";
@@ -92,22 +97,57 @@ export default function RegisterPage() {
     }
   };
 
+  React.useEffect(() => {
+    getRedirectResult(auth).then(async (credential) => {
+      if (credential?.user) {
+        const redirect = await getPostAuthRedirect(credential.user.uid);
+        if (redirect.success && redirect.path === "/register/role") {
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("cvvault_new_registration", "true");
+          }
+        }
+        toast.success("Signed up with Google!");
+        router.push(redirect.success ? redirect.path : "/dashboard");
+      }
+    }).catch((err) => {
+      if (err.code !== "auth/missing-initial-state") {
+        console.error("Google redirect result error:", err);
+      }
+    });
+  }, [router]);
+
   const handleGoogleRegister = async () => {
     setGoogleLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      const credential = await signInWithPopup(auth, provider);
-      const redirect = await getPostAuthRedirect(credential.user.uid);
-      if (redirect.success && redirect.path === "/register/role") {
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("cvvault_new_registration", "true");
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        const idToken = googleUser.authentication.idToken;
+        const credential = GoogleAuthProvider.credential(idToken);
+        const userCredential = await signInWithCredential(auth, credential);
+
+        const redirect = await getPostAuthRedirect(userCredential.user.uid);
+        if (redirect.success && redirect.path === "/register/role") {
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("cvvault_new_registration", "true");
+          }
         }
+        toast.success("Signed up with Google!");
+        router.push(redirect.success ? redirect.path : "/dashboard");
+      } else {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        const credential = await signInWithPopup(auth, provider);
+        const redirect = await getPostAuthRedirect(credential.user.uid);
+        if (redirect.success && redirect.path === "/register/role") {
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("cvvault_new_registration", "true");
+          }
+        }
+        toast.success("Signed up with Google!");
+        router.push(redirect.success ? redirect.path : "/dashboard");
       }
-      toast.success("Signed up with Google!");
-      router.push(redirect.success ? redirect.path : "/dashboard");
     } catch (error: any) {
-      if (error.code !== "auth/popup-closed-by-user") {
+      if (error.code !== "auth/popup-closed-by-user" && error.code !== "auth/cancelled-popup-request") {
         toast.error(error.message || "Google sign-in failed");
       }
     } finally {

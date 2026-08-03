@@ -3,6 +3,7 @@
   "appName": "CVVault",
   "webDir": "out",
   "server": {
+    "url": "https://cvvault.vercel.app",
     "androidScheme": "https",
     "cleartext": true
   },
@@ -16,6 +17,11 @@
       "launchShowDuration": 2000,
       "backgroundColor": "#0f172a",
       "showSpinner": false
+    },
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "666493076753-web.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
     }
   }
 }
