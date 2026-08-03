@@ -12,13 +12,13 @@ import {
   Star,
   Lock,
   Menu,
-  Sparkles,
   Zap,
   Users,
   ChevronRight,
   Globe,
   TrendingUp,
   ShieldCheck,
+  Rocket,
 } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
@@ -211,7 +211,7 @@ export default function LandingPage() {
             >
               {/* Badge */}
               <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-8 shadow-sm shadow-primary/10">
-                <Sparkles className="h-3.5 w-3.5 fill-primary" />
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
                 <span>THE MOST TRUSTED PROFESSIONAL VAULT</span>
               </motion.div>
 
@@ -422,7 +422,7 @@ export default function LandingPage() {
               variants={staggerContainer}
             >
               <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-6">
-                <Sparkles className="h-3 w-3" />
+                <Zap className="h-3 w-3" />
                 TRANSPARENT PRICING
               </motion.div>
               <motion.h2 variants={fadeUp} custom={1} className="text-4xl md:text-5xl font-black mb-5 leading-tight">
@@ -667,7 +667,7 @@ export default function LandingPage() {
 
               <div className="relative">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold mb-6">
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <Rocket className="h-3.5 w-3.5" />
                   START FOR FREE TODAY
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">

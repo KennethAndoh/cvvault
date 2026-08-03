@@ -187,3 +187,85 @@ export async function getUnreadMessageCount(userId: string) {
 
   return { success: true, count: count ?? 0 };
 }
+
+// Delete a specific chat message
+export async function deleteChatMessage(messageId: string, userId: string) {
+  // Fetch message details first to verify existence & authorization
+  const { data: msg, error: fetchErr } = await supabaseAdmin
+    .from("messages")
+    .select("id, chat_id, sender_id")
+    .eq("id", messageId)
+    .single();
+
+  if (fetchErr || !msg) {
+    return { success: false, error: "Message not found" };
+  }
+
+  // Fetch associated chat to check if user is a participant
+  const { data: chat } = await supabaseAdmin
+    .from("chats")
+    .select("seeker_id, recruiter_id")
+    .eq("id", msg.chat_id)
+    .single();
+
+  const isSender = msg.sender_id === userId;
+  const isParticipant = chat && (chat.seeker_id === userId || chat.recruiter_id === userId);
+
+  if (!isSender && !isParticipant) {
+    return { success: false, error: "Unauthorized to delete this message" };
+  }
+
+  const { error: deleteErr } = await supabaseAdmin
+    .from("messages")
+    .delete()
+    .eq("id", messageId);
+
+  if (deleteErr) {
+    console.error("Error deleting message:", deleteErr);
+    return { success: false, error: deleteErr.message };
+  }
+
+  await logAction(userId, "CHAT_MESSAGE_DELETED", { messageId, chatId: msg.chat_id });
+  revalidatePath(`/dashboard/chats`);
+  return { success: true };
+}
+
+// Delete an entire chat conversation
+export async function deleteChatConversation(chatId: string, userId: string) {
+  // Fetch chat to verify ownership/participation
+  const { data: chat, error: fetchErr } = await supabaseAdmin
+    .from("chats")
+    .select("id, seeker_id, recruiter_id")
+    .eq("id", chatId)
+    .single();
+
+  if (fetchErr || !chat) {
+    return { success: false, error: "Conversation not found" };
+  }
+
+  if (chat.seeker_id !== userId && chat.recruiter_id !== userId) {
+    return { success: false, error: "Unauthorized to delete this conversation" };
+  }
+
+  // Delete all messages belonging to this chat first
+  await supabaseAdmin
+    .from("messages")
+    .delete()
+    .eq("chat_id", chatId);
+
+  // Delete the chat row
+  const { error: deleteErr } = await supabaseAdmin
+    .from("chats")
+    .delete()
+    .eq("id", chatId);
+
+  if (deleteErr) {
+    console.error("Error deleting chat conversation:", deleteErr);
+    return { success: false, error: deleteErr.message };
+  }
+
+  await logAction(userId, "CHAT_CONVERSATION_DELETED", { chatId });
+  revalidatePath(`/dashboard/chats`);
+  return { success: true };
+}
+

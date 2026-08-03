@@ -18,7 +18,6 @@ import {
   Loader2,
   Briefcase,
   Clock,
-  Sparkles,
   ArrowRight,
   UploadCloud,
 } from "lucide-react";
@@ -605,7 +604,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -translate-y-8 translate-x-8" />
             <CardContent className="p-5 relative">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-primary" />
+                <ShieldCheck className="h-4 w-4 text-primary" />
                 <span className="text-xs font-bold text-primary uppercase tracking-wide">
                   {isEmployer ? "Employer Tip" : "Pro Tip"}
                 </span>

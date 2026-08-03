@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, ShieldCheck, Share2, Sparkles, Bell } from "lucide-react";
+import { Eye, ShieldCheck, Share2, Award, Bell } from "lucide-react";
 
 export interface NotificationItem {
   id: string;
@@ -107,7 +107,7 @@ export function NotificationBubble({
       case "share":
         return <Share2 className="h-4 w-4 text-purple-500" />;
       case "match":
-        return <Sparkles className="h-4 w-4 text-amber-500" />;
+        return <Award className="h-4 w-4 text-amber-500" />;
       default:
         return <Bell className="h-4 w-4 text-primary" />;
     }

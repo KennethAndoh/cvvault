@@ -30,6 +30,7 @@ CVVault is a secure, professional SaaS platform for storing, organizing, and sha
 - **Security**: Audit logging for all critical actions (Upload, Delete, Share, View).
 
 ## Project Guidelines
+- **Documentation**: Always update `CVVAULT_FINISHED_MVP.txt` whenever new features, modifications, or architecture changes are implemented in the project.
 - **Security**: Always verify `userId` in server actions. Log all significant user activity.
 - **UI/UX**: Maintain professional, clean aesthetic. Use animations for state transitions.
 - **Scalability**: Positioned for future migration to AWS; modular action-based backend logic.

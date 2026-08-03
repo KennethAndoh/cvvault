@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, User, Globe, Shield, Camera, Sparkles, Printer, Briefcase, Code, FileText, Code2 } from "lucide-react";
+import { Loader2, User, Globe, Shield, Camera, Printer, Briefcase, Code, FileText, Code2 } from "lucide-react";
 import { TailoredResumeBuilder } from "@/components/TailoredResumeBuilder";
 import { PortfolioEditor, PortfolioItem } from "@/components/PortfolioEditor";
 
@@ -127,7 +127,7 @@ export default function ProfilePage() {
           onClick={() => setIsResumeBuilderOpen(true)}
           className="gap-2 bg-[#3482BE] hover:bg-[#2a699a] w-full sm:w-auto shadow-sm"
         >
-          <Sparkles className="h-4 w-4" /> Export ATS Resume
+          <FileText className="h-4 w-4" /> Export ATS Resume
         </Button>
       </div>
 

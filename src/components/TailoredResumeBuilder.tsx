@@ -24,7 +24,6 @@ import {
   Plus, 
   Trash2, 
   ShieldCheck, 
-  Sparkles, 
   Download, 
   CheckCircle2,
   Briefcase,
@@ -145,7 +144,7 @@ export function TailoredResumeBuilder({
         <DialogHeader className="pb-3 border-b">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded text-primary">
-              <Sparkles className="h-5 w-5" />
+              <FileText className="h-5 w-5" />
             </div>
             <div>
               <DialogTitle className="text-xl font-bold">Tailored ATS Resume Exporter</DialogTitle>
