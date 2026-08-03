@@ -12,7 +12,7 @@
   "dependencies": {
     "@capacitor/android": "^8.5.0",
     "@capacitor/core": "^8.5.0",
-    "@codetrix-studio/capacitor-google-auth": "^3.4.0",
+    "@codetrix-studio/capacitor-google-auth": "3.3.6",
     "@hookform/resolvers": "^5.2.2",
     "@novu/api": "^3.18.2",
     "@novu/nextjs": "^3.18.0",
