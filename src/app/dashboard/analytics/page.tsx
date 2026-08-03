@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getVaultAnalytics, VaultAnalyticsData } from "@/app/actions/analytics";
-import { GeoActivityMap } from "@/components/GeoActivityMap";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,13 +12,11 @@ import {
   ShieldCheck,
   FileText,
   TrendingUp,
-  Globe,
-  Monitor,
   Loader2,
-  Download,
   RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -62,28 +59,6 @@ export default function AnalyticsPage() {
     return () => clearInterval(interval);
   }, [user]);
 
-  const exportActivityLogCsv = () => {
-    if (!data?.recentViewers || data.recentViewers.length === 0) return;
-
-    const headers = ["Event Action", "Estimated Location", "Device / Client", "Timestamp"];
-    const rows = data.recentViewers.map((log) => [
-      `"${(log.action || "").replace(/"/g, '""')}"`,
-      `"${(log.location || "").replace(/"/g, '""')}"`,
-      `"${(log.device || "").replace(/"/g, '""')}"`,
-      `"${new Date(log.timestamp).toISOString()}"`,
-    ]);
-
-    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `vault_activity_log_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   if (loading) {
     return (
@@ -126,9 +101,9 @@ export default function AnalyticsPage() {
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Profile Views</p>
-              <h3 className="text-2xl font-black mt-1">{data?.totalProfileViews || 0}</h3>
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 mt-1">
-                <TrendingUp className="h-3 w-3" /> +24% this month
+              <h3 className="text-2xl font-black mt-1">{data?.totalProfileViews ?? 0}</h3>
+              <p className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1 mt-1">
+                <TrendingUp className="h-3 w-3" /> From shared links &amp; views
               </p>
             </div>
             <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -141,9 +116,9 @@ export default function AnalyticsPage() {
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Document Reads</p>
-              <h3 className="text-2xl font-black mt-1">{data?.totalDocumentViews || 0}</h3>
+              <h3 className="text-2xl font-black mt-1">{data?.totalDocumentViews ?? 0}</h3>
               <p className="text-[11px] text-sky-600 dark:text-sky-400 font-bold flex items-center gap-1 mt-1">
-                <FileText className="h-3 w-3" /> Vault credentials
+                <FileText className="h-3 w-3" /> Vault document opens
               </p>
             </div>
             <div className="h-12 w-12 rounded-2xl bg-sky-500/10 flex items-center justify-center text-sky-600">
@@ -156,9 +131,9 @@ export default function AnalyticsPage() {
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shared Link Clicks</p>
-              <h3 className="text-2xl font-black mt-1">{data?.totalSharedLinkClicks || 0}</h3>
+              <h3 className="text-2xl font-black mt-1">{data?.totalSharedLinkClicks ?? 0}</h3>
               <p className="text-[11px] text-violet-600 dark:text-violet-400 font-bold flex items-center gap-1 mt-1">
-                <Share2 className="h-3 w-3" /> Token conversions
+                <Share2 className="h-3 w-3" /> Share link opens
               </p>
             </div>
             <div className="h-12 w-12 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-600">
@@ -264,75 +239,6 @@ export default function AnalyticsPage() {
         </motion.div>
       </div>
 
-      {/* Interactive Geo Map */}
-      <motion.div variants={fadeUp} custom={4}>
-        <GeoActivityMap viewers={data?.recentViewers || []} />
-      </motion.div>
-
-      {/* Live Access Log Table */}
-      <motion.div variants={fadeUp} custom={5}>
-        <Card className="border border-border/60 shadow-sm">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Globe className="h-5 w-5 text-primary" /> Live Viewer Activity Log
-              </CardTitle>
-              <CardDescription>Geographic location and device breakdown of recruiters and link viewers.</CardDescription>
-            </div>
-            <Button
-              onClick={exportActivityLogCsv}
-              variant="outline"
-              size="sm"
-              className="gap-2 shrink-0 text-xs font-semibold"
-              disabled={!data?.recentViewers || data.recentViewers.length === 0}
-            >
-              <Download className="h-4 w-4" /> Download CSV
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto overflow-y-auto max-h-96">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-muted/50 text-muted-foreground uppercase font-bold text-[10px] border-b sticky top-0 backdrop-blur-xs">
-                  <tr>
-                    <th className="p-3">Event Action</th>
-                    <th className="p-3">Estimated Location</th>
-                    <th className="p-3">Device / Client</th>
-                    <th className="p-3">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {(data?.recentViewers || []).map((log) => (
-                    <tr key={log.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="p-3 font-bold text-foreground flex items-center gap-2">
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                        {log.action}
-                      </td>
-                      <td className="p-3 text-muted-foreground">
-                        <span className="inline-flex items-center gap-1 font-semibold text-foreground">
-                          <Globe className="h-3 w-3 text-sky-500" /> {log.location}
-                        </span>
-                      </td>
-                      <td className="p-3 text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          <Monitor className="h-3 w-3 text-violet-500" /> {log.device}
-                        </span>
-                      </td>
-                      <td className="p-3 text-muted-foreground font-mono">
-                        {new Date(log.timestamp).toLocaleString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
     </motion.div>
   );
 }
