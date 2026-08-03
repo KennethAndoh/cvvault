@@ -16,7 +16,6 @@ import {
   Globe,
   Monitor,
   Loader2,
-  Calendar,
   Download,
   RefreshCw,
 } from "lucide-react";
@@ -263,6 +262,8 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </motion.div>
+      </div>
+
       {/* Interactive Geo Map */}
       <motion.div variants={fadeUp} custom={4}>
         <GeoActivityMap viewers={data?.recentViewers || []} />
@@ -335,4 +336,3 @@ export default function AnalyticsPage() {
     </motion.div>
   );
 }
-
