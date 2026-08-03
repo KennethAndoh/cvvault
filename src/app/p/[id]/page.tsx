@@ -5,6 +5,7 @@ import { FileText, User, Globe, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MessageButton from "@/components/MessageButton";
 import { PortfolioShowcase } from "@/components/PortfolioShowcase";
+import { DocumentThumbnailPreview } from "@/components/DocumentThumbnailPreview";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -100,9 +101,15 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                   <Card key={doc.id} className="hover:border-primary/50 transition-colors">
                     <CardContent className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="p-2 bg-muted rounded">
-                          <FileText className="h-6 w-6 text-muted-foreground" />
-                        </div>
+                        <DocumentThumbnailPreview
+                          documentName={doc.name}
+                          category={doc.category}
+                          verificationStatus="verified"
+                          fileUrl={doc.url}
+                          aspectRatio="mini"
+                          showOverlay={false}
+                          className="shrink-0 h-16 w-14 p-0 border-0 bg-transparent"
+                        />
                         <div>
                           <div className="font-bold text-sm">{doc.name}</div>
                           <div className="text-[10px] text-muted-foreground uppercase tracking-wider">

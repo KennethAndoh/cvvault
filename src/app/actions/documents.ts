@@ -52,7 +52,24 @@ export async function getDocuments(userId: string) {
     return { success: false, error: error.message };
   }
 
-  return { success: true, documents: data };
+  // Attach signed file URLs for live document thumbnail previews
+  const documentsWithUrls = await Promise.all(
+    (data || []).map(async (doc) => {
+      try {
+        const { data: signedData } = await supabaseAdmin.storage
+          .from("documents")
+          .createSignedUrl(doc.storage_path, 3600);
+        return {
+          ...doc,
+          url: signedData?.signedUrl || null,
+        };
+      } catch (e) {
+        return { ...doc, url: null };
+      }
+    })
+  );
+
+  return { success: true, documents: documentsWithUrls };
 }
 
 async function ensureBucket(bucketName: string, isPublic = true) {

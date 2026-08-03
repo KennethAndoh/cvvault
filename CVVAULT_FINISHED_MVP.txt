@@ -49,6 +49,7 @@ multi-channel notifications, and comprehensive audit logging.
   * Storage in Supabase S3-compatible buckets with secure file streaming.
   * File search, category filtering, and status indicators.
   * File metadata management, preview modal, download, and deletion.
+  * Transitioned Zoomed-In Document Preview (DocumentThumbnailPreview.tsx): Replaces basic document icons with realistic A4 paper-styled document card previews (ATS printable layout representation, category badges, micro document structure, and verification watermark seals) featuring smooth scale-up zoom, sheen animation, and quick hover preview triggers across Dashboard, Vault, Public Profiles, Shared Access, and Candidate reviews.
 
 [MODULE 3: CREDENTIAL VERIFICATION ENGINE]
 - Auto-Verification Engine (actions/auto-verify.ts, lib/verification-proof.ts):
@@ -115,6 +116,27 @@ multi-channel notifications, and comprehensive audit logging.
   * Brand light blue theme (#3482BE) with responsive Dark and Light modes.
   * Clean UI typography and contextual icons (ShieldCheck, FileText, Zap, Rocket, Award) without decorative sparkle icons.
 
+[MODULE 11: ADVANCED POST-MVP FEATURE SUITE]
+- AI Candidate & Job Match Score Engine (actions/match-score.ts, MatchScoreBadge.tsx):
+  * Calculates candidate-to-job fit score (0-100%) based on required skills, verified credential bonus, and work history.
+  * Displays Match Score badges on Candidate Profile Review and Job Listings.
+- OCR Auto-Parsing Engine (ocr-parser.ts, actions/ocr.ts, FileUpload.tsx):
+  * Smart pattern extraction engine extracting document titles, issuing organizations, dates, and skill tags during drag-and-drop upload.
+- Vault Analytics & View Heatmap Dashboard (actions/analytics.ts, dashboard/analytics, GeoActivityMap.tsx):
+  * Full analytics page tracking profile views, document reads, shared link conversions, top-viewed credentials, and live viewer geography logs.
+  * Interactive SVG Geo Map: World map visualization (`GeoActivityMap.tsx`) featuring animated recruiter location pulse beacons, hover tooltips, and regional distribution statistics.
+  * GeoIP & User-Agent Parsing: Resolves actual viewer locations via IP-API and extracts browser/OS client details from request headers.
+  * Live Auto-Refresh (30s): Real-time interval updates to fetch fresh access logs without page reload.
+  * CSV Export Utility: One-click export of viewer activity logs (`vault_activity_log_[date].csv`) with full action, location, device, and timestamp data.
+- Employer Kanban Applicant Pipeline (KanbanApplicantPipeline.tsx, dashboard/jobs/[id]):
+  * Interactive 5-stage Kanban board (*Applied → Shortlisted → Interviewing → Offered → Hired*) with HTML5 drag-and-drop status transitions, AI Match Score badges, candidate verification badges, and direct candidate chat shortcuts.
+- Digitally Signed PDF Certificate Exporter (CertificateExportModal.tsx, ZeroDepQRCode.tsx):
+  * Printable A4 landscape credential award certificate with embedded standalone SVG verification QR code, cryptographic hash ledger signature, and official gold seal.
+- Capacitor Android Native App Readiness (capacitor.config.json, layout.tsx, capacitor_android_setup.md):
+  * Pre-configured Capacitor config with package ID `io.cvvault.app`.
+  * Mobile notch viewport & safe-area inset configuration (`viewportFit: "cover"`, `userScalable: false`, brand theme status bar).
+  * Step-by-step Android Studio APK build guide.
+
 --------------------------------------------------------------------------------
 4. SERVER ACTIONS & API ENDPOINTS SUMMARY
 --------------------------------------------------------------------------------
@@ -126,11 +148,14 @@ multi-channel notifications, and comprehensive audit logging.
 - actions/jobs.ts           : Job creation, editing, closing, candidate applications, status updates.
 - actions/chat.ts           : Fetch chat rooms, retrieve messages, post new messages, delete individual messages, delete conversations.
 - actions/resume.ts         : Resume parsing and tailoring logic.
+- actions/match-score.ts    : Algorithmic candidate vs job match scoring engine.
+- actions/ocr.ts            : OCR document auto-parsing and metadata extraction.
+- actions/analytics.ts      : Vault engagement, link conversion, and access log analytics.
 - actions/settings.ts       : Account preferences and security settings.
 - actions/audit.ts          : Global audit logging utility.
 - api/candidate-profile     : REST API for candidate data lookup.
 - api/signed-url            : Secure Supabase storage signed URL generation.
 
 ================================================================================
-CVVault MVP Implementation - Complete and Operational.
+CVVault Implementation - Complete, Extended and Operational.
 ================================================================================

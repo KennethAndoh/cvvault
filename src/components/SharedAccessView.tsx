@@ -7,6 +7,7 @@ import { FileText, Download, ExternalLink, Loader2, QrCode } from "lucide-react"
 import { getSignedUrlForShareToken } from "@/app/actions/documents";
 import { toast } from "sonner";
 import { QRCodeModal } from "@/components/QRCodeModal";
+import { DocumentThumbnailPreview } from "@/components/DocumentThumbnailPreview";
 
 interface Document {
   id: string;
@@ -14,6 +15,7 @@ interface Document {
   category: string;
   created_at: string;
   verification_status?: string;
+  url?: string | null;
 }
 
 interface SharedAccessViewProps {
@@ -72,9 +74,15 @@ export function SharedAccessView({
     const isLoader = loadingDocId === "single";
     return (
       <div className="p-6 bg-primary/5 rounded-xl border border-primary/10 flex flex-col items-center text-center">
-        <div className="p-4 bg-background rounded-full shadow-sm mb-4">
-          <FileText className="h-10 w-10 text-primary" />
-        </div>
+        <DocumentThumbnailPreview
+          documentName={singleDoc.name}
+          category={singleDoc.category}
+          verificationStatus={singleDoc.verification_status}
+          fileUrl={singleDoc.url}
+          aspectRatio="card"
+          className="w-64 h-44 mb-4"
+          onPreview={() => handleAction(undefined, "preview", singleDoc.name)}
+        />
         <h3 className="font-bold text-lg">{singleDoc.name}</h3>
         <p className="text-sm text-muted-foreground mt-1">
           Category: {singleDoc.category}
@@ -143,9 +151,15 @@ export function SharedAccessView({
               <Card key={doc.id} className="hover:border-primary/50 transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4 overflow-hidden">
-                    <div className="p-2 bg-primary/10 rounded">
-                      <FileText className="h-6 w-6 text-primary" />
-                    </div>
+                    <DocumentThumbnailPreview
+                      documentName={doc.name}
+                      category={doc.category}
+                      verificationStatus={doc.verification_status}
+                      fileUrl={doc.url}
+                      aspectRatio="mini"
+                      showOverlay={false}
+                      className="shrink-0 h-16 w-14 p-1 border border-border/40 bg-muted/20 shadow-xs"
+                    />
                     <div className="overflow-hidden">
                       <div className="font-bold text-sm truncate" title={doc.name}>
                         {doc.name}

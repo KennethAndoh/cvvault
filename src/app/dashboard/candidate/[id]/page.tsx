@@ -21,6 +21,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DocumentThumbnailPreview } from "@/components/DocumentThumbnailPreview";
+import { MatchScoreBadge } from "@/components/MatchScoreBadge";
 import { toast } from "sonner";
 import { createChat } from "@/app/actions/chat";
 import { cn } from "@/lib/utils";
@@ -166,7 +168,10 @@ export default function CandidateProfilePage({ params }: { params: Promise<{ id:
               {(profile.full_name || "?")[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold">{profile.full_name || "Anonymous"}</h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-xl font-bold">{profile.full_name || "Anonymous"}</h1>
+                <MatchScoreBadge candidateId={candidateId} jobId="general" />
+              </div>
               <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
                 <Mail className="h-3.5 w-3.5" />
                 {profile.email}
@@ -204,9 +209,16 @@ export default function CandidateProfilePage({ params }: { params: Promise<{ id:
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                      </div>
+                      <DocumentThumbnailPreview
+                        documentName={doc.name}
+                        category={doc.category}
+                        verificationStatus={doc.metadata?.verification_status}
+                        fileUrl={doc.url}
+                        fileType={doc.metadata?.type}
+                        aspectRatio="mini"
+                        showOverlay={false}
+                        className="shrink-0 h-16 w-14 p-1 border border-border/40 bg-muted/20 shadow-xs"
+                      />
                       <div className="min-w-0">
                         <p className="font-semibold text-sm truncate">{doc.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">

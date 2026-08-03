@@ -22,8 +22,11 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  QrCode
+  QrCode,
+  Award
 } from "lucide-react";
+import { DocumentThumbnailPreview } from "@/components/DocumentThumbnailPreview";
+import { CertificateExportModal } from "@/components/CertificateExportModal";
 import { 
   Dialog, 
   DialogContent, 
@@ -83,6 +86,7 @@ export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [activeQrDoc, setActiveQrDoc] = useState<{ id: string; name: string; status?: string } | null>(null);
+  const [activeCertDoc, setActiveCertDoc] = useState<{ name: string; category?: string } | null>(null);
 
   // Document inline preview states
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -302,7 +306,19 @@ export default function DocumentsPage() {
               </div>
                 <div className="space-y-2">
                   <Label>File (PDF, DOCX, JPEG, PNG)</Label>
-                  <FileUpload onFileSelect={setFile} />
+                  <FileUpload
+                    onFileSelect={(selectedFile, parsedMeta) => {
+                      setFile(selectedFile);
+                      if (parsedMeta) {
+                        if (parsedMeta.extractedTitle && !docName) {
+                          setDocName(parsedMeta.extractedTitle);
+                        }
+                        if (parsedMeta.detectedCategory) {
+                          setCategory(parsedMeta.detectedCategory);
+                        }
+                      }
+                    }}
+                  />
                 </div>
               <DialogFooter>
                 <Button type="submit" disabled={uploading} className="w-full">
@@ -367,53 +383,17 @@ export default function DocumentsPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredDocuments.map((doc) => (
             <Card key={doc.id} className="overflow-hidden border border-border bg-card shadow-xs transition-all duration-300 hover:shadow-md hover:border-primary/20 flex flex-col justify-between">
-              {/* Card visual header (Mock thumbnail representation) */}
-              <div className="relative h-32 bg-muted/40 dark:bg-muted/10 border-b border-border flex items-center justify-center group/thumbnail overflow-hidden">
-                {/* Visual document layout representation */}
-                <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/5 opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                <div className="w-16 h-20 bg-card rounded-md shadow-xs border border-border p-2 flex flex-col justify-between transform transition-transform duration-300 group-hover/thumbnail:scale-105 group-hover/thumbnail:-rotate-1 relative">
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="w-4 h-1 bg-primary/20 rounded-full" />
-                    <div className="w-2 h-1 bg-muted rounded-full" />
-                  </div>
-                  <div className="flex-1 flex items-center justify-center my-1.5">
-                    <FileText className="h-8 w-8 text-primary/80" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <div className="w-full h-1 bg-muted rounded-full" />
-                    <div className="w-4/5 h-1 bg-muted rounded-full" />
-                  </div>
-                </div>
-                
-                {/* Overlay actions directly on visual header */}
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center gap-2 opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300">
-                  <Button 
-                    size="sm" 
-                    variant="secondary" 
-                    className="h-8 gap-1.5 shadow-xs" 
-                    onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
-                  >
-                    <Eye className="h-3.5 w-3.5" /> Preview
-                  </Button>
-                </div>
-
-                {/* Verification Badge */}
-                <div className="absolute top-2.5 right-2.5">
-                  {doc.metadata?.verification_status === "verified" ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 shadow-xs">
-                      <CheckCircle2 className="h-3 w-3" /> Verified
-                    </span>
-                  ) : doc.metadata?.verification_status === "rejected" ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/10 text-destructive border border-destructive/20 shadow-xs">
-                      <XCircle className="h-3 w-3" /> Rejected
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-xs">
-                      <Clock className="h-3 w-3" /> Pending
-                    </span>
-                  )}
-                </div>
-              </div>
+              {/* Card visual header (Zoomed Live Uploaded Document Preview) */}
+              <DocumentThumbnailPreview
+                documentName={doc.name}
+                category={doc.category}
+                verificationStatus={doc.metadata?.verification_status}
+                fileUrl={doc.url}
+                fileType={doc.metadata?.type}
+                createdAt={doc.created_at}
+                onPreview={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                className="h-44 rounded-b-none border-x-0 border-t-0"
+              />
 
               {/* Card main content */}
               <CardContent className="p-4 flex-1 flex flex-col justify-between">
@@ -485,6 +465,17 @@ export default function DocumentsPage() {
                     >
                       <QrCode className="h-3.5 w-3.5" />
                     </Button>
+                    {doc.metadata?.verification_status === "verified" && (
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-8 w-8 text-amber-500 hover:bg-amber-500/10 border-amber-500/30"
+                        onClick={() => setActiveCertDoc({ name: doc.name, category: doc.category })}
+                        title="Export Official Signed Certificate"
+                      >
+                        <Award className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="icon" 
@@ -519,6 +510,18 @@ export default function DocumentsPage() {
           documentId={activeQrDoc.id}
           documentName={activeQrDoc.name}
           verificationStatus={activeQrDoc.status}
+        />
+      )}
+
+      {/* Certificate Export Modal */}
+      {activeCertDoc && (
+        <CertificateExportModal
+          isOpen={!!activeCertDoc}
+          onClose={() => setActiveCertDoc(null)}
+          documentName={activeCertDoc.name}
+          category={activeCertDoc.category}
+          userName={profile?.full_name || "Verified Candidate"}
+          userEmail={user?.email || "candidate@cvvault.io"}
         />
       )}
 

@@ -1,14 +1,37 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { headers } from "next/headers";
 
 export async function logAction(userId: string, action: string, details: any = {}) {
+  let clientIp = details.ip;
+  let userAgent = details.userAgent;
+
+  try {
+    const headerList = await headers();
+    if (!clientIp) {
+      const forwarded = headerList.get("x-forwarded-for");
+      clientIp = forwarded ? forwarded.split(",")[0].trim() : (headerList.get("x-real-ip") || "");
+    }
+    if (!userAgent) {
+      userAgent = headerList.get("user-agent") || "";
+    }
+  } catch {
+    // Graceful fallback if called outside an active HTTP request
+  }
+
+  const enrichedDetails = {
+    ...details,
+    ...(clientIp ? { ip: clientIp } : {}),
+    ...(userAgent ? { userAgent } : {}),
+  };
+
   const { error } = await supabaseAdmin
     .from("audit_logs")
     .insert({
       user_id: userId,
       action,
-      details,
+      details: enrichedDetails,
     });
 
   if (error) {

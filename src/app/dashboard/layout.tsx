@@ -16,6 +16,7 @@ import {
   Briefcase,
   ChevronRight,
   MessageSquare,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ const navItems = [
   { label: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
   { label: "Messages", href: "/dashboard/chats", icon: MessageSquare },
   { label: "Sharing", href: "/dashboard/sharing", icon: Share2 },
+  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Profile", href: "/dashboard/profile", icon: User },
 ];
 

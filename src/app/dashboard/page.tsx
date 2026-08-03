@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDocuments } from "@/app/actions/documents";
+import { getDocuments, getSignedUrlForDocument } from "@/app/actions/documents";
 import { getSharingTokens, getProfile } from "@/app/actions/profile";
 import { getRecentAuditLogs } from "@/app/actions/audit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   FileText,
   ShieldCheck,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { DocumentThumbnailPreview } from "@/components/DocumentThumbnailPreview";
 import { getJobs, getJobApplications } from "@/app/actions/jobs";
 import { motion } from "framer-motion";
 import { NotificationBubble, NotificationItem } from "@/components/NotificationBubble";
@@ -52,6 +54,24 @@ export default function DashboardPage() {
   const [recentDocs, setRecentDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  // Preview Lightbox States
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState("");
+  const [previewType, setPreviewType] = useState("");
+
+  const handleOpenPreview = async (path: string, name: string, type?: string) => {
+    try {
+      const result = await getSignedUrlForDocument(path, user!.uid);
+      if (result.success && result.signedUrl) {
+        setPreviewUrl(result.signedUrl);
+        setPreviewName(name);
+        setPreviewType(type || "application/pdf");
+      }
+    } catch (error) {
+      console.error("Failed to generate preview", error);
+    }
+  };
 
   useEffect(() => {
     if (cachedProfile) {
@@ -492,38 +512,64 @@ export default function DashboardPage() {
                 ) : (
                   recentDocs.map((doc, i) => (
                     <div
-                      key={i}
-                      className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-muted/50 hover:border-primary/20 transition-all duration-200 group"
+                      key={doc.id || i}
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-border/60 bg-card hover:bg-muted/40 hover:border-primary/30 transition-all duration-200 group shadow-2xs gap-3"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-xl group-hover:bg-primary/15 transition-colors">
-                          <FileText className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-sm truncate max-w-[180px]">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <DocumentThumbnailPreview
+                          documentName={doc.name}
+                          category={doc.category}
+                          verificationStatus={doc.metadata?.verification_status}
+                          fileUrl={doc.url}
+                          fileType={doc.metadata?.type}
+                          aspectRatio="mini"
+                          showOverlay={false}
+                          className="shrink-0 h-16 w-14 p-1 border border-border/40 bg-muted/20 shadow-xs"
+                          onPreview={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                        />
+                        <div className="min-w-0">
+                          <div
+                            className="font-semibold text-sm truncate max-w-[170px] sm:max-w-[240px] text-foreground group-hover:text-primary transition-colors cursor-pointer"
+                            onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                            title={doc.name}
+                          >
                             {doc.name}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {doc.category} ·{" "}
-                            {new Date(doc.created_at).toLocaleDateString()}
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-[10px] px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full font-semibold">
+                              {doc.category}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(doc.created_at).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric"
+                              })}
+                            </span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {doc.metadata?.verification_status === "verified" && (
-                          <span className="text-[10px] font-bold text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full hidden sm:block">
-                            Verified
+                      <div className="flex items-center gap-2 shrink-0">
+                        {doc.metadata?.verification_status === "verified" ? (
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
+                            <ShieldCheck className="h-3 w-3" /> Verified
+                          </span>
+                        ) : doc.metadata?.verification_status === "rejected" ? (
+                          <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
+                            Rejected
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
+                            Pending
                           </span>
                         )}
+
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
                         >
-                          <Link href="/dashboard/documents">
-                            <ArrowUpRight className="h-3.5 w-3.5" />
-                          </Link>
+                          <Eye className="h-3.5 w-3.5" /> Preview
                         </Button>
                       </div>
                     </div>
@@ -657,6 +703,34 @@ export default function DashboardPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Lightbox / Previewer Dialog */}
+      <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-6">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold truncate">
+              <FileText className="h-5 w-5 text-primary" />
+              {previewName}
+            </DialogTitle>
+            <DialogDescription>
+              Previewing uploaded document.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full min-h-0 relative bg-muted rounded-lg overflow-hidden flex items-center justify-center mt-4 border">
+            {previewUrl && (
+              previewType.startsWith("image/") ? (
+                <img src={previewUrl} alt={previewName} className="max-h-full max-w-full object-contain" />
+              ) : (
+                <iframe 
+                  src={previewUrl}
+                  className="w-full h-full border-none rounded-lg"
+                  title={previewName}
+                />
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

@@ -14,8 +14,11 @@ import {
   MoreVertical,
   MessageSquare,
   Trash2,
-  ShieldCheck
+  ShieldCheck,
+  LayoutGrid,
+  List
 } from "lucide-react";
+import { KanbanApplicantPipeline } from "@/components/KanbanApplicantPipeline";
 import { getSignedUrlForDocument, verifyApplicantDocument } from "@/app/actions/documents";
 import { createChat } from "@/app/actions/chat";
 import { useRouter } from "next/navigation";
@@ -41,6 +44,7 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatting, setChatting] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const router = useRouter();
 
   useEffect(() => {
@@ -261,13 +265,59 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
       </div>
 
       <div className="grid gap-6">
-        <h2 className="text-xl font-semibold">Applicants</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Applicants Pipeline</h2>
+          <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border">
+            <Button
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              size="xs"
+              onClick={() => setViewMode("kanban")}
+              className="gap-1.5 text-xs font-semibold"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" /> Kanban View
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="xs"
+              onClick={() => setViewMode("list")}
+              className="gap-1.5 text-xs font-semibold"
+            >
+              <List className="h-3.5 w-3.5" /> List View
+            </Button>
+          </div>
+        </div>
+
         {applications.length === 0 ? (
           <Card className="flex flex-col items-center justify-center p-12 text-center">
             <User className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
             <CardTitle>No applicants yet</CardTitle>
             <CardDescription>When people apply, they will appear here.</CardDescription>
           </Card>
+        ) : viewMode === "kanban" ? (
+          <KanbanApplicantPipeline
+            applications={applications.map((app) => ({
+              id: app.id,
+              employee_id: app.employee_id,
+              job_id: app.job_id,
+              status: app.status,
+              created_at: app.created_at,
+              resume_url: app.resume_url,
+              document_id: app.document_id,
+              applicant: {
+                full_name: app.profiles?.full_name || "Applicant",
+                email: app.profiles?.email,
+                skills: app.profiles?.skills || [],
+                bio: app.profiles?.bio,
+              },
+              verificationStatus: app.verification_status || "verified",
+            }))}
+            jobTitle={job.title}
+            jobSkills={job.skills || []}
+            onStatusChange={handleStatusUpdate}
+            onViewResume={handleViewResume}
+            onVerifyDocument={handleVerifyDocument}
+            onChatCandidate={handleChatWithCandidate}
+          />
         ) : (
           <div className="space-y-4">
             {applications.map((app) => (

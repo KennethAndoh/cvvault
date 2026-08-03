@@ -73,25 +73,52 @@ export default async function SharedAccessPage({ params }: { params: Promise<{ t
   const isFullProfile = !accessToken.document_id;
   const ownerName = accessToken.profiles?.full_name || "a user";
 
-  let documents: { id: string; name: string; category: string; created_at: string }[] = [];
+  let documents: { id: string; name: string; category: string; created_at: string; url?: string | null }[] = [];
   if (isFullProfile) {
     const { data: userDocs } = await supabaseAdmin
       .from("documents")
-      .select("id, name, category, created_at")
+      .select("id, name, category, storage_path, created_at")
       .eq("user_id", accessToken.user_id)
       .order("created_at", { ascending: false });
-    documents = userDocs || [];
+
+    documents = await Promise.all(
+      (userDocs || []).map(async (doc) => {
+        try {
+          const { data: signedData } = await supabaseAdmin.storage
+            .from("documents")
+            .createSignedUrl(doc.storage_path, 3600);
+          return {
+            id: doc.id,
+            name: doc.name,
+            category: doc.category,
+            created_at: doc.created_at,
+            url: signedData?.signedUrl || null,
+          };
+        } catch {
+          return { id: doc.id, name: doc.name, category: doc.category, created_at: doc.created_at, url: null };
+        }
+      })
+    );
   }
 
   const linkedDoc = accessToken.documents;
-  const singleDoc = linkedDoc
-    ? {
-        id: linkedDoc.id,
-        name: linkedDoc.name,
-        category: linkedDoc.category,
-        created_at: linkedDoc.created_at,
-      }
-    : undefined;
+  let singleDoc: { id: string; name: string; category: string; created_at: string; url?: string | null } | undefined = undefined;
+  if (linkedDoc) {
+    let signedUrl: string | null = null;
+    if (linkedDoc.storage_path) {
+      const { data: signedData } = await supabaseAdmin.storage
+        .from("documents")
+        .createSignedUrl(linkedDoc.storage_path, 3600);
+      signedUrl = signedData?.signedUrl || null;
+    }
+    singleDoc = {
+      id: linkedDoc.id,
+      name: linkedDoc.name,
+      category: linkedDoc.category,
+      created_at: linkedDoc.created_at,
+      url: signedUrl,
+    };
+  }
 
   return (
     <div className="min-h-screen bg-muted/30 pb-12">
