@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocuments, getSignedUrlForDocument } from "@/app/actions/documents";
+import { supabase } from "@/lib/supabase";
 import { getSharingTokens, getProfile } from "@/app/actions/profile";
 import { getRecentAuditLogs } from "@/app/actions/audit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,13 +61,63 @@ export default function DashboardPage() {
   const [previewName, setPreviewName] = useState("");
   const [previewType, setPreviewType] = useState("");
 
+  const isNativeRef = useRef(false);
+
+  // Detect Capacitor native platform (Android/iOS) on mount
+  useEffect(() => {
+    const checkNative = async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        isNativeRef.current = Capacitor.isNativePlatform();
+      } catch {
+        isNativeRef.current = false;
+      }
+    };
+    checkNative();
+  }, []);
+
   const handleOpenPreview = async (path: string, name: string, type?: string, existingUrl?: string) => {
     try {
-      let targetUrl = existingUrl || null;
-      const result = await getSignedUrlForDocument(path, user!.uid);
-      if (result.success && result.signedUrl) {
-        targetUrl = result.signedUrl;
+      let targetUrl: string | null = null;
+
+      if (isNativeRef.current) {
+        // On Android native: use Supabase client SDK directly — server actions don't work in static Capacitor builds
+        try {
+          const { data, error } = await supabase.storage
+            .from("documents")
+            .createSignedUrl(path, 3600);
+          if (!error && data?.signedUrl) targetUrl = data.signedUrl;
+        } catch (e) {
+          console.warn("Supabase client signed URL failed:", e);
+        }
+        targetUrl = targetUrl || existingUrl || null;
+
+        if (targetUrl) {
+          const resolvedType = type || "application/pdf";
+          if (!resolvedType.startsWith("image/")) {
+            const { Browser } = await import("@capacitor/browser");
+            await Browser.open({ url: targetUrl });
+            return;
+          }
+          // Images: show inline
+          setPreviewUrl(targetUrl);
+          setPreviewName(name);
+          setPreviewType(resolvedType);
+        } else {
+          console.error("Failed to generate preview on native");
+        }
+        return;
       }
+
+      // On web: use server action
+      try {
+        const result = await getSignedUrlForDocument(path, user!.uid);
+        if (result.success && result.signedUrl) targetUrl = result.signedUrl;
+      } catch (e) {
+        console.warn("Server action signed URL failed:", e);
+      }
+      targetUrl = targetUrl || existingUrl || null;
+
       if (targetUrl) {
         setPreviewUrl(targetUrl);
         setPreviewName(name);

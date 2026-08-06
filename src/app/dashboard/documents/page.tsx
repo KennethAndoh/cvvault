@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocuments, uploadDocument, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument } from "@/app/actions/documents";
+import { supabase } from "@/lib/supabase";
 import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,34 +109,62 @@ export default function DocumentsPage() {
     checkNative();
   }, []);
 
+  // Helper: get a valid URL for a document - skips server action on Android native
+  const resolveDocumentUrl = async (storagePath: string, existingUrl?: string): Promise<string | null> => {
+    // On Android native (Capacitor), server actions don't work in static builds.
+    // Prefer: fresh Supabase client signed URL > existingUrl from page load.
+    if (isNativeRef.current) {
+      try {
+        const { data, error } = await supabase.storage
+          .from("documents")
+          .createSignedUrl(storagePath, 3600);
+        if (!error && data?.signedUrl) return data.signedUrl;
+      } catch (e) {
+        console.warn("Supabase client signed URL failed, falling back to cached url:", e);
+      }
+      return existingUrl || null;
+    }
+
+    // On web: use the server action (most secure, verifies ownership server-side)
+    try {
+      const result = await getSignedUrlForDocument(storagePath, user!.uid);
+      if (result.success && result.signedUrl) return result.signedUrl;
+    } catch (e) {
+      console.warn("Server action signed URL failed:", e);
+    }
+    return existingUrl || null;
+  };
+
   const handleOpenPreview = async (path: string, name: string, type?: string, existingUrl?: string) => {
     setPreviewLoading(true);
     try {
-      let urlToUse = existingUrl || null;
-      const result = await getSignedUrlForDocument(path, user!.uid);
-      if (result.success && result.signedUrl) {
-        urlToUse = result.signedUrl;
-      }
+      const urlToUse = await resolveDocumentUrl(path, existingUrl);
 
       if (urlToUse) {
         const resolvedType = type || "application/pdf";
-        // On Android native, PDFs can't be rendered in iframes — open in external browser instead
+        // On Android native, PDFs can't be rendered in iframes — open in native browser
         if (isNativeRef.current && !resolvedType.startsWith("image/")) {
           const { Browser } = await import("@capacitor/browser");
           await Browser.open({ url: urlToUse });
           return;
         }
+        // On Android native with images, or on web for all types:
         setPreviewUrl(urlToUse);
         setPreviewName(name);
         setPreviewType(resolvedType);
       } else {
-        toast.error(result.error || "Could not generate preview link");
+        toast.error("Could not generate preview link");
       }
     } catch (error) {
       if (existingUrl) {
-        setPreviewUrl(existingUrl);
-        setPreviewName(name);
-        setPreviewType(type || "application/pdf");
+        if (isNativeRef.current) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: existingUrl });
+        } else {
+          setPreviewUrl(existingUrl);
+          setPreviewName(name);
+          setPreviewType(type || "application/pdf");
+        }
       } else {
         toast.error("Failed to generate preview");
       }
@@ -222,13 +251,15 @@ export default function DocumentsPage() {
 
   const handleDownload = async (path: string, name: string, existingUrl?: string) => {
     try {
-      let downloadUrl = existingUrl || null;
-      const result = await getSignedUrlForDocument(path, user!.uid);
-      if (result.success && result.signedUrl) {
-        downloadUrl = result.signedUrl;
-      }
+      const downloadUrl = await resolveDocumentUrl(path, existingUrl);
       if (!downloadUrl) {
-        toast.error("Download failed");
+        toast.error("Download failed — could not get document URL");
+        return;
+      }
+      // On native Android, use Browser.open instead of fetch+blob (avoids CORS issues)
+      if (isNativeRef.current) {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: downloadUrl });
         return;
       }
       const response = await fetch(downloadUrl);
