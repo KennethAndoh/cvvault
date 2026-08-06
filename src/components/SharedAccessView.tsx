@@ -90,7 +90,7 @@ export function SharedAccessView({
 
         <div className="flex gap-3 mt-8 w-full flex-wrap sm:flex-nowrap">
           <Button
-            className="flex-1 gap-2 bg-[#3482BE] hover:bg-[#2a699a]"
+            className="flex-1 gap-2 bg-primary hover:bg-primary/90"
             disabled={isLoader}
             onClick={() => handleAction(undefined, "download", singleDoc.name)}
           >
@@ -196,7 +196,7 @@ export function SharedAccessView({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-[#3482BE]"
+                      className="h-8 w-8 text-primary"
                       disabled={isLoader}
                       onClick={() => handleAction(doc.id, "download", doc.name)}
                       title="Download"

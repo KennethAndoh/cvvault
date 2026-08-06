@@ -282,7 +282,7 @@ export function TailoredResumeBuilder({
               <span className="text-xs text-muted-foreground">
                 Formatted with single-column ATS typography standards. Click export to generate PDF.
               </span>
-              <Button onClick={handleSaveAndPrint} size="sm" className="gap-2 bg-[#3482BE] hover:bg-[#2a699a]">
+              <Button onClick={handleSaveAndPrint} size="sm" className="gap-2 bg-primary hover:bg-primary/90">
                 <Printer className="h-4 w-4" /> Export ATS PDF
               </Button>
             </div>
@@ -370,7 +370,7 @@ export function TailoredResumeBuilder({
           <Button variant="ghost" onClick={onClose} size="sm">
             Close
           </Button>
-          <Button onClick={handleSaveAndPrint} size="sm" className="gap-2 bg-[#3482BE] hover:bg-[#2a699a]">
+          <Button onClick={handleSaveAndPrint} size="sm" className="gap-2 bg-primary hover:bg-primary/90">
             <Printer className="h-4 w-4" /> Export ATS PDF
           </Button>
         </DialogFooter>

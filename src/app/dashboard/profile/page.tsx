@@ -125,7 +125,7 @@ export default function ProfilePage() {
         </div>
         <Button 
           onClick={() => setIsResumeBuilderOpen(true)}
-          className="gap-2 bg-[#3482BE] hover:bg-[#2a699a] w-full sm:w-auto shadow-sm"
+          className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto shadow-sm"
         >
           <FileText className="h-4 w-4" /> Export ATS Resume
         </Button>

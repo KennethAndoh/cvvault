@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocuments, uploadDocument, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument } from "@/app/actions/documents";
 import { getProfile } from "@/app/actions/profile";
@@ -93,15 +93,36 @@ export default function DocumentsPage() {
   const [previewName, setPreviewName] = useState("");
   const [previewType, setPreviewType] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
+  const isNativeRef = useRef(false);
+
+  // Detect Capacitor native platform (Android/iOS) on mount
+  useEffect(() => {
+    const checkNative = async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        isNativeRef.current = Capacitor.isNativePlatform();
+      } catch {
+        isNativeRef.current = false;
+      }
+    };
+    checkNative();
+  }, []);
 
   const handleOpenPreview = async (path: string, name: string, type?: string) => {
     setPreviewLoading(true);
     try {
       const result = await getSignedUrlForDocument(path, user!.uid);
       if (result.success && result.signedUrl) {
+        const resolvedType = type || "application/pdf";
+        // On Android native, PDFs can't be rendered in iframes — open in external browser instead
+        if (isNativeRef.current && !resolvedType.startsWith("image/")) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: result.signedUrl });
+          return;
+        }
         setPreviewUrl(result.signedUrl);
         setPreviewName(name);
-        setPreviewType(type || "application/pdf");
+        setPreviewType(resolvedType);
       } else {
         toast.error(result.error || "Could not generate preview link");
       }

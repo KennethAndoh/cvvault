@@ -16,18 +16,18 @@ export default function NotificationInbox({ subscriberId }: { subscriberId?: str
       appearance={{
         baseTheme: dark,
         variables: {
-          colorPrimary: '#3482BE',
+          colorPrimary: '#3B82F6',
           colorPrimaryForeground: '#ffffff',
-          colorSecondary: '#1e293b',
+          colorSecondary: '#172033',
           colorSecondaryForeground: '#f8fafc',
-          colorBackground: '#0f172a',
+          colorBackground: '#0B1120',
           colorForeground: '#f8fafc',
-          colorNeutral: '#334155',
+          colorNeutral: '#1E293B',
           fontSize: '14px',
         },
         elements: {
           bellIcon: {
-            color: '#3482BE',
+            color: 'currentColor',
           },
         },
       }}

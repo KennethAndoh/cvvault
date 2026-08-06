@@ -119,7 +119,7 @@ export async function generateAndSendOtp(userId: string, email: string) {
           subject: "Your 2FA Verification Code - CVVault",
           html: `
             <div style="font-family: sans-serif; padding: 24px; max-width: 480px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
-              <h2 style="color: #3482BE; text-align: center; margin-top: 0;">CVVault 2FA Verification</h2>
+              <h2 style="color: #2563EB; text-align: center; margin-top: 0;">CVVault 2FA Verification</h2>
               <p style="color: #475569; font-size: 14px;">Your 6-digit verification code is:</p>
               <div style="background: #f1f5f9; padding: 16px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #0f172a; border-radius: 8px; margin: 16px 0;">
                 ${otp}

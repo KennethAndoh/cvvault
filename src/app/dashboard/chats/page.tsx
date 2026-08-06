@@ -552,7 +552,7 @@ export default function ChatsPage() {
               <Button 
                 type="submit" 
                 size="icon" 
-                className="bg-[#3482BE] hover:bg-[#2a699a] shrink-0 rounded-xl"
+                className="bg-primary hover:bg-primary/90 shrink-0 rounded-xl"
                 disabled={sendingMessage || !inputText.trim()}
               >
                 {sendingMessage ? (

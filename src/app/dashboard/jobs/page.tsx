@@ -286,7 +286,7 @@ export default function JobsPage() {
         {userRole === "employer" && (
           <Dialog open={isPostJobOpen} onOpenChange={setIsPostJobOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#3482BE] hover:bg-[#2a699a] gap-2">
+              <Button className="bg-primary hover:bg-primary/90 gap-2">
                 <Plus className="h-4 w-4" />
                 Post a Job
               </Button>
@@ -381,7 +381,7 @@ export default function JobsPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" className="bg-[#3482BE] hover:bg-[#2a699a] w-full">Post Job</Button>
+                  <Button type="submit" className="bg-primary hover:bg-primary/90 w-full">Post Job</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -431,7 +431,7 @@ export default function JobsPage() {
                   <CardHeader>
                     <div className="flex justify-between items-start mb-2 gap-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge variant="secondary" className="bg-[#3482BE]/10 text-[#3482BE] hover:bg-[#3482BE]/20">
+                        <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
                           {job.type}
                         </Badge>
                         {job.status === "filled" ? (
@@ -512,7 +512,7 @@ export default function JobsPage() {
                       <div className="flex gap-2 w-full">
                         <Button 
                           className={cn(
-                            "flex-1 bg-[#3482BE] hover:bg-[#2a699a]",
+                            "flex-1 bg-primary hover:bg-primary/90",
                             job.status === "filled" && "bg-muted text-muted-foreground hover:bg-muted cursor-not-allowed"
                           )}
                           disabled={job.status === "filled" || applications.some(app => app.job_id === job.id)}
@@ -685,7 +685,7 @@ export default function JobsPage() {
               Cancel
             </Button>
             <Button
-              className="bg-[#3482BE] hover:bg-[#2a699a]"
+              className="bg-primary hover:bg-primary/90"
               disabled={applying || !selectedDocId}
               onClick={handleApplySubmit}
             >

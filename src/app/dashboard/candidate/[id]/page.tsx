@@ -151,7 +151,7 @@ export default function CandidateProfilePage({ params }: { params: Promise<{ id:
         </Button>
         <Button
           size="sm"
-          className="bg-[#3482BE] hover:bg-[#2a699a] gap-2 rounded-xl"
+          className="bg-primary hover:bg-primary/90 gap-2 rounded-xl"
           onClick={handleChat}
           disabled={chatting}
         >

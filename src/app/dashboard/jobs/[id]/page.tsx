@@ -270,17 +270,17 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
           <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border">
             <Button
               variant={viewMode === "kanban" ? "default" : "ghost"}
-              size="xs"
+              size="sm"
               onClick={() => setViewMode("kanban")}
-              className="gap-1.5 text-xs font-semibold"
+              className="h-7 px-2.5 gap-1.5 text-xs font-semibold"
             >
               <LayoutGrid className="h-3.5 w-3.5" /> Kanban View
             </Button>
             <Button
               variant={viewMode === "list" ? "default" : "ghost"}
-              size="xs"
+              size="sm"
               onClick={() => setViewMode("list")}
-              className="gap-1.5 text-xs font-semibold"
+              className="h-7 px-2.5 gap-1.5 text-xs font-semibold"
             >
               <List className="h-3.5 w-3.5" /> List View
             </Button>
@@ -341,7 +341,7 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
                             <Button
                               variant="link"
                               size="sm"
-                              className="h-auto p-0 text-[#3482BE] hover:text-[#2a699a] font-semibold flex items-center gap-1 text-xs"
+                              className="h-auto p-0 text-primary hover:text-primary/80 font-semibold flex items-center gap-1 text-xs"
                               onClick={() => handleViewResume(app.resume_url, app.employee_id)}
                             >
                               <FileText className="h-3.5 w-3.5" />
@@ -417,7 +417,7 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
                            Chat
                          </Button>
 
-                         <Button size="sm" className="bg-[#3482BE] hover:bg-[#2a699a] gap-2" asChild>
+                         <Button size="sm" className="bg-primary hover:bg-primary/90 gap-2" asChild>
                            <Link href={`/dashboard/candidate/${app.employee_id}`}>
                              <FileText className="h-4 w-4" />
                              View Profile

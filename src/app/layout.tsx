@@ -9,8 +9,8 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#3482BE" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: light)", color: "#2563EB" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B1120" },
   ],
 };
 import { VisualEditsMessenger } from "orchids-visual-edits";

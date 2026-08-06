@@ -81,7 +81,7 @@ export function CertificateExportModal({
               Digitally signed A4 landscape certificate with cryptographic QR proof ledger stamp.
             </DialogDescription>
           </div>
-          <Button onClick={handlePrint} size="sm" className="gap-2 bg-[#3482BE] hover:bg-[#2a699a]">
+          <Button onClick={handlePrint} size="sm" className="gap-2 bg-primary hover:bg-primary/90">
             <Printer className="h-4 w-4" /> Download / Print PDF
           </Button>
         </DialogHeader>

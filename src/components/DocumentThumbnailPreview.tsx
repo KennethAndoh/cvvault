@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Eye, CheckCircle2, ShieldCheck, Clock, XCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Eye, CheckCircle2, ShieldCheck, Clock, XCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DocumentThumbnailPreviewProps {
@@ -30,12 +30,29 @@ export function DocumentThumbnailPreview({
   showOverlay = true,
 }: DocumentThumbnailPreviewProps) {
   const [imageError, setImageError] = useState(false);
+  const [isNative, setIsNative] = useState(false);
+
+  // Detect Android/iOS native WebView on mount
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        setIsNative(Capacitor.isNativePlatform());
+      } catch {
+        setIsNative(false);
+      }
+    };
+    check();
+  }, []);
 
   const isImage = fileUrl && !imageError && (
     fileType?.startsWith("image/") ||
     /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(documentName) ||
     /\.(jpg|jpeg|png|webp|gif|svg)/i.test(fileUrl)
   );
+
+  // On Android native, iframes cannot render PDFs — use placeholder instead
+  const showNativePdfPlaceholder = isNative && fileUrl && !imageError && !isImage;
 
   const isVerified = verificationStatus === "verified";
   const isRejected = verificationStatus === "rejected";
@@ -69,6 +86,14 @@ export function DocumentThumbnailPreview({
                 onError={() => setImageError(true)}
                 className="w-full h-full object-cover object-top transition-transform duration-500 ease-out group-hover/thumb:scale-125"
               />
+            ) : showNativePdfPlaceholder ? (
+              /* Android native placeholder — iframes can't render PDFs in WebView */
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-900 select-none">
+                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                  <FileText className="h-8 w-8 text-primary/70" />
+                </div>
+                <p className="text-[9px] text-slate-400 font-semibold text-center px-2">Tap to open document</p>
+              </div>
             ) : (
               <div className="w-full h-full relative overflow-hidden pointer-events-none select-none">
                 <iframe
