@@ -118,8 +118,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    position: relative;
+    overflow-x: hidden;
   }
 }
 
@@ -167,27 +173,83 @@
   animation: gradient-shift 4s ease infinite; 
 }
 
-/* === Glassmorphism === */
+/* === Glassmorphism System === */
 .glass {
-  background: oklch(1 0 0 / 0.7);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid oklch(1 0 0 / 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(52, 130, 190, 0.08);
 }
 
 .dark .glass {
-  background: oklch(0.18 0.045 252 / 0.7);
-  border: 1px solid oklch(1 0 0 / 0.08);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 .glass-card {
-  background: oklch(1 0 0 / 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 20px -2px rgba(52, 130, 190, 0.1);
 }
 
 .dark .glass-card {
-  background: oklch(0.2 0.05 252 / 0.6);
+  background: rgba(20, 30, 55, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-nav {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-fab {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 30px -5px rgba(52, 130, 190, 0.25), 0 0 15px 0 rgba(52, 130, 190, 0.15);
+}
+
+.dark .glass-fab {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 20px 0 rgba(52, 130, 190, 0.2);
+}
+
+.glass-dropdown {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 20px 40px -10px rgba(52, 130, 190, 0.2), 0 0 20px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass-dropdown {
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 20px 0 rgba(52, 130, 190, 0.15);
 }
 
 /* === Gradient Text === */
@@ -246,6 +308,17 @@
 ::selection {
   background: oklch(0.53 0.165 250 / 0.25);
   color: oklch(0.12 0.03 247);
+}
+
+/* === Touch & Tap Speed Optimizations === */
+html, body, button, a, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active, a:active, [role="button"]:active {
+  transform: scale(0.98);
+  transition: transform 0.08s ease-out;
 }
 
 /* Hide Next.js error overlay portal */

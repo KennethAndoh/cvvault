@@ -31,6 +31,12 @@ public class MainActivity extends BridgeActivity {
             settings.setJavaScriptCanOpenWindowsAutomatically(true);
             settings.setSupportMultipleWindows(true);
 
+            String defaultUserAgent = settings.getUserAgentString();
+            if (defaultUserAgent != null) {
+                String cleanUserAgent = defaultUserAgent.replace("; wv", "");
+                settings.setUserAgentString(cleanUserAgent);
+            }
+
             CookieManager cookieManager = CookieManager.getInstance();
             cookieManager.setAcceptCookie(true);
             cookieManager.setAcceptThirdPartyCookies(webView, true);
@@ -45,6 +51,11 @@ public class MainActivity extends BridgeActivity {
                     popupSettings.setDomStorageEnabled(true);
                     popupSettings.setDatabaseEnabled(true);
                     popupSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+                    if (defaultUserAgent != null) {
+                        String cleanUserAgent = defaultUserAgent.replace("; wv", "");
+                        popupSettings.setUserAgentString(cleanUserAgent);
+                    }
 
                     CookieManager.getInstance().setAcceptThirdPartyCookies(popupWebView, true);
 

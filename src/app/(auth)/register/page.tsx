@@ -116,36 +116,58 @@ export default function RegisterPage() {
     });
   }, [router]);
 
+  React.useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize({
+        clientId: "666493076753-web.apps.googleusercontent.com",
+        scopes: ["profile", "email"],
+        grantOfflineAccess: true,
+      }).catch((err: any) => console.log("GoogleAuth init warning:", err));
+    }
+  }, []);
+
   const handleGoogleRegister = async () => {
     setGoogleLoading(true);
     try {
       if (Capacitor.isNativePlatform()) {
-        const googleUser = await GoogleAuth.signIn();
-        const idToken = googleUser.authentication.idToken;
-        const credential = GoogleAuthProvider.credential(idToken);
-        const userCredential = await signInWithCredential(auth, credential);
+        try {
+          await GoogleAuth.initialize({
+            clientId: "666493076753-web.apps.googleusercontent.com",
+            scopes: ["profile", "email"],
+            grantOfflineAccess: true,
+          });
+          const googleUser = await GoogleAuth.signIn();
+          const idToken = googleUser.authentication.idToken;
+          if (idToken) {
+            const credential = GoogleAuthProvider.credential(idToken);
+            const userCredential = await signInWithCredential(auth, credential);
 
-        const redirect = await getPostAuthRedirect(userCredential.user.uid);
-        if (redirect.success && redirect.path === "/register/role") {
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("cvvault_new_registration", "true");
+            const redirect = await getPostAuthRedirect(userCredential.user.uid);
+            if (redirect.success && redirect.path === "/register/role") {
+              if (typeof window !== "undefined") {
+                sessionStorage.setItem("cvvault_new_registration", "true");
+              }
+            }
+            toast.success("Signed up with Google!");
+            router.push(redirect.success ? redirect.path : "/dashboard");
+            return;
           }
+        } catch (nativeErr: any) {
+          console.warn("Native GoogleAuth failed, falling back to Web OAuth:", nativeErr);
         }
-        toast.success("Signed up with Google!");
-        router.push(redirect.success ? redirect.path : "/dashboard");
-      } else {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
-        const credential = await signInWithPopup(auth, provider);
-        const redirect = await getPostAuthRedirect(credential.user.uid);
-        if (redirect.success && redirect.path === "/register/role") {
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("cvvault_new_registration", "true");
-          }
-        }
-        toast.success("Signed up with Google!");
-        router.push(redirect.success ? redirect.path : "/dashboard");
       }
+
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      const credential = await signInWithPopup(auth, provider);
+      const redirect = await getPostAuthRedirect(credential.user.uid);
+      if (redirect.success && redirect.path === "/register/role") {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("cvvault_new_registration", "true");
+        }
+      }
+      toast.success("Signed up with Google!");
+      router.push(redirect.success ? redirect.path : "/dashboard");
     } catch (error: any) {
       if (error.code !== "auth/popup-closed-by-user" && error.code !== "auth/cancelled-popup-request") {
         toast.error(error.message || "Google sign-in failed");

@@ -83,21 +83,20 @@ export default function DashboardPage() {
     if (user) {
       fetchDashboardData(true);
 
-      // Lightweight background sync every 45 seconds
+      // Lightweight background sync every 60 seconds
       const interval = setInterval(() => {
         fetchDashboardData(false);
-      }, 45000);
+      }, 60000);
 
       return () => clearInterval(interval);
     }
   }, [user]);
 
   const fetchDashboardData = async (isInitial = false) => {
-    if (isInitial) setLoading(true);
+    if (isInitial && !cachedProfile) setLoading(true);
     const userRole = profile?.role || cachedProfile?.role || "employee";
 
-    const [profileRes, docsRes, tokensRes, jobsRes, appsRes, auditRes] = await Promise.all([
-      getProfile(user!.uid),
+    const [docsRes, tokensRes, jobsRes, appsRes, auditRes] = await Promise.all([
       getDocuments(user!.uid),
       getSharingTokens(user!.uid),
       getJobs({ employer_id: user!.uid }),
@@ -108,10 +107,6 @@ export default function DashboardPage() {
       ),
       getRecentAuditLogs(user!.uid, 10),
     ]);
-
-    if (profileRes.success && profileRes.profile) {
-      setProfile(profileRes.profile);
-    }
 
     if (docsRes.success) {
       const docs = docsRes.documents || [];

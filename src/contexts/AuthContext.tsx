@@ -51,13 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
-      setLoading(false);
       
       if (authUser) {
-        // Fetch profile once on auth change
-        fetchUserProfile(authUser.uid);
+        // Fetch profile once on auth change before ending loading state
+        await fetchUserProfile(authUser.uid);
 
         // Non-blocking background session logging
         const deviceInfo = typeof navigator !== "undefined" ? navigator.userAgent : "Unknown";
@@ -65,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();

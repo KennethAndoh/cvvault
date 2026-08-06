@@ -32,6 +32,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { Capacitor } from "@capacitor/core";
 import { NotificationBubble } from "@/components/NotificationBubble";
 
 const fadeUp = {
@@ -52,12 +53,23 @@ export default function LandingPage() {
   const logoUrl =
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
   const [scrolled, setScrolled] = useState(false);
+  const [isNative, setIsNative] = useState(false);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (!authLoading && user) {
-      router.replace("/dashboard");
+    if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
+      setIsNative(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (user) {
+        router.replace("/dashboard");
+      } else if (Capacitor.isNativePlatform()) {
+        router.replace("/login");
+      }
     }
   }, [user, authLoading, router]);
 
@@ -101,9 +113,19 @@ export default function LandingPage() {
   const profileChecklist = [
     "Customizable vanity URLs (cvvault.com/p/yourname)",
     "One-click verification for recruiters",
-    "Granular document-level permission control",
-    "Activity logs showing who viewed your documents",
   ];
+
+  if (isNative || (authLoading && typeof window !== "undefined" && Capacitor.isNativePlatform())) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-4">
+        <div className="flex flex-col items-center gap-4">
+          <img src={logoUrl} alt="CVVault" className="h-14 w-14 rounded-2xl shadow-xl animate-pulse" />
+          <div className="h-8 w-8 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+          <p className="text-sm text-slate-400 font-medium">Opening CVVault…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-x-hidden">
