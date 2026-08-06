@@ -60,16 +60,26 @@ export default function DashboardPage() {
   const [previewName, setPreviewName] = useState("");
   const [previewType, setPreviewType] = useState("");
 
-  const handleOpenPreview = async (path: string, name: string, type?: string) => {
+  const handleOpenPreview = async (path: string, name: string, type?: string, existingUrl?: string) => {
     try {
+      let targetUrl = existingUrl || null;
       const result = await getSignedUrlForDocument(path, user!.uid);
       if (result.success && result.signedUrl) {
-        setPreviewUrl(result.signedUrl);
+        targetUrl = result.signedUrl;
+      }
+      if (targetUrl) {
+        setPreviewUrl(targetUrl);
         setPreviewName(name);
         setPreviewType(type || "application/pdf");
       }
     } catch (error) {
-      console.error("Failed to generate preview", error);
+      if (existingUrl) {
+        setPreviewUrl(existingUrl);
+        setPreviewName(name);
+        setPreviewType(type || "application/pdf");
+      } else {
+        console.error("Failed to generate preview", error);
+      }
     }
   };
 
@@ -520,12 +530,12 @@ export default function DashboardPage() {
                           aspectRatio="mini"
                           showOverlay={false}
                           className="shrink-0 h-16 w-14 p-1 border border-border/40 bg-muted/20 shadow-xs"
-                          onPreview={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                          onPreview={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type, doc.url)}
                         />
                         <div className="min-w-0">
                           <div
                             className="font-semibold text-sm truncate max-w-[170px] sm:max-w-[240px] text-foreground group-hover:text-primary transition-colors cursor-pointer"
-                            onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                            onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type, doc.url)}
                             title={doc.name}
                           >
                             {doc.name}
@@ -562,7 +572,7 @@ export default function DashboardPage() {
                           variant="outline"
                           size="sm"
                           className="h-8 gap-1 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                          onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type, doc.url)}
                         >
                           <Eye className="h-3.5 w-3.5" /> Preview
                         </Button>

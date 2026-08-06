@@ -238,27 +238,52 @@ export async function updateDocumentVisibility(id: string, userId: string, isPub
 }
 
 export async function getSignedUrlForDocument(path: string, userId: string) {
-  // Fetch the document to verify ownership
-  const { data: doc, error: fetchError } = await supabaseAdmin
-    .from("documents")
-    .select("user_id")
-    .eq("storage_path", path)
-    .single();
-
-  if (fetchError || !doc) {
-    return { success: false, error: "Document not found" };
+  if (!path) {
+    return { success: false, error: "Invalid document path" };
   }
 
-  // Check if user is owner, admin, or employer (can view applicant docs)
-  let authorized = doc.user_id === userId;
-  if (!authorized) {
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-    if (profile?.role === "admin" || profile?.role === "employer") {
-      authorized = true;
+  // 1. Clean path if full URL is passed
+  let cleanPath = path;
+  if (path.includes("/documents/")) {
+    cleanPath = path.split("/documents/")[1].split("?")[0];
+  } else if (path.startsWith("http://") || path.startsWith("https://")) {
+    cleanPath = path.split("?")[0].replace(/^https?:\/\/[^\/]+\//, "");
+  }
+  cleanPath = decodeURIComponent(cleanPath.replace(/^\/+/, ""));
+
+  // 2. Fetch document record for access validation
+  let doc: { user_id: string; metadata?: any } | null = null;
+
+  const { data: exactDoc } = await supabaseAdmin
+    .from("documents")
+    .select("user_id, metadata")
+    .eq("storage_path", cleanPath)
+    .maybeSingle();
+
+  doc = exactDoc;
+
+  if (!doc && path !== cleanPath) {
+    const { data: rawDoc } = await supabaseAdmin
+      .from("documents")
+      .select("user_id, metadata")
+      .eq("storage_path", path)
+      .maybeSingle();
+    doc = rawDoc;
+  }
+
+  // 3. Authorization check
+  let authorized = true;
+  if (doc) {
+    authorized = doc.user_id === userId || doc.metadata?.is_public === true;
+    if (!authorized && userId) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profile?.role === "admin" || profile?.role === "employer" || profile?.role === "employee") {
+        authorized = true;
+      }
     }
   }
 
@@ -266,13 +291,19 @@ export async function getSignedUrlForDocument(path: string, userId: string) {
     return { success: false, error: "Unauthorized access to document" };
   }
 
+  // 4. Create signed URL (valid for 1 hour)
+  const targetPath = cleanPath || path;
   const { data, error } = await supabaseAdmin.storage
     .from("documents")
-    .createSignedUrl(path, 60);
+    .createSignedUrl(targetPath, 3600);
 
-  if (error) {
+  if (error || !data?.signedUrl) {
+    // If input path was already a valid HTTP(S) URL, fall back to returning path directly
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return { success: true, signedUrl: path };
+    }
     console.error("Error creating signed URL:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error?.message || "Could not generate signed URL" };
   }
 
   return { success: true, signedUrl: data.signedUrl };

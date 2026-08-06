@@ -108,26 +108,37 @@ export default function DocumentsPage() {
     checkNative();
   }, []);
 
-  const handleOpenPreview = async (path: string, name: string, type?: string) => {
+  const handleOpenPreview = async (path: string, name: string, type?: string, existingUrl?: string) => {
     setPreviewLoading(true);
     try {
+      let urlToUse = existingUrl || null;
       const result = await getSignedUrlForDocument(path, user!.uid);
       if (result.success && result.signedUrl) {
+        urlToUse = result.signedUrl;
+      }
+
+      if (urlToUse) {
         const resolvedType = type || "application/pdf";
         // On Android native, PDFs can't be rendered in iframes — open in external browser instead
         if (isNativeRef.current && !resolvedType.startsWith("image/")) {
           const { Browser } = await import("@capacitor/browser");
-          await Browser.open({ url: result.signedUrl });
+          await Browser.open({ url: urlToUse });
           return;
         }
-        setPreviewUrl(result.signedUrl);
+        setPreviewUrl(urlToUse);
         setPreviewName(name);
         setPreviewType(resolvedType);
       } else {
         toast.error(result.error || "Could not generate preview link");
       }
     } catch (error) {
-      toast.error("Failed to generate preview");
+      if (existingUrl) {
+        setPreviewUrl(existingUrl);
+        setPreviewName(name);
+        setPreviewType(type || "application/pdf");
+      } else {
+        toast.error("Failed to generate preview");
+      }
     } finally {
       setPreviewLoading(false);
     }
@@ -209,26 +220,34 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDownload = async (path: string, name: string) => {
+  const handleDownload = async (path: string, name: string, existingUrl?: string) => {
     try {
+      let downloadUrl = existingUrl || null;
       const result = await getSignedUrlForDocument(path, user!.uid);
       if (result.success && result.signedUrl) {
-        const response = await fetch(result.signedUrl);
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        toast.success("Download started");
-      } else {
-        toast.error(result.error || "Download failed");
+        downloadUrl = result.signedUrl;
       }
+      if (!downloadUrl) {
+        toast.error("Download failed");
+        return;
+      }
+      const response = await fetch(downloadUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Download started");
     } catch (error) {
-      toast.error("Download failed");
+      if (existingUrl) {
+        window.open(existingUrl, "_blank");
+      } else {
+        toast.error("Download failed");
+      }
     }
   };
 
@@ -412,7 +431,7 @@ export default function DocumentsPage() {
                 fileUrl={doc.url}
                 fileType={doc.metadata?.type}
                 createdAt={doc.created_at}
-                onPreview={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                onPreview={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type, doc.url)}
                 className="h-44 rounded-b-none border-x-0 border-t-0"
               />
 
@@ -473,7 +492,7 @@ export default function DocumentsPage() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1 gap-1 h-8 text-xs font-semibold" 
-                      onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type)}
+                      onClick={() => handleOpenPreview(doc.storage_path, doc.name, doc.metadata?.type, doc.url)}
                     >
                       <Eye className="h-3.5 w-3.5" /> Preview
                     </Button>
@@ -501,7 +520,7 @@ export default function DocumentsPage() {
                       variant="outline" 
                       size="icon" 
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleDownload(doc.storage_path, doc.name)}
+                      onClick={() => handleDownload(doc.storage_path, doc.name, doc.url)}
                       title="Download"
                     >
                       <Download className="h-3.5 w-3.5" />
