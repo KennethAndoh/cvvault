@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isAdmin, getAllProfiles, getAllDocuments, updateDocumentMetadata } from "@/app/actions/admin";
 import { getSignedUrlForDocument } from "@/app/actions/documents";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { 
   Table, 
@@ -89,11 +90,40 @@ export default function AdminPage() {
 
   const handleViewFile = async (path: string) => {
     try {
-      const result = await getSignedUrlForDocument(path, user!.uid);
-      if (result.success && result.signedUrl) {
-        window.open(result.signedUrl, "_blank");
+      let signedUrl: string | null = null;
+      try {
+        const result = await getSignedUrlForDocument(path, user!.uid);
+        if (result.success && result.signedUrl) signedUrl = result.signedUrl;
+      } catch (e) {
+        console.warn("Server action failed, using client fallback:", e);
+      }
+
+      if (!signedUrl) {
+        const { data, error } = await supabase.storage
+          .from("documents")
+          .createSignedUrl(path, 3600);
+        if (!error && data?.signedUrl) signedUrl = data.signedUrl;
+      }
+
+      if (signedUrl) {
+        const isMobileOrAndroid = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isPdf = !path.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i);
+        const targetUrl = (isMobileOrAndroid && isPdf)
+          ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(signedUrl)}`
+          : signedUrl;
+
+        try {
+          const { Capacitor } = await import("@capacitor/core");
+          if (Capacitor.isNativePlatform()) {
+            const { Browser } = await import("@capacitor/browser");
+            await Browser.open({ url: targetUrl });
+            return;
+          }
+        } catch (e) {}
+
+        window.open(targetUrl, "_blank");
       } else {
-        toast.error(result.error || "Failed to view document");
+        toast.error("Failed to view document");
       }
     } catch (error) {
       toast.error("Failed to generate preview URL");

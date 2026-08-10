@@ -97,8 +97,8 @@ export function DocumentThumbnailPreview({
             ) : (
               <div className="w-full h-full relative overflow-hidden pointer-events-none select-none">
                 <iframe
-                  src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                  className="w-[200%] h-[200%] border-none pointer-events-none origin-top-left transform scale-50 group-hover/thumb:scale-[0.58] transition-transform duration-500 ease-out"
+                  src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(fileUrl)}`}
+                  className="w-[200%] h-[200%] border-none pointer-events-none origin-top-left transform scale-50 group-hover/thumb:scale-[0.58] transition-transform duration-500 ease-out bg-white"
                   title={documentName}
                 />
               </div>

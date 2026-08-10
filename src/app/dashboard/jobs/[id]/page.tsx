@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { KanbanApplicantPipeline } from "@/components/KanbanApplicantPipeline";
 import { getSignedUrlForDocument, verifyApplicantDocument } from "@/app/actions/documents";
+import { supabase } from "@/lib/supabase";
 import { createChat } from "@/app/actions/chat";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -96,12 +97,41 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
 
   const handleViewResume = async (resumeUrl: string, applicantId: string) => {
     try {
-      const res = await getSignedUrlForDocument(resumeUrl, applicantId);
-      if (res.success && res.signedUrl) {
-        window.open(res.signedUrl, "_blank");
+      let signedUrl: string | null = null;
+      try {
+        const res = await getSignedUrlForDocument(resumeUrl, applicantId);
+        if (res.success && res.signedUrl) signedUrl = res.signedUrl;
+      } catch (e) {
+        console.warn("Server action failed, using client fallback:", e);
+      }
+
+      if (!signedUrl) {
+        const { data, error } = await supabase.storage
+          .from("documents")
+          .createSignedUrl(resumeUrl, 3600);
+        if (!error && data?.signedUrl) signedUrl = data.signedUrl;
+      }
+
+      if (signedUrl) {
+        const isMobileOrAndroid = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isPdf = !resumeUrl.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i);
+        const targetUrl = (isMobileOrAndroid && isPdf)
+          ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(signedUrl)}`
+          : signedUrl;
+
+        try {
+          const { Capacitor } = await import("@capacitor/core");
+          if (Capacitor.isNativePlatform()) {
+            const { Browser } = await import("@capacitor/browser");
+            await Browser.open({ url: targetUrl });
+            return;
+          }
+        } catch (e) {}
+
+        window.open(targetUrl, "_blank");
       } else {
         toast.error("Error", {
-          description: res.error || "Could not generate file access link."
+          description: "Could not generate file access link."
         });
       }
     } catch (err) {

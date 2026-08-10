@@ -22,6 +22,7 @@ import {
   Clock,
   ArrowRight,
   UploadCloud,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -80,8 +81,18 @@ export default function DashboardPage() {
     try {
       let targetUrl: string | null = null;
 
-      if (isNativeRef.current) {
-        // On Android native: use Supabase client SDK directly — server actions don't work in static Capacitor builds
+      // 1. Try server action first
+      try {
+        if (user?.uid) {
+          const result = await getSignedUrlForDocument(path, user.uid);
+          if (result.success && result.signedUrl) targetUrl = result.signedUrl;
+        }
+      } catch (e) {
+        console.warn("Server action signed URL failed, trying client SDK:", e);
+      }
+
+      // 2. Client SDK fallback for Capacitor Android static builds
+      if (!targetUrl) {
         try {
           const { data, error } = await supabase.storage
             .from("documents")
@@ -90,38 +101,17 @@ export default function DashboardPage() {
         } catch (e) {
           console.warn("Supabase client signed URL failed:", e);
         }
-        targetUrl = targetUrl || existingUrl || null;
-
-        if (targetUrl) {
-          const resolvedType = type || "application/pdf";
-          if (!resolvedType.startsWith("image/")) {
-            const { Browser } = await import("@capacitor/browser");
-            await Browser.open({ url: targetUrl });
-            return;
-          }
-          // Images: show inline
-          setPreviewUrl(targetUrl);
-          setPreviewName(name);
-          setPreviewType(resolvedType);
-        } else {
-          console.error("Failed to generate preview on native");
-        }
-        return;
       }
 
-      // On web: use server action
-      try {
-        const result = await getSignedUrlForDocument(path, user!.uid);
-        if (result.success && result.signedUrl) targetUrl = result.signedUrl;
-      } catch (e) {
-        console.warn("Server action signed URL failed:", e);
-      }
       targetUrl = targetUrl || existingUrl || null;
 
       if (targetUrl) {
+        const resolvedType = type || (name.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? "image/jpeg" : "application/pdf");
         setPreviewUrl(targetUrl);
         setPreviewName(name);
-        setPreviewType(type || "application/pdf");
+        setPreviewType(resolvedType);
+      } else {
+        console.error("Failed to generate document preview link");
       }
     } catch (error) {
       if (existingUrl) {
@@ -763,23 +753,46 @@ export default function DashboardPage() {
       {/* Lightbox / Previewer Dialog */}
       <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
         <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-6">
-          <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold truncate">
-              <FileText className="h-5 w-5 text-primary" />
-              {previewName}
-            </DialogTitle>
-            <DialogDescription>
-              Previewing uploaded document.
-            </DialogDescription>
+          <DialogHeader className="pb-4 border-b flex flex-row items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="flex items-center gap-2 text-xl font-bold truncate">
+                <FileText className="h-5 w-5 text-primary shrink-0" />
+                <span className="truncate">{previewName}</span>
+              </DialogTitle>
+              <DialogDescription className="truncate">
+                Previewing uploaded document.
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 pr-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (!previewUrl) return;
+                  try {
+                    const { Capacitor } = await import("@capacitor/core");
+                    if (Capacitor.isNativePlatform()) {
+                      const { Browser } = await import("@capacitor/browser");
+                      await Browser.open({ url: previewUrl });
+                      return;
+                    }
+                  } catch (e) {}
+                  window.open(previewUrl, "_blank");
+                }}
+                className="gap-1.5 text-xs font-semibold"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Open / Download
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="flex-1 w-full h-full min-h-0 relative bg-muted rounded-lg overflow-hidden flex items-center justify-center mt-4 border">
+          <div className="flex-1 w-full h-full min-h-0 relative bg-slate-950/90 rounded-lg overflow-hidden flex items-center justify-center mt-4 border border-border">
             {previewUrl && (
-              previewType.startsWith("image/") ? (
-                <img src={previewUrl} alt={previewName} className="max-h-full max-w-full object-contain" />
+              previewType.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(previewName) ? (
+                <img src={previewUrl} alt={previewName} className="max-h-full max-w-full object-contain p-2" />
               ) : (
                 <iframe 
-                  src={previewUrl}
-                  className="w-full h-full border-none rounded-lg"
+                  src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(previewUrl)}`}
+                  className="w-full h-full border-none rounded-lg bg-white"
                   title={previewName}
                 />
               )

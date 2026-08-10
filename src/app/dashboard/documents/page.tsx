@@ -24,7 +24,8 @@ import {
   XCircle,
   Clock,
   QrCode,
-  Award
+  Award,
+  ExternalLink
 } from "lucide-react";
 import { DocumentThumbnailPreview } from "@/components/DocumentThumbnailPreview";
 import { CertificateExportModal } from "@/components/CertificateExportModal";
@@ -109,29 +110,29 @@ export default function DocumentsPage() {
     checkNative();
   }, []);
 
-  // Helper: get a valid URL for a document - skips server action on Android native
+  // Helper: get a valid URL for a document - tries server action -> client SDK -> existingUrl
   const resolveDocumentUrl = async (storagePath: string, existingUrl?: string): Promise<string | null> => {
-    // On Android native (Capacitor), server actions don't work in static builds.
-    // Prefer: fresh Supabase client signed URL > existingUrl from page load.
-    if (isNativeRef.current) {
-      try {
-        const { data, error } = await supabase.storage
-          .from("documents")
-          .createSignedUrl(storagePath, 3600);
-        if (!error && data?.signedUrl) return data.signedUrl;
-      } catch (e) {
-        console.warn("Supabase client signed URL failed, falling back to cached url:", e);
+    // 1. Try server action first
+    try {
+      if (user?.uid) {
+        const result = await getSignedUrlForDocument(storagePath, user.uid);
+        if (result.success && result.signedUrl) return result.signedUrl;
       }
-      return existingUrl || null;
+    } catch (e) {
+      console.warn("Server action signed URL failed, trying client SDK:", e);
     }
 
-    // On web: use the server action (most secure, verifies ownership server-side)
+    // 2. Client-side Supabase signed URL (essential for Capacitor Android static builds where server actions are unavailable)
     try {
-      const result = await getSignedUrlForDocument(storagePath, user!.uid);
-      if (result.success && result.signedUrl) return result.signedUrl;
+      const { data, error } = await supabase.storage
+        .from("documents")
+        .createSignedUrl(storagePath, 3600);
+      if (!error && data?.signedUrl) return data.signedUrl;
     } catch (e) {
-      console.warn("Server action signed URL failed:", e);
+      console.warn("Supabase client signed URL failed:", e);
     }
+
+    // 3. Fallback to pre-existing URL if available
     return existingUrl || null;
   };
 
@@ -141,14 +142,7 @@ export default function DocumentsPage() {
       const urlToUse = await resolveDocumentUrl(path, existingUrl);
 
       if (urlToUse) {
-        const resolvedType = type || "application/pdf";
-        // On Android native, PDFs can't be rendered in iframes — open in native browser
-        if (isNativeRef.current && !resolvedType.startsWith("image/")) {
-          const { Browser } = await import("@capacitor/browser");
-          await Browser.open({ url: urlToUse });
-          return;
-        }
-        // On Android native with images, or on web for all types:
+        const resolvedType = type || (name.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? "image/jpeg" : "application/pdf");
         setPreviewUrl(urlToUse);
         setPreviewName(name);
         setPreviewType(resolvedType);
@@ -157,14 +151,9 @@ export default function DocumentsPage() {
       }
     } catch (error) {
       if (existingUrl) {
-        if (isNativeRef.current) {
-          const { Browser } = await import("@capacitor/browser");
-          await Browser.open({ url: existingUrl });
-        } else {
-          setPreviewUrl(existingUrl);
-          setPreviewName(name);
-          setPreviewType(type || "application/pdf");
-        }
+        setPreviewUrl(existingUrl);
+        setPreviewName(name);
+        setPreviewType(type || "application/pdf");
       } else {
         toast.error("Failed to generate preview");
       }
@@ -599,23 +588,46 @@ export default function DocumentsPage() {
       {/* Lightbox / Previewer Dialog */}
       <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
         <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-6">
-          <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold truncate">
-              <FileText className="h-5 w-5 text-primary" />
-              {previewName}
-            </DialogTitle>
-            <DialogDescription>
-              Previewing the uploaded document file.
-            </DialogDescription>
+          <DialogHeader className="pb-4 border-b flex flex-row items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="flex items-center gap-2 text-xl font-bold truncate">
+                <FileText className="h-5 w-5 text-primary shrink-0" />
+                <span className="truncate">{previewName}</span>
+              </DialogTitle>
+              <DialogDescription className="truncate">
+                Previewing uploaded document file.
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 pr-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (!previewUrl) return;
+                  try {
+                    const { Capacitor } = await import("@capacitor/core");
+                    if (Capacitor.isNativePlatform()) {
+                      const { Browser } = await import("@capacitor/browser");
+                      await Browser.open({ url: previewUrl });
+                      return;
+                    }
+                  } catch (e) {}
+                  window.open(previewUrl, "_blank");
+                }}
+                className="gap-1.5 text-xs font-semibold"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Open / Download
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="flex-1 w-full h-full min-h-0 relative bg-muted rounded-lg overflow-hidden flex items-center justify-center mt-4 border">
+          <div className="flex-1 w-full h-full min-h-0 relative bg-slate-950/90 rounded-lg overflow-hidden flex items-center justify-center mt-4 border border-border">
             {previewUrl && (
-              previewType.startsWith("image/") ? (
-                <img src={previewUrl} alt={previewName} className="max-h-full max-w-full object-contain" />
+              previewType.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(previewName) ? (
+                <img src={previewUrl} alt={previewName} className="max-h-full max-w-full object-contain p-2" />
               ) : (
                 <iframe 
-                  src={previewUrl}
-                  className="w-full h-full border-none rounded-lg"
+                  src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(previewUrl)}`}
+                  className="w-full h-full border-none rounded-lg bg-white"
                   title={previewName}
                 />
               )

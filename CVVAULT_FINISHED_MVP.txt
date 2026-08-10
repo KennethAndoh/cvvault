@@ -184,13 +184,11 @@ multi-channel notifications, and comprehensive audit logging.
 - Mobile Horizontal Scroll Overflow Prevention (globals.css, layout.tsx, dashboard/layout.tsx):
   * Applied `overflow-x: hidden`, `max-w-full`, and viewport constraints on `html`, `body`, root layouts, and dashboard page containers, completely eliminating horizontal scrolling and page wobbling on mobile viewports.
 
-- Android Document Preview Fix (documents/page.tsx, DocumentThumbnailPreview.tsx):
-  * Diagnosed root cause: Android WebView (Capacitor) cannot natively render PDF files inside <iframe> elements, resulting in blank/empty previews.
-  * Installed `@capacitor/browser` plugin to enable opening documents in a full native in-app browser.
-  * Added dynamic Capacitor platform detection via `Capacitor.isNativePlatform()` on mount in both the documents page and thumbnail component.
-  * On Android native: document preview button opens the signed Supabase URL using `Browser.open()` from `@capacitor/browser` (native in-app browser, supports PDF rendering).
-  * On Android native: document card thumbnails for PDFs render a clean styled "Tap to open document" placeholder with a FileText icon instead of the blank iframe.
-  * On web browsers: all existing iframe-based inline preview behavior is preserved unchanged.
+- Android & Mobile Document Preview Fix (documents/page.tsx, dashboard/page.tsx, jobs/[id]/page.tsx, admin/page.tsx, SharedAccessView.tsx, DocumentThumbnailPreview.tsx):
+  * Diagnosed root cause: Android WebViews (Capacitor) and Android mobile Chrome cannot render PDF/DOCX files natively inside standard `<iframe>` tags or `window.open` direct links, resulting in blank pages or unhandled download prompts. Server actions also require fallback on static Capacitor builds.
+  * Implemented robust multi-tiered URL resolution (`resolveDocumentUrl`): Tries Next.js Server Action -> Client-side Supabase `createSignedUrl` fallback -> Cached URL.
+  * Embedded Google Docs Viewer (`https://docs.google.com/gview?embedded=true&url=...`) inside in-app `<iframe />` Lightbox modals and document thumbnail previews for all non-image files on Android/Mobile.
+  * Added an explicit "Open / Download" button in the Lightbox header using `@capacitor/browser` on native Android and `window.open` on web to allow opening documents in external PDF reader apps.
 - Custom Palette & Theme Refinement (globals.css, layout.tsx, components):
   * Light Theme System:
     - Primary Brand: #2563EB | Background: #F8FAFC | Cards: #FFFFFF | Text Primary: #0F172A | Text Secondary: #64748B

@@ -44,7 +44,22 @@ export function SharedAccessView({
       const res = await getSignedUrlForShareToken(token, docId);
       if (res.success && res.signedUrl) {
         if (type === "preview") {
-          window.open(res.signedUrl, "_blank");
+          const isMobileOrAndroid = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          const isPdf = !docName.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i);
+          const targetUrl = (isMobileOrAndroid && isPdf)
+            ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(res.signedUrl)}`
+            : res.signedUrl;
+
+          try {
+            const { Capacitor } = await import("@capacitor/core");
+            if (Capacitor.isNativePlatform()) {
+              const { Browser } = await import("@capacitor/browser");
+              await Browser.open({ url: targetUrl });
+              return;
+            }
+          } catch (e) {}
+
+          window.open(targetUrl, "_blank");
         } else {
           // Download the file
           const response = await fetch(res.signedUrl);

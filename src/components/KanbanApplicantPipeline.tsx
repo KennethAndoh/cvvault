@@ -170,7 +170,9 @@ export function KanbanApplicantPipeline({
                                 {applicantName}
                               </span>
                               {isVerified && (
-                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" title="Verified Proof" />
+                                <span title="Verified Proof">
+                                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                                </span>
                               )}
                             </div>
                             <span className="text-[11px] text-muted-foreground block truncate">
@@ -212,9 +214,8 @@ export function KanbanApplicantPipeline({
                         {/* AI Match Score Badge */}
                         <div className="pt-1">
                           <MatchScoreBadge
-                            candidateSkills={app.applicant?.skills || []}
-                            jobRequiredSkills={jobSkills}
-                            isVerified={isVerified}
+                            candidateId={app.employee_id}
+                            jobId={app.job_id}
                           />
                         </div>
 
