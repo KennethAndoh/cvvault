@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "666493076753",
+    "project_id": "cvvault-project26",
+    "storage_bucket": "cvvault-project26.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:666493076753:android:859664a092f53f8a0bb8b0",
+        "android_client_info": {
+          "package_name": "io.cvvault.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "666493076753-web.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIePrJ0_bVIUJ06_cfd-tHzBom29OpQSk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

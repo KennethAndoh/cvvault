@@ -17,6 +17,7 @@ import { VisualEditsMessenger } from "orchids-visual-edits";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { PushNotificationListener } from "@/components/PushNotificationListener";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -79,6 +80,7 @@ export default function RootLayout({
           themes={["light", "light-warm", "dark", "dark-midnight"]}
         >
           <AuthProvider>
+            <PushNotificationListener />
             {children}
             <Toaster />
           </AuthProvider>

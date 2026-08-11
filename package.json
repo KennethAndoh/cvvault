@@ -13,6 +13,7 @@
     "@capacitor/android": "^8.5.0",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/push-notifications": "^8.0.0",
     "@codetrix-studio/capacitor-google-auth": "3.3.6",
     "@hookform/resolvers": "^5.2.2",
     "@novu/api": "^3.18.2",

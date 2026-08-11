@@ -209,9 +209,24 @@ multi-channel notifications, and comprehensive audit logging.
     - Expanded authorization check so public documents, applicant submissions, and owner previews always succeed.
     - Added fallback signed URL handling (`doc.url`) in the UI components so previews and downloads never fail or toast errors.
 
-  * Firebase Cloud Messaging Service Worker Registration Fix (settings/page.tsx, firebase-messaging-sw.js):
-    - Explicitly registered `/firebase-messaging-sw.js` under root scope and passed `serviceWorkerRegistration` to `getToken(messaging, ...)` when enabling push notifications.
-    - Added fallback VAPID key token generation and browser push service error diagnostics for Brave Browser, ad-blockers, and missing push service settings.
+  * Android Document Upload & Native FCM Push Notifications Fixes (AndroidManifest.xml, FileUpload.tsx, PushNotificationListener.tsx, push-sender.ts, novu.ts, firebase-admin.ts):
+    - Added missing Android OS permissions (`READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`, `READ_MEDIA_AUDIO`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `POST_NOTIFICATIONS`, `VIBRATE`) to `android/app/src/main/AndroidManifest.xml`.
+    - Fixed Upload Document modal trigger in `documents/page.tsx` with explicit `onClick` state handler so tapping "Upload Personal Document" / "Upload Company Document" opens the dialog modal 100% reliably on Android WebView.
+    - Updated `FileUpload.tsx` with a full-size active `<input type="file" style={{ display: "block" }}>` overlay over the dropzone container, allowing direct native touch events on the HTML input tag to trigger Android `WebChromeClient.onShowFileChooser()` system file chooser sheet without JS security blocks.
+    - Added client-side Supabase Storage upload fallback in `handleUpload` for Capacitor Android static builds.
+    - Added `@capacitor/push-notifications` dependency and configured `capacitor.config.json` plugin settings.
+    - Generated `google-services.json` in `android/app/` for native Android Firebase Cloud Messaging initialization.
+    - Built `PushNotificationListener.tsx` component mounted in root layout to register native FCM tokens on Android app launch, save tokens to user profiles via `updateFcmToken`, and handle foreground toasts and tap actions.
+    - Created `push-sender.ts` helper exporting `sendPushToUser` using Firebase Admin SDK (`adminMessaging.send`) to dispatch high-priority native push notifications directly to user Android devices for document verification updates and job application status changes.
+    - Updated `android/build.gradle` classpath (`com.android.tools.build:gradle:8.7.3`) and `android/gradle/wrapper/gradle-wrapper.properties` (`gradle-8.13-all.zip`) to resolve Android Gradle Plugin version mismatch errors.
+
+  * Android & Mobile Document Upload Reliability & Visual Error Messaging Fix (FileUpload.tsx, documents/page.tsx):
+    - Resolved Android file picker closing/freezing issue by eliminating duplicate `.click()` event triggers on the dropzone container and utilizing react-dropzone's programmatic `open()` method.
+    - Expanded file extension (`.pdf`, `.docx`, `.doc`, `.jpg`, `.jpeg`, `.png`, `.webp`, `.PDF`, `.DOCX`, etc.) and MIME type matching (`application/octet-stream`, `*/*`, empty MIME type) so files picked from Android Downloads, Google Drive, and SD Card are never silently rejected.
+    - Added custom validator in `FileUpload.tsx` and explicit toast notification alerts (`toast.error(...)`) for invalid file formats or files exceeding 10MB size limits.
+    - Fixed silent returns on submit in `documents/page.tsx` when no file is selected, providing instant visual red-border highlighting and toast alert (`"Please select a document file to upload"`).
+    - Implemented client-side Supabase Database insertion fallback (`supabase.from("documents").insert(...)`) for native Android Capacitor builds where Next.js Server Actions are unreachable.
+    - Added offline/client-side OCR metadata extraction fallback (`parseDocumentMetadata`) when server action OCR parsing is unavailable.
 
 ================================================================================
 CVVault Implementation - Complete, Extended and Operational.

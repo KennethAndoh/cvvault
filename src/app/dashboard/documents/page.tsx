@@ -197,10 +197,22 @@ export default function DocumentsPage() {
     setLoading(false);
   };
 
+  const [fileError, setFileError] = useState(false);
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !user) return;
+    if (!user) {
+      toast.error("Session expired or user not logged in");
+      return;
+    }
 
+    if (!file) {
+      setFileError(true);
+      toast.error("Please select a document file to upload");
+      return;
+    }
+
+    setFileError(false);
     setUploading(true);
     try {
       const formData = new FormData();
@@ -208,19 +220,85 @@ export default function DocumentsPage() {
       formData.append("name", docName || file.name);
       formData.append("category", category);
 
-      const result = await uploadDocument(user.uid, formData);
+      let result: any = null;
+      try {
+        result = await uploadDocument(user.uid, formData);
+      } catch (err) {
+        console.warn("Server action upload failed, attempting client-side upload fallback:", err);
+      }
 
-      if (result.success) {
+      // Fallback for Capacitor Android native app static builds where server actions are unavailable
+      if (!result || !result.success) {
+        const fileExt = file.name.split(".").pop() || "bin";
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        const filePath = `${user.uid}/${fileName}`;
+
+        const { error: upErr } = await supabase.storage
+          .from("documents")
+          .upload(filePath, file, { contentType: file.type || "application/octet-stream", upsert: true });
+
+        if (upErr) {
+          throw new Error(`Storage upload error: ${upErr.message}`);
+        }
+
+        // Try server action for database record first
+        try {
+          const { createDocumentRecord } = await import("@/app/actions/documents");
+          result = await createDocumentRecord({
+            userId: user.uid,
+            name: docName || file.name,
+            storagePath: filePath,
+            category,
+            metadata: {
+              size: file.size,
+              type: file.type || "application/octet-stream",
+              originalName: file.name,
+              verification_status: "pending",
+            },
+          });
+        } catch (serverActionErr) {
+          console.warn("Server action createDocumentRecord failed, attempting client DB insert:", serverActionErr);
+        }
+
+        // Direct client DB insertion fallback if server action failed
+        if (!result || !result.success) {
+          const { data: dbData, error: dbErr } = await supabase
+            .from("documents")
+            .insert({
+              user_id: user.uid,
+              name: docName || file.name,
+              storage_path: filePath,
+              category,
+              metadata: {
+                size: file.size,
+                type: file.type || "application/octet-stream",
+                originalName: file.name,
+                verification_status: "pending",
+              },
+            })
+            .select()
+            .single();
+
+          if (dbErr) {
+            throw new Error(`Database error: ${dbErr.message}`);
+          }
+          result = { success: true, document: dbData };
+        }
+      }
+
+      if (result && result.success) {
         toast.success("Document uploaded successfully!");
         setIsDialogOpen(false);
         setFile(null);
         setDocName("");
+        setFileError(false);
         fetchDocuments();
       } else {
-        throw new Error(result.error);
+        throw new Error(result?.error || "Upload failed");
       }
     } catch (error: any) {
-      toast.error(error.message || "Upload failed");
+      console.error("Upload error:", error);
+      toast.error(error.message || "Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -358,7 +436,7 @@ export default function DocumentsPage() {
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 w-full sm:w-auto">
+            <Button onClick={() => setIsDialogOpen(true)} className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               {isEmployer ? "Upload Company Document" : "Upload Personal Document"}
             </Button>
@@ -402,8 +480,12 @@ export default function DocumentsPage() {
                 <div className="space-y-2">
                   <Label>File (PDF, DOCX, JPEG, PNG)</Label>
                   <FileUpload
+                    hasError={fileError}
                     onFileSelect={(selectedFile, parsedMeta) => {
                       setFile(selectedFile);
+                      if (selectedFile) {
+                        setFileError(false);
+                      }
                       if (parsedMeta) {
                         if (parsedMeta.extractedTitle && !docName) {
                           setDocName(parsedMeta.extractedTitle);

@@ -1,59 +1,153 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { UploadCloud, File, X, Sparkles, CheckCircle2, ShieldCheck } from "lucide-react";
+import { useDropzone, FileRejection } from "react-dropzone";
+import { UploadCloud, File, X, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runDocumentOcr } from "@/app/actions/ocr";
-import { ParsedDocumentMetadata } from "@/lib/ocr-parser";
+import { parseDocumentMetadata, ParsedDocumentMetadata } from "@/lib/ocr-parser";
+import { toast } from "sonner";
 
 interface FileUploadProps {
   onFileSelect: (file: File | null, parsedMeta?: ParsedDocumentMetadata) => void;
   accept?: Record<string, string[]>;
   maxSize?: number;
+  hasError?: boolean;
 }
 
-export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024 }: FileUploadProps) {
+const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".doc", ".jpg", ".jpeg", ".png", ".webp"];
+
+export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, hasError }: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isOcrParsing, setIsOcrParsing] = useState(false);
   const [ocrMeta, setOcrMeta] = useState<ParsedDocumentMetadata | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      setSelectedFile(file);
-      setIsOcrParsing(true);
-      setOcrMeta(null);
+  const processFile = useCallback(async (file: File) => {
+    // Validate file size
+    if (file.size > maxSize) {
+      const errMsg = `File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum allowed is 10MB.`;
+      setErrorMessage(errMsg);
+      toast.error(errMsg);
+      return;
+    }
 
-      // Run OCR Auto-Parsing
+    // Validate extension / MIME type flexible for Android
+    const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+    const isExtAllowed = ALLOWED_EXTENSIONS.includes(ext);
+    const isMimeAllowed = file.type
+      ? file.type.includes("pdf") ||
+        file.type.includes("word") ||
+        file.type.includes("document") ||
+        file.type.includes("image") ||
+        file.type === "application/octet-stream"
+      : true;
+
+    if (!isExtAllowed && !isMimeAllowed) {
+      const errMsg = "Invalid document format. Please upload a PDF, DOCX, JPG, or PNG file.";
+      setErrorMessage(errMsg);
+      toast.error(errMsg);
+      return;
+    }
+
+    setErrorMessage(null);
+    setSelectedFile(file);
+    setIsOcrParsing(true);
+    setOcrMeta(null);
+
+    // Run OCR Auto-Parsing with client-side fallback
+    try {
       const res = await runDocumentOcr(file.name);
       setIsOcrParsing(false);
 
-      if (res.success && res.data) {
+      if (res && res.success && res.data) {
         setOcrMeta(res.data);
         onFileSelect(file, res.data);
       } else {
-        onFileSelect(file);
+        const fallbackMeta = parseDocumentMetadata(file.name);
+        setOcrMeta(fallbackMeta);
+        onFileSelect(file, fallbackMeta);
       }
+    } catch (err) {
+      setIsOcrParsing(false);
+      const fallbackMeta = parseDocumentMetadata(file.name);
+      setOcrMeta(fallbackMeta);
+      onFileSelect(file, fallbackMeta);
     }
-  }, [onFileSelect]);
+  }, [maxSize, onFileSelect]);
 
-  const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
+  const onDrop = useCallback(async (acceptedFiles: File[], rejections: FileRejection[]) => {
+    if (rejections.length > 0) {
+      const err = rejections[0].errors[0];
+      const msg = err.code === "file-too-large"
+        ? "File is too large (max 10MB)"
+        : "Invalid file type. Please upload a PDF, DOCX, JPG, or PNG document.";
+      setErrorMessage(msg);
+      toast.error(msg);
+      return;
+    }
+
+    if (acceptedFiles.length > 0) {
+      await processFile(acceptedFiles[0]);
+    }
+  }, [processFile]);
+
+  // Custom validator for dropzone
+  const customValidator = (file: File) => {
+    if (file.size > maxSize) {
+      return {
+        code: "file-too-large",
+        message: `File exceeds maximum allowed size of 10MB`
+      };
+    }
+    const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+    if (ALLOWED_EXTENSIONS.includes(ext)) {
+      return null;
+    }
+    if (file.type && (
+      file.type.includes("pdf") ||
+      file.type.includes("word") ||
+      file.type.includes("document") ||
+      file.type.includes("image") ||
+      file.type === "application/octet-stream"
+    )) {
+      return null;
+    }
+    return {
+      code: "file-invalid-type",
+      message: "Unsupported file type"
+    };
+  };
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
-    accept: accept || {
-      "application/pdf": [".pdf"],
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-      "image/jpeg": [".jpg", ".jpeg"],
-      "image/png": [".png"]
-    },
+    validator: customValidator,
+    noClick: false,
+    noKeyboard: false,
     maxFiles: 1,
-    maxSize
+    accept: accept || {
+      "application/pdf": [".pdf", ".PDF"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx", ".DOCX"],
+      "application/msword": [".doc", ".DOC"],
+      "image/jpeg": [".jpg", ".jpeg", ".JPG", ".JPEG"],
+      "image/png": [".png", ".PNG"],
+      "image/webp": [".webp", ".WEBP"],
+      "application/octet-stream": ALLOWED_EXTENSIONS
+    }
   });
 
   const removeFile = () => {
     setSelectedFile(null);
     setOcrMeta(null);
+    setErrorMessage(null);
     onFileSelect(null);
+  };
+
+  const handleManualFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await processFile(files[0]);
+    }
   };
 
   return (
@@ -61,38 +155,60 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024 }:
       {!selectedFile ? (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-4 ${
-            isDragActive ? "border-primary bg-primary/5 scale-[1.02]" : "border-muted-foreground/20 hover:border-primary/50 hover:bg-muted/50"
+          className={`relative border-2 border-dashed rounded-xl p-6 md:p-8 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-3 ${
+            hasError || errorMessage
+              ? "border-destructive bg-destructive/5"
+              : isDragActive
+              ? "border-primary bg-primary/5 scale-[1.01]"
+              : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/40"
           }`}
         >
-          <input {...getInputProps()} />
-          <div className="p-4 bg-primary/10 rounded-full">
-            <UploadCloud className="h-8 w-8 text-primary" />
+          <input
+            {...getInputProps({
+              accept: "application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/msword,.doc,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp,application/octet-stream",
+              onChange: handleManualFileChange
+            })}
+          />
+          <div className={`p-3.5 rounded-full ${hasError || errorMessage ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+            <UploadCloud className="h-7 w-7" />
           </div>
           <div>
-            <p className="text-lg font-semibold">
-              {isDragActive ? "Drop your file here" : "Click or drag to upload"}
+            <p className="text-base md:text-lg font-semibold">
+              {isDragActive ? "Drop your document here" : "Tap or drag to upload document"}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              PDF, DOCX, JPG, PNG (Max 10MB) • Includes AI OCR Auto-Parsing
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
+              PDF, DOCX, JPG, PNG (Max 10MB) • Supports Android File Pickers
             </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3 rounded-lg border-primary/40 text-primary font-medium shadow-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                open();
+              }}
+            >
+              <UploadCloud className="h-4 w-4 mr-2" />
+              Choose File from Device
+            </Button>
           </div>
         </div>
       ) : (
         <div className="space-y-2">
-          <div className="border rounded-xl p-4 flex items-center justify-between bg-muted/30">
+          <div className="border border-border rounded-xl p-4 flex items-center justify-between bg-card shadow-xs">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="p-2 bg-primary/10 rounded">
+              <div className="p-2.5 bg-primary/10 rounded-lg shrink-0">
                 <File className="h-6 w-6 text-primary" />
               </div>
-              <div className="overflow-hidden">
-                <p className="font-medium truncate text-sm">{selectedFile.name}</p>
+              <div className="overflow-hidden min-w-0">
+                <p className="font-semibold truncate text-sm text-foreground">{selectedFile.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={removeFile} className="shrink-0">
+            <Button variant="ghost" size="icon" onClick={removeFile} className="shrink-0 text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -109,7 +225,7 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024 }:
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4" /> OCR Metadata Extracted ({ocrMeta.confidenceScore}% Confidence)
                 </span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[10px] uppercase">
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-[10px] uppercase font-bold">
                   {ocrMeta.detectedCategory}
                 </span>
               </div>
@@ -130,14 +246,14 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024 }:
         </div>
       )}
       
-      {fileRejections.length > 0 && (
-        <p className="text-xs text-destructive mt-2">
-          {fileRejections[0].errors[0].code === "file-too-large" 
-            ? "File is too large (max 10MB)"
-            : "Invalid file type"}
-        </p>
+      {errorMessage && (
+        <div className="flex items-center gap-1.5 text-xs text-destructive mt-2 font-medium">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
       )}
     </div>
   );
 }
+
 

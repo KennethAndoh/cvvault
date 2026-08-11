@@ -1,4 +1,5 @@
 import { Novu } from "@novu/api";
+import { sendPushToUser } from "@/lib/push-sender";
 
 const novuSecretKey = process.env.NOVU_SECRET_KEY;
 let novuInstance: Novu | null = null;
@@ -73,6 +74,17 @@ export async function sendDocumentStatusNotification(
   status: "verified" | "rejected",
   userName?: string
 ) {
+  // 1. Dispatch FCM Push Notification directly to user's Android/Mobile app
+  sendPushToUser({
+    userId: subscriberId,
+    title: status === "verified" ? "Document Verified! ✅" : "Document Verification Update",
+    body: status === "verified"
+      ? `Your document "${documentName}" has been successfully verified.`
+      : `Your document "${documentName}" was rejected. Please review and re-upload.`,
+    url: "/dashboard/documents"
+  }).catch(err => console.error("FCM push send error:", err));
+
+  // 2. Trigger Novu workflow
   return triggerNovuNotification({
     workflowId: "document-status-updated",
     subscriberId,
@@ -97,6 +109,15 @@ export async function sendJobApplicationReceivedNotification(
   jobTitle: string,
   applicantName: string
 ) {
+  // 1. Dispatch FCM Push Notification to Employer
+  sendPushToUser({
+    userId: employerSubscriberId,
+    title: "New Job Application Received! 📄",
+    body: `${applicantName} submitted an application for "${jobTitle}".`,
+    url: "/dashboard/jobs"
+  }).catch(err => console.error("FCM push send error:", err));
+
+  // 2. Trigger Novu workflow
   return triggerNovuNotification({
     workflowId: "job-application-received",
     subscriberId: employerSubscriberId,
@@ -118,6 +139,15 @@ export async function sendApplicationStatusUpdatedNotification(
   jobTitle: string,
   newStatus: string
 ) {
+  // 1. Dispatch FCM Push Notification to Candidate
+  sendPushToUser({
+    userId: applicantSubscriberId,
+    title: "Application Status Update 💼",
+    body: `Your application status for "${jobTitle}" was updated to ${newStatus}.`,
+    url: "/dashboard/jobs"
+  }).catch(err => console.error("FCM push send error:", err));
+
+  // 2. Trigger Novu workflow
   return triggerNovuNotification({
     workflowId: "application-status-updated",
     subscriberId: applicantSubscriberId,
@@ -129,3 +159,4 @@ export async function sendApplicationStatusUpdatedNotification(
     },
   });
 }
+
