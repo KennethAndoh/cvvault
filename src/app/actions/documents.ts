@@ -104,6 +104,14 @@ export async function uploadDocument(
     const file = formData.get("file") as File | null;
     const name = (formData.get("name") as string) || "";
     const category = (formData.get("category") as string) || "Other";
+    const ocrRaw = formData.get("ocr") as string | null;
+    let ocrMeta: any = null;
+
+    if (ocrRaw) {
+      try {
+        ocrMeta = JSON.parse(ocrRaw);
+      } catch (e) {}
+    }
 
     if (!file) {
       return { success: false, error: "No file provided" };
@@ -144,6 +152,7 @@ export async function uploadDocument(
         type: file.type || "application/octet-stream",
         originalName: file.name,
         verification_status: "pending",
+        ...(ocrMeta ? { ocr: ocrMeta } : {}),
       },
     });
 

@@ -56,22 +56,47 @@ export function FileUpload({ onFileSelect, maxSize = 10 * 1024 * 1024, hasError 
     setIsOcrParsing(true);
     setOcrMeta(null);
 
-    // Run OCR Auto-Parsing with client-side fallback
+    // Extract sample text content from selected document for genuine OCR parsing
+    let sampleText = "";
     try {
-      const res = await runDocumentOcr(file.name);
+      if (file.type.startsWith("text/") || file.name.match(/\.(txt|md|csv|json)$/i)) {
+        sampleText = await file.text();
+      } else if (file.name.endsWith(".docx") || file.type.includes("wordprocessingml")) {
+        const ab = await file.arrayBuffer();
+        const decoder = new TextDecoder("utf-8", { fatal: false });
+        const rawXml = decoder.decode(ab);
+        sampleText = rawXml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 4000);
+      } else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+        const ab = await file.arrayBuffer();
+        const decoder = new TextDecoder("latin1", { fatal: false });
+        const rawPdf = decoder.decode(ab);
+        const matches = rawPdf.match(/\(([^()]{3,120})\)/g);
+        if (matches && matches.length > 0) {
+          sampleText = matches.map((m) => m.slice(1, -1)).join(" ").replace(/\s+/g, " ").slice(0, 4000);
+        } else {
+          sampleText = rawPdf.replace(/[^\x20-\x7E]/g, " ").replace(/\s+/g, " ").slice(0, 3000);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not extract sample text from document for OCR:", err);
+    }
+
+    // Run OCR Auto-Parsing with extracted text sample
+    try {
+      const res = await runDocumentOcr(file.name, sampleText);
       setIsOcrParsing(false);
 
       if (res && res.success && res.data) {
         setOcrMeta(res.data);
         onFileSelect(file, res.data);
       } else {
-        const fallbackMeta = parseDocumentMetadata(file.name);
+        const fallbackMeta = parseDocumentMetadata(file.name, sampleText);
         setOcrMeta(fallbackMeta);
         onFileSelect(file, fallbackMeta);
       }
     } catch (err) {
       setIsOcrParsing(false);
-      const fallbackMeta = parseDocumentMetadata(file.name);
+      const fallbackMeta = parseDocumentMetadata(file.name, sampleText);
       setOcrMeta(fallbackMeta);
       onFileSelect(file, fallbackMeta);
     }

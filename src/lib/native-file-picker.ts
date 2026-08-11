@@ -55,8 +55,26 @@ export async function pickNativeDocument(): Promise<PickedFileResult | null> {
           const byteArray = new Uint8Array(byteNumbers);
           blob = new Blob([byteArray], { type: mimeType });
         } else if (picked.path) {
-          const response = await fetch(Capacitor.convertFileSrc(picked.path));
-          blob = await response.blob();
+          try {
+            const response = await fetch(Capacitor.convertFileSrc(picked.path));
+            blob = await response.blob();
+          } catch (pathErr) {
+            console.warn("Fetch Capacitor convertFileSrc failed, checking Filesystem plugin:", pathErr);
+            const FilesystemPlugin = Plugins?.Filesystem || Plugins?.FilesystemPlugin;
+            if (FilesystemPlugin && typeof FilesystemPlugin.readFile === "function") {
+              const fileData = await FilesystemPlugin.readFile({ path: picked.path });
+              const base64Data = typeof fileData.data === "string" ? (fileData.data.includes(",") ? fileData.data.split(",")[1] : fileData.data) : fileData.data;
+              const byteCharacters = atob(base64Data);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              blob = new Blob([byteArray], { type: mimeType });
+            } else {
+              throw pathErr;
+            }
+          }
         } else {
           throw new Error("Could not read native file data");
         }

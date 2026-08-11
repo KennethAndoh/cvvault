@@ -85,6 +85,7 @@ export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [category, setCategory] = useState("CV / Resume");
   const [docName, setDocName] = useState("");
+  const [selectedOcrMeta, setSelectedOcrMeta] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [activeQrDoc, setActiveQrDoc] = useState<{ id: string; name: string; status?: string } | null>(null);
@@ -219,23 +220,59 @@ export default function DocumentsPage() {
       formData.append("file", file);
       formData.append("name", docName || file.name);
       formData.append("category", category);
-
-      let result: any = null;
-      try {
-        result = await uploadDocument(user.uid, formData);
-      } catch (err) {
-        console.warn("Server action upload failed, attempting client-side upload fallback:", err);
+      if (selectedOcrMeta) {
+        formData.append("ocr", JSON.stringify(selectedOcrMeta));
       }
 
-      // Fallback for Capacitor Android native app static builds where server actions are unavailable
+      let result: any = null;
+
+      // On non-native platforms, try server action first; on native Capacitor Android, server actions are unavailable
+      if (!isNativeRef.current) {
+        try {
+          result = await uploadDocument(user.uid, formData);
+        } catch (err) {
+          console.warn("Server action upload failed, attempting client-side upload fallback:", err);
+        }
+      }
+
+      // Fallback for Capacitor Android native app static builds or when server action returns unsuccessful
       if (!result || !result.success) {
         const fileExt = file.name.split(".").pop() || "bin";
         const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
         const filePath = `${user.uid}/${fileName}`;
 
-        const { error: upErr } = await supabase.storage
+        // Convert File object to Uint8Array/ArrayBuffer to prevent Android WebView fetch streaming errors ("failed to fetch")
+        let uploadPayload: ArrayBuffer | Uint8Array | File = file;
+        try {
+          const ab = await file.arrayBuffer();
+          uploadPayload = new Uint8Array(ab);
+        } catch (abErr) {
+          console.warn("Could not convert file to arrayBuffer, attempting upload with raw File:", abErr);
+        }
+
+        let { error: upErr } = await supabase.storage
           .from("documents")
-          .upload(filePath, file, { contentType: file.type || "application/octet-stream", upsert: true });
+          .upload(filePath, uploadPayload, { 
+            contentType: file.type || "application/octet-stream", 
+            upsert: true 
+          });
+
+        // Retry with ArrayBuffer if first attempt had a network/fetch glitch
+        if (upErr && (upErr.message?.toLowerCase().includes("fetch") || upErr.message?.toLowerCase().includes("network"))) {
+          console.warn("First storage upload attempt failed, retrying with raw ArrayBuffer:", upErr);
+          try {
+            const ab = await file.arrayBuffer();
+            const retryRes = await supabase.storage
+              .from("documents")
+              .upload(filePath, ab, { 
+                contentType: file.type || "application/octet-stream", 
+                upsert: true 
+              });
+            upErr = retryRes.error;
+          } catch (retryErr: any) {
+            console.warn("Retry storage upload exception:", retryErr);
+          }
+        }
 
         if (upErr) {
           throw new Error(`Storage upload error: ${upErr.message}`);
@@ -254,6 +291,7 @@ export default function DocumentsPage() {
               type: file.type || "application/octet-stream",
               originalName: file.name,
               verification_status: "pending",
+              ...(selectedOcrMeta ? { ocr: selectedOcrMeta } : {}),
             },
           });
         } catch (serverActionErr) {
@@ -274,6 +312,7 @@ export default function DocumentsPage() {
                 type: file.type || "application/octet-stream",
                 originalName: file.name,
                 verification_status: "pending",
+                ...(selectedOcrMeta ? { ocr: selectedOcrMeta } : {}),
               },
             })
             .select()
@@ -291,6 +330,7 @@ export default function DocumentsPage() {
         setIsDialogOpen(false);
         setFile(null);
         setDocName("");
+        setSelectedOcrMeta(null);
         setFileError(false);
         fetchDocuments();
       } else {
@@ -487,12 +527,15 @@ export default function DocumentsPage() {
                         setFileError(false);
                       }
                       if (parsedMeta) {
+                        setSelectedOcrMeta(parsedMeta);
                         if (parsedMeta.extractedTitle && !docName) {
                           setDocName(parsedMeta.extractedTitle);
                         }
                         if (parsedMeta.detectedCategory) {
                           setCategory(parsedMeta.detectedCategory);
                         }
+                      } else {
+                        setSelectedOcrMeta(null);
                       }
                     }}
                   />

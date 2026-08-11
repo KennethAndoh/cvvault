@@ -13,12 +13,14 @@ import { toast } from "sonner";
 import { Loader2, User, Globe, Shield, Camera, Printer, Briefcase, Code, FileText, Code2 } from "lucide-react";
 import { TailoredResumeBuilder } from "@/components/TailoredResumeBuilder";
 import { PortfolioEditor, PortfolioItem } from "@/components/PortfolioEditor";
+import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [activeTab, setActiveTab] = useState<"profile" | "resume" | "portfolio">("profile");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(false);
   const [isPortfolioEditorOpen, setIsPortfolioEditorOpen] = useState(false);
@@ -32,12 +34,17 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     setLoading(true);
-    const result = await getProfile(user!.uid);
-    if (result.success) {
-      setProfile(result.profile);
-      if (!result.profile) {
-        toast.info("Profile not found. Creating a default profile for you...");
-      }
+    const res = await getProfile(user!.uid);
+    if (res.success && res.profile) {
+      setProfile(res.profile);
+    } else if (res.success && !res.profile) {
+      setProfile({
+        full_name: user?.displayName || "",
+        email: user?.email || "",
+        role: "employee",
+        bio: "",
+        public_profile_enabled: true,
+      });
     } else {
       toast.error("Failed to fetch profile");
     }
@@ -69,15 +76,60 @@ export default function ProfilePage() {
     }
 
     setUploadingAvatar(true);
-    const formData = new FormData();
-    formData.append("file", file);
+    let result: any = null;
 
-    const result = await uploadAvatar(user.uid, formData);
-    if (result.success) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      result = await uploadAvatar(user.uid, formData);
+    } catch (err) {
+      console.warn("Server action uploadAvatar failed, trying client fallback:", err);
+    }
+
+    if (!result || !result.success) {
+      try {
+        const fileExt = file.name.split(".").pop() || "jpg";
+        const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
+        
+        let binaryPayload: ArrayBuffer | Uint8Array | File = file;
+        try {
+          const ab = await file.arrayBuffer();
+          binaryPayload = new Uint8Array(ab);
+        } catch (abErr) {
+          console.warn("Could not convert image to arrayBuffer:", abErr);
+        }
+
+        const { error: upErr } = await supabase.storage
+          .from("avatars")
+          .upload(fileName, binaryPayload, {
+            upsert: true,
+            contentType: file.type || "image/jpeg"
+          });
+
+        if (upErr) {
+          throw new Error(upErr.message);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(fileName);
+
+        const updateRes = await updateProfile(user.uid, { avatar_url: publicUrl });
+        if (updateRes.success) {
+          result = { success: true, avatarUrl: publicUrl };
+        } else {
+          result = { success: false, error: updateRes.error || "Failed to update profile record" };
+        }
+      } catch (fallbackErr: any) {
+        result = { success: false, error: fallbackErr.message || "Failed to upload avatar" };
+      }
+    }
+
+    if (result && result.success) {
       toast.success("Avatar updated successfully");
       setProfile({ ...profile, avatar_url: result.avatarUrl });
     } else {
-      toast.error(result.error || "Failed to upload avatar");
+      toast.error(result?.error || "Failed to upload avatar");
     }
     setUploadingAvatar(false);
   };
