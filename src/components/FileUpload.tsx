@@ -148,6 +148,19 @@ export function FileUpload({ onFileSelect, maxSize = 10 * 1024 * 1024, hasError 
               zIndex: 50,
               cursor: "pointer",
             }}
+            onClick={async (e) => {
+              try {
+                const { pickNativeDocument } = await import("@/lib/native-file-picker");
+                const nativeRes = await pickNativeDocument();
+                if (nativeRes && nativeRes.file) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  await processFile(nativeRes.file);
+                }
+              } catch (err) {
+                console.warn("Native file picker trigger warning:", err);
+              }
+            }}
             onChange={handleManualFileChange}
           />
 

@@ -218,8 +218,10 @@ Return your response strictly in the following JSON format:
       confidence
     });
 
-    revalidatePath("/dashboard/documents");
-    revalidatePath("/admin");
+    try {
+      revalidatePath("/dashboard/documents");
+      revalidatePath("/admin");
+    } catch {}
 
     return {
       success: true,
