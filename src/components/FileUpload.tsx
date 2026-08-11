@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useRef } from "react";
 import { useDropzone, FileRejection } from "react-dropzone";
 import { UploadCloud, File, X, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,12 @@ interface FileUploadProps {
 
 const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".doc", ".jpg", ".jpeg", ".png", ".webp"];
 
-export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, hasError }: FileUploadProps) {
+export function FileUpload({ onFileSelect, maxSize = 10 * 1024 * 1024, hasError }: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isOcrParsing, setIsOcrParsing] = useState(false);
   const [ocrMeta, setOcrMeta] = useState<ParsedDocumentMetadata | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const processFile = useCallback(async (file: File) => {
     // Validate file size
@@ -92,54 +93,20 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, h
     }
   }, [processFile]);
 
-  // Custom validator for dropzone
-  const customValidator = (file: File) => {
-    if (file.size > maxSize) {
-      return {
-        code: "file-too-large",
-        message: `File exceeds maximum allowed size of 10MB`
-      };
-    }
-    const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
-    if (ALLOWED_EXTENSIONS.includes(ext)) {
-      return null;
-    }
-    if (file.type && (
-      file.type.includes("pdf") ||
-      file.type.includes("word") ||
-      file.type.includes("document") ||
-      file.type.includes("image") ||
-      file.type === "application/octet-stream"
-    )) {
-      return null;
-    }
-    return {
-      code: "file-invalid-type",
-      message: "Unsupported file type"
-    };
-  };
-
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+  const { getRootProps, isDragActive } = useDropzone({
     onDrop,
-    validator: customValidator,
-    noClick: false,
+    noClick: true, // Native touch on the full-cover transparent input handles tap directly on Android & Web
     noKeyboard: false,
     maxFiles: 1,
-    accept: accept || {
-      "application/pdf": [".pdf", ".PDF"],
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx", ".DOCX"],
-      "application/msword": [".doc", ".DOC"],
-      "image/jpeg": [".jpg", ".jpeg", ".JPG", ".JPEG"],
-      "image/png": [".png", ".PNG"],
-      "image/webp": [".webp", ".WEBP"],
-      "application/octet-stream": ALLOWED_EXTENSIONS
-    }
   });
 
   const removeFile = () => {
     setSelectedFile(null);
     setOcrMeta(null);
     setErrorMessage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     onFileSelect(null);
   };
 
@@ -147,6 +114,7 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, h
     const files = e.target.files;
     if (files && files.length > 0) {
       await processFile(files[0]);
+      e.target.value = "";
     }
   };
 
@@ -155,7 +123,7 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, h
       {!selectedFile ? (
         <div
           {...getRootProps()}
-          className={`relative border-2 border-dashed rounded-xl p-6 md:p-8 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-3 ${
+          className={`relative border-2 border-dashed rounded-xl p-6 md:p-8 transition-all flex flex-col items-center justify-center text-center gap-3 overflow-hidden ${
             hasError || errorMessage
               ? "border-destructive bg-destructive/5"
               : isDragActive
@@ -163,16 +131,30 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, h
               : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/40"
           }`}
         >
+          {/* Full-size active HTML file input overlay for 100% reliable Android WebChromeClient file chooser triggering */}
           <input
-            {...getInputProps({
-              accept: "application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/msword,.doc,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp,application/octet-stream",
-              onChange: handleManualFileChange
-            })}
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/msword,.doc,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp,application/octet-stream,*/*"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50 pointer-events-auto"
+            style={{
+              display: "block",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              opacity: 0,
+              zIndex: 50,
+              cursor: "pointer",
+            }}
+            onChange={handleManualFileChange}
           />
-          <div className={`p-3.5 rounded-full ${hasError || errorMessage ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+
+          <div className={`p-3.5 rounded-full pointer-events-none ${hasError || errorMessage ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
             <UploadCloud className="h-7 w-7" />
           </div>
-          <div>
+          <div className="pointer-events-none">
             <p className="text-base md:text-lg font-semibold">
               {isDragActive ? "Drop your document here" : "Tap or drag to upload document"}
             </p>
@@ -183,11 +165,7 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, h
               type="button"
               variant="outline"
               size="sm"
-              className="mt-3 rounded-lg border-primary/40 text-primary font-medium shadow-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                open();
-              }}
+              className="mt-3 rounded-lg border-primary/40 text-primary font-medium shadow-xs pointer-events-none"
             >
               <UploadCloud className="h-4 w-4 mr-2" />
               Choose File from Device
@@ -255,5 +233,6 @@ export function FileUpload({ onFileSelect, accept, maxSize = 10 * 1024 * 1024, h
     </div>
   );
 }
+
 
 

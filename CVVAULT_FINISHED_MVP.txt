@@ -220,9 +220,11 @@ multi-channel notifications, and comprehensive audit logging.
     - Created `push-sender.ts` helper exporting `sendPushToUser` using Firebase Admin SDK (`adminMessaging.send`) to dispatch high-priority native push notifications directly to user Android devices for document verification updates and job application status changes.
     - Updated `android/build.gradle` classpath (`com.android.tools.build:gradle:8.7.3`) and `android/gradle/wrapper/gradle-wrapper.properties` (`gradle-8.13-all.zip`) to resolve Android Gradle Plugin version mismatch errors.
 
-  * Android & Mobile Document Upload Reliability & Visual Error Messaging Fix (FileUpload.tsx, documents/page.tsx):
-    - Resolved Android file picker closing/freezing issue by eliminating duplicate `.click()` event triggers on the dropzone container and utilizing react-dropzone's programmatic `open()` method.
-    - Expanded file extension (`.pdf`, `.docx`, `.doc`, `.jpg`, `.jpeg`, `.png`, `.webp`, `.PDF`, `.DOCX`, etc.) and MIME type matching (`application/octet-stream`, `*/*`, empty MIME type) so files picked from Android Downloads, Google Drive, and SD Card are never silently rejected.
+  * Android & Mobile Document Upload Reliability & Native Touch Fix (FileUpload.tsx, documents/page.tsx):
+    - Root cause identified: Calling `.click()` programmatically on a `display: none` file input from JS inside a Radix UI dialog modal is blocked by Android WebView security policies.
+    - Implemented a full-size active `<input type="file">` HTML overlay (`position: absolute`, `inset-0`, `z-50`, `display: block`, `opacity-0`) covering the entire upload dropzone and "Choose File from Device" button.
+    - Direct user finger taps anywhere on the dropzone or button hit the native `<input type="file">` tag directly, triggering Android OS `WebChromeClient.onShowFileChooser()` 100% reliably.
+    - Expanded file extension (`.pdf`, `.docx`, `.doc`, `.jpg`, `.jpeg`, `.png`, `.webp`, `.PDF`, `.DOCX`, etc.) and MIME type matching (`application/octet-stream`, `*/*`) for Android system file pickers.
     - Added custom validator in `FileUpload.tsx` and explicit toast notification alerts (`toast.error(...)`) for invalid file formats or files exceeding 10MB size limits.
     - Fixed silent returns on submit in `documents/page.tsx` when no file is selected, providing instant visual red-border highlighting and toast alert (`"Please select a document file to upload"`).
     - Implemented client-side Supabase Database insertion fallback (`supabase.from("documents").insert(...)`) for native Android Capacitor builds where Next.js Server Actions are unreachable.
@@ -231,4 +233,5 @@ multi-channel notifications, and comprehensive audit logging.
 ================================================================================
 CVVault Implementation - Complete, Extended and Operational.
 ================================================================================
+
 
