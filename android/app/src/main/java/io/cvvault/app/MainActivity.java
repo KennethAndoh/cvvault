@@ -47,9 +47,6 @@ public class MainActivity extends BridgeActivity {
             cookieManager.setAcceptCookie(true);
             cookieManager.setAcceptThirdPartyCookies(webView, true);
 
-            // Get original Capacitor WebChromeClient to preserve native plugin callbacks
-            WebChromeClient originalWebChromeClient = getBridge() != null ? getBridge().getWebChromeClient() : null;
-
             // Set custom WebChromeClient that supports both OAuth popups AND native file chooser sheets
             webView.setWebChromeClient(new WebChromeClient() {
                 @Override
@@ -97,15 +94,7 @@ public class MainActivity extends BridgeActivity {
 
                 @Override
                 public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-                    // 1. Delegate to Capacitor bridge client if available
-                    if (originalWebChromeClient != null) {
-                        try {
-                            boolean handled = originalWebChromeClient.onShowFileChooser(webView, filePathCallback, fileChooserParams);
-                            if (handled) return true;
-                        } catch (Exception ignored) {}
-                    }
-
-                    // 2. Native Android Intent File Picker fallback
+                    // Cancel any pending callback before starting a new one
                     if (mFilePathCallback != null) {
                         mFilePathCallback.onReceiveValue(null);
                         mFilePathCallback = null;
