@@ -76,33 +76,15 @@ export function DocumentThumbnailPreview({
 
       {/* Full-Bleed Document Preview Container (Zooms on Hover, Zero Margins) */}
       <div className="w-full h-full relative overflow-hidden flex flex-col justify-between">
-        {fileUrl && !imageError ? (
-          /* Actual Uploaded Document File Preview (Full Bleed Image or PDF iframe) */
+        {isImage && fileUrl && !imageError ? (
+          /* Actual Uploaded Image Preview */
           <div className="relative w-full h-full overflow-hidden bg-slate-900">
-            {isImage ? (
-              <img
-                src={fileUrl}
-                alt={documentName}
-                onError={() => setImageError(true)}
-                className="w-full h-full object-cover object-top transition-transform duration-500 ease-out group-hover/thumb:scale-125"
-              />
-            ) : showNativePdfPlaceholder ? (
-              /* Android native placeholder — iframes can't render PDFs in WebView */
-              <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-900 select-none">
-                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                  <FileText className="h-8 w-8 text-primary/70" />
-                </div>
-                <p className="text-[9px] text-slate-400 font-semibold text-center px-2">Tap to open document</p>
-              </div>
-            ) : (
-              <div className="w-full h-full relative overflow-hidden pointer-events-none select-none">
-                <iframe
-                  src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(fileUrl)}`}
-                  className="w-[200%] h-[200%] border-none pointer-events-none origin-top-left transform scale-50 group-hover/thumb:scale-[0.58] transition-transform duration-500 ease-out bg-white"
-                  title={documentName}
-                />
-              </div>
-            )}
+            <img
+              src={fileUrl}
+              alt={documentName}
+              onError={() => setImageError(true)}
+              className="w-full h-full object-cover object-top transition-transform duration-500 ease-out group-hover/thumb:scale-125"
+            />
             <div className="absolute inset-0 bg-linear-to-t from-slate-950/75 via-slate-950/10 to-transparent pointer-events-none" />
             <div className="absolute bottom-1.5 left-1.5 right-1.5 px-2 py-1 bg-slate-950/80 backdrop-blur-xs rounded-md text-[9px] font-semibold text-white truncate flex items-center justify-between gap-1 shadow-sm">
               <span className="truncate">{documentName}</span>

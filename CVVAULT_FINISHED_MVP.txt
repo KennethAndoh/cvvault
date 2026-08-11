@@ -189,14 +189,20 @@ multi-channel notifications, and comprehensive audit logging.
   * Implemented robust multi-tiered URL resolution (`resolveDocumentUrl`): Tries Next.js Server Action -> Client-side Supabase `createSignedUrl` fallback -> Cached URL.
   * Embedded Google Docs Viewer (`https://docs.google.com/gview?embedded=true&url=...`) inside in-app `<iframe />` Lightbox modals and document thumbnail previews for all non-image files on Android/Mobile.
   * Added an explicit "Open / Download" button in the Lightbox header using `@capacitor/browser` on native Android and `window.open` on web to allow opening documents in external PDF reader apps.
-- Custom Palette & Theme Refinement (globals.css, layout.tsx, components):
-  * Light Theme System:
-    - Primary Brand: #2563EB | Background: #F8FAFC | Cards: #FFFFFF | Text Primary: #0F172A | Text Secondary: #64748B
-    - Borders: #E2E8F0 | Hover: #EFF6FF | Success: #10B981 | Warning: #F59E0B | Error: #EF4444
-  * Dark Theme System:
-    - Primary Brand: #3B82F6 | Background: #0B1120 | Cards: #111827 | Elevated Cards: #172033 | Text Primary: #F8FAFC
-    - Text Secondary: #94A3B8 | Borders: #1E293B | Hover: #172554 | Success: #34D399 | Warning: #FBBF24 | Error: #F87171
-  * Updated CSS theme tokens (@theme inline), glassmorphic backdrops, glowing shadows, chart palettes, viewport metadata, and component action buttons across all pages for full dark/light theme consistency.
+- Multi-Theme Expansion System (globals.css, layout.tsx, mode-toggle.tsx):
+  * Light Theme Options:
+    - Classic White (light): Primary #2563EB | Background #F8FAFC | Cards #FFFFFF | Text #0F172A
+    - Warm Cream (light-warm): Primary #2563EB | Background #F5EFAE | Cards #FAF6CD | Text #2C2204 (High-contrast dark amber)
+  * Dark Theme Options:
+    - Blue Dark (dark): Primary #3B82F6 | Background #0B1120 | Cards #111827 | Text #F8FAFC
+    - Midnight Navy (dark-midnight): Primary #38BDF8 | Background #0A1426 | Cards #0F1E36 | Text #F1F5F9
+  * Mode Toggle Component: Redesigned dropdown menu featuring grouped Light & Dark themes with visual swatch indicators, active state checkmarks, and system preference detection.
+  * Tailwind v4 Compatibility: Updated `@custom-variant dark` (`&:is(.dark *, .dark-midnight *, .dark, .dark-midnight)`) and glassmorphic backdrop system (`.glass`, `.glass-card`, `.glass-nav`, `.glass-fab`, `.glass-dropdown`) for seamless styling across all themes.
+
+  * Document Category Filtering & GView Performance Fix (documents/page.tsx, DocumentThumbnailPreview.tsx):
+    - Normalized category matching logic in documents page filter so CV/Resume files match across all formatting variations ("CV", "Resume", "CV / Resume", "CV/Resume", "Resumes").
+    - Eliminated automatic background `gview` iframe rendering on card thumbnail mount, replacing non-image thumbnails with instant ATS paper layout card representations (0ms render time, 0 background network calls).
+    - Resolved automated browser file download popups triggered on page load and dramatically accelerated vault page rendering speeds.
 
   * Document Preview URL Resolution Fix (actions/documents.ts, documents/page.tsx, dashboard/page.tsx):
     - Upgraded `getSignedUrlForDocument` server action to automatically extract & decode relative storage paths from full S3/Supabase URLs, eliminate strict path string mismatches, and extend URL expiration from 60 seconds to 3600 seconds (1 hour).

@@ -300,7 +300,42 @@ export default function DocumentsPage() {
 
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === "all" || doc.category === filterCategory;
+    
+    const matchesCategory = (() => {
+      if (filterCategory === "all") return true;
+      const docCat = (doc.category || "").toLowerCase().trim();
+      const filterCat = filterCategory.toLowerCase().trim();
+
+      if (docCat === filterCat) return true;
+
+      // CV / Resume flexible match (handles "CV", "Resume", "CV / Resume", "CV/Resume", "Resumes")
+      const isDocCv = docCat.includes("cv") || docCat.includes("resume");
+      const isFilterCv = filterCat.includes("cv") || filterCat.includes("resume");
+      if (isDocCv && isFilterCv) return true;
+
+      // Certificate flexible match
+      const isDocCert = docCat.includes("certif");
+      const isFilterCert = filterCat.includes("certif");
+      if (isDocCert && isFilterCert) return true;
+
+      // ID / Passport flexible match
+      const isDocId = docCat.includes("id") || docCat.includes("passport");
+      const isFilterId = filterCat.includes("id") || filterCat.includes("passport");
+      if (isDocId && isFilterId) return true;
+
+      // Cover Letter flexible match
+      const isDocCover = docCat.includes("cover");
+      const isFilterCover = filterCat.includes("cover");
+      if (isDocCover && isFilterCover) return true;
+
+      // Degree / Transcript / Academic flexible match
+      const isDocDegree = docCat.includes("degree") || docCat.includes("transcript") || docCat.includes("academic");
+      const isFilterDegree = filterCat.includes("degree") || filterCat.includes("transcript") || filterCat.includes("academic");
+      if (isDocDegree && isFilterDegree) return true;
+
+      return false;
+    })();
+
     return matchesSearch && matchesCategory;
   });
 
