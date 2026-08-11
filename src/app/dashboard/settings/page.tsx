@@ -77,25 +77,68 @@ export default function SettingsPage() {
     if (!user) return;
     if (checked) {
       try {
+        if (!("serviceWorker" in navigator)) {
+          toast.error("Service workers are not supported in this browser.");
+          return;
+        }
+
         const permission = await Notification.requestPermission();
-        if (permission === "granted" && messaging) {
-          const token = await getToken(messaging, {
-            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
-          });
-          if (token) {
-            await updateFcmToken(user.uid, token);
-            setNotifications({ ...notifications, push: true });
-            toast.success("Push notifications enabled!");
+        if (permission !== "granted") {
+          toast.error("Notification permission was denied by your browser.");
+          return;
+        }
+
+        if (!messaging) {
+          toast.error("Firebase Messaging is not initialized.");
+          return;
+        }
+
+        // Register service worker explicitly under root scope
+        const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
+        await navigator.serviceWorker.ready;
+
+        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY?.trim();
+        let token = "";
+
+        try {
+          if (vapidKey) {
+            token = await getToken(messaging, {
+              vapidKey,
+              serviceWorkerRegistration: registration,
+            });
           } else {
-            toast.error("Failed to generate push token.");
+            token = await getToken(messaging, {
+              serviceWorkerRegistration: registration,
+            });
           }
+        } catch (firstErr: any) {
+          console.warn("First FCM token generation attempt warning, trying fallback without explicit VAPID key:", firstErr);
+          try {
+            token = await getToken(messaging, {
+              serviceWorkerRegistration: registration,
+            });
+          } catch (retryErr) {
+            throw firstErr;
+          }
+        }
+
+        if (token) {
+          await updateFcmToken(user.uid, token);
+          setNotifications({ ...notifications, push: true });
+          toast.success("Push notifications enabled!");
         } else {
-          toast.error("Notification permission denied.");
+          toast.error("Failed to generate push notification token.");
         }
       } catch (error: any) {
-        console.error(error);
-        toast.error("Error setting up push notifications", {
-          description: error?.message || "Please check browser permissions and VAPID configuration."
+        console.error("Push notification registration error:", error);
+        
+        let errorDesc = error?.message || "Please check your browser notification permissions.";
+        if (errorDesc.includes("push service error") || errorDesc.includes("Registration failed")) {
+          errorDesc = "Push service rejected subscription. If using Brave Browser or an ad-blocker, please enable 'Use Google services for push messaging' in brave://settings/privacy or check browser push settings.";
+        }
+
+        toast.error("Push Notification Error", {
+          description: errorDesc,
         });
       }
     } else {

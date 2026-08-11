@@ -209,6 +209,10 @@ multi-channel notifications, and comprehensive audit logging.
     - Expanded authorization check so public documents, applicant submissions, and owner previews always succeed.
     - Added fallback signed URL handling (`doc.url`) in the UI components so previews and downloads never fail or toast errors.
 
+  * Firebase Cloud Messaging Service Worker Registration Fix (settings/page.tsx, firebase-messaging-sw.js):
+    - Explicitly registered `/firebase-messaging-sw.js` under root scope and passed `serviceWorkerRegistration` to `getToken(messaging, ...)` when enabling push notifications.
+    - Added fallback VAPID key token generation and browser push service error diagnostics for Brave Browser, ad-blockers, and missing push service settings.
+
 ================================================================================
 CVVault Implementation - Complete, Extended and Operational.
 ================================================================================
