@@ -48,8 +48,8 @@ multi-channel notifications, and comprehensive audit logging.
   * Categorization (Resumes, Certificates, Degrees, Identity, Passports, Transcripts, Cover Letters).
   * Storage in Supabase S3-compatible buckets with secure file streaming.
   * File search, category filtering, and status indicators.
-  * File metadata management, preview modal, download, and deletion.
   * Transitioned Zoomed-In Document Preview (DocumentThumbnailPreview.tsx): Replaces basic document icons with realistic A4 paper-styled document card previews (ATS printable layout representation, category badges, micro document structure, and verification watermark seals) featuring smooth scale-up zoom, sheen animation, and quick hover preview triggers across Dashboard, Vault, Public Profiles, Shared Access, and Candidate reviews.
+  * Android Mobile App Storage Upload Resolution & Base64 Pipeline: Fixed "Failed to fetch" errors on Android mobile apps by removing native Server Action bypass logic and introducing `uploadDocumentBase64` & `uploadAvatarBase64` server actions. Converts binary payloads to Base64 strings when Android WebView binary fetch streaming bugs occur, routing uploads cleanly through `supabaseAdmin` with expanded 25MB body limits.
 
 [MODULE 3: CREDENTIAL VERIFICATION ENGINE]
 - Auto-Verification Engine (actions/auto-verify.ts, lib/verification-proof.ts):

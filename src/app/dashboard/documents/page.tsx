@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDocuments, uploadDocument, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument } from "@/app/actions/documents";
+import { getDocuments, uploadDocument, uploadDocumentBase64, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument } from "@/app/actions/documents";
 import { supabase } from "@/lib/supabase";
 import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
@@ -226,16 +226,39 @@ export default function DocumentsPage() {
 
       let result: any = null;
 
-      // On non-native platforms, try server action first; on native Capacitor Android, server actions are unavailable
-      if (!isNativeRef.current) {
+      // Tier 1: Primary Server Action upload (FormData) for all platforms (Web and Native Mobile)
+      try {
+        result = await uploadDocument(user.uid, formData);
+      } catch (err) {
+        console.warn("Primary Server Action upload (FormData) failed, attempting Base64 fallback:", err);
+      }
+
+      // Tier 2: Resilient Base64 Server Action upload (bypasses Android WebView binary fetch streaming bugs)
+      if (!result || !result.success) {
         try {
-          result = await uploadDocument(user.uid, formData);
-        } catch (err) {
-          console.warn("Server action upload failed, attempting client-side upload fallback:", err);
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (e) => reject(e);
+            reader.readAsDataURL(file);
+          });
+          const base64Data = await base64Promise;
+
+          result = await uploadDocumentBase64({
+            userId: user.uid,
+            fileName: file.name,
+            fileType: file.type || "application/octet-stream",
+            base64Data,
+            name: docName || file.name,
+            category,
+            ocr: selectedOcrMeta || undefined,
+          });
+        } catch (base64Err) {
+          console.warn("Base64 Server Action upload failed, attempting client-side fallback:", base64Err);
         }
       }
 
-      // Fallback for Capacitor Android native app static builds or when server action returns unsuccessful
+      // Tier 3: Client-side Supabase Storage upload fallback
       if (!result || !result.success) {
         const fileExt = file.name.split(".").pop() || "bin";
         const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;

@@ -170,6 +170,73 @@ export async function uploadDocument(
   }
 }
 
+export async function uploadDocumentBase64(payload: {
+  userId: string;
+  fileName: string;
+  fileType: string;
+  base64Data: string;
+  name?: string;
+  category?: string;
+  ocr?: any;
+}) {
+  try {
+    const { userId, fileName, fileType, base64Data, name, category, ocr } = payload;
+    if (!userId || !base64Data) {
+      return { success: false, error: "Missing user or file data" };
+    }
+
+    await ensureBucket("documents", true);
+
+    const fileExt = fileName.split(".").pop() || "bin";
+    const storageFileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+    const filePath = `${userId}/${storageFileName}`;
+
+    const cleanBase64 = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
+    const buffer = Buffer.from(cleanBase64, "base64");
+
+    if (buffer.length > 15 * 1024 * 1024) {
+      return { success: false, error: "File too large (max 15MB)" };
+    }
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("documents")
+      .upload(filePath, buffer, {
+        contentType: fileType || "application/octet-stream",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("Error uploading document base64:", uploadError);
+      return { success: false, error: uploadError.message };
+    }
+
+    const recordResult = await createDocumentRecord({
+      userId,
+      name: name || fileName,
+      storagePath: filePath,
+      category: category || "Other",
+      metadata: {
+        size: buffer.length,
+        type: fileType || "application/octet-stream",
+        originalName: fileName,
+        verification_status: "pending",
+        ...(ocr ? { ocr } : {}),
+      },
+    });
+
+    if (recordResult.success && recordResult.document) {
+      autoVerifyDocument(recordResult.document.id, userId).catch((err) => {
+        console.error("Background auto-verification error:", err);
+      });
+    }
+
+    return recordResult;
+  } catch (err: any) {
+    console.error("Exception in uploadDocumentBase64 server action:", err);
+    return { success: false, error: err?.message || "Failed to upload document. Please try again." };
+  }
+}
+
 export async function deleteDocument(id: string, storagePath: string, userId: string) {
   const { data: doc, error: fetchError } = await supabaseAdmin
     .from("documents")

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getProfile, updateProfile, uploadAvatar } from "@/app/actions/profile";
+import { getProfile, updateProfile, uploadAvatar, uploadAvatarBase64 } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -83,7 +83,28 @@ export default function ProfilePage() {
       formData.append("file", file);
       result = await uploadAvatar(user.uid, formData);
     } catch (err) {
-      console.warn("Server action uploadAvatar failed, trying client fallback:", err);
+      console.warn("Server action uploadAvatar (FormData) failed, attempting Base64 fallback:", err);
+    }
+
+    if (!result || !result.success) {
+      try {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (e) => reject(e);
+          reader.readAsDataURL(file);
+        });
+        const base64Data = await base64Promise;
+
+        result = await uploadAvatarBase64({
+          userId: user.uid,
+          fileName: file.name,
+          fileType: file.type || "image/jpeg",
+          base64Data,
+        });
+      } catch (base64Err) {
+        console.warn("Base64 uploadAvatar failed, attempting client fallback:", base64Err);
+      }
     }
 
     if (!result || !result.success) {

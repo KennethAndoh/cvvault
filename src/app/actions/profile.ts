@@ -177,3 +177,63 @@ export async function uploadAvatar(userId: string, formData: FormData) {
     return { success: false, error: err?.message || "Failed to upload avatar. Please try again." };
   }
 }
+
+export async function uploadAvatarBase64(payload: {
+  userId: string;
+  fileName: string;
+  fileType: string;
+  base64Data: string;
+}) {
+  try {
+    const { userId, fileName, fileType, base64Data } = payload;
+    if (!userId || !base64Data) {
+      return { success: false, error: "Missing user or avatar image data" };
+    }
+
+    await ensureAvatarsBucketExists();
+
+    const fileExt = fileName.split(".").pop() || "jpg";
+    const storageFileName = `${userId}-${Date.now()}.${fileExt}`;
+
+    const cleanBase64 = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
+    const buffer = Buffer.from(cleanBase64, "base64");
+
+    if (buffer.length > 5 * 1024 * 1024) {
+      return { success: false, error: "Avatar image too large (max 5MB)" };
+    }
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("avatars")
+      .upload(storageFileName, buffer, {
+        upsert: true,
+        contentType: fileType || "image/jpeg",
+      });
+
+    if (uploadError) {
+      console.error("Error uploading avatar base64:", uploadError);
+      return { success: false, error: uploadError.message };
+    }
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from("avatars")
+      .getPublicUrl(storageFileName);
+
+    const { error: updateError } = await supabaseAdmin
+      .from("profiles")
+      .update({ avatar_url: publicUrl })
+      .eq("id", userId);
+
+    if (updateError) {
+      console.error("Error updating profile avatar:", updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    await logAction(userId, "AVATAR_UPLOAD", { publicUrl });
+
+    revalidatePath("/dashboard/profile");
+    return { success: true, avatarUrl: publicUrl };
+  } catch (err: any) {
+    console.error("Exception in uploadAvatarBase64 server action:", err);
+    return { success: false, error: err?.message || "Failed to upload avatar. Please try again." };
+  }
+}
