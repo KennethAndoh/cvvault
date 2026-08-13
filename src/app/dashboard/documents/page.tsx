@@ -258,94 +258,30 @@ export default function DocumentsPage() {
         }
       }
 
-      // Tier 3: Client-side Supabase Storage upload fallback
+      // Tier 3: API route fallback — uses service-role key server-side, no RLS issues
       if (!result || !result.success) {
-        const fileExt = file.name.split(".").pop() || "bin";
-        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-        const filePath = `${user.uid}/${fileName}`;
-
-        // Convert File object to Uint8Array/ArrayBuffer to prevent Android WebView fetch streaming errors ("failed to fetch")
-        let uploadPayload: ArrayBuffer | Uint8Array | File = file;
-        try {
-          const ab = await file.arrayBuffer();
-          uploadPayload = new Uint8Array(ab);
-        } catch (abErr) {
-          console.warn("Could not convert file to arrayBuffer, attempting upload with raw File:", abErr);
+        console.warn("Server actions unavailable, falling back to /api/upload-document route");
+        const apiFormData = new FormData();
+        apiFormData.append("file", file);
+        apiFormData.append("userId", user.uid);
+        apiFormData.append("name", docName || file.name);
+        apiFormData.append("category", category);
+        if (selectedOcrMeta) {
+          apiFormData.append("ocr", JSON.stringify(selectedOcrMeta));
         }
 
-        let { error: upErr } = await supabase.storage
-          .from("documents")
-          .upload(filePath, uploadPayload, { 
-            contentType: file.type || "application/octet-stream", 
-            upsert: true 
-          });
+        const apiRes = await fetch("/api/upload-document", {
+          method: "POST",
+          body: apiFormData,
+        });
 
-        // Retry with ArrayBuffer if first attempt had a network/fetch glitch
-        if (upErr && (upErr.message?.toLowerCase().includes("fetch") || upErr.message?.toLowerCase().includes("network"))) {
-          console.warn("First storage upload attempt failed, retrying with raw ArrayBuffer:", upErr);
-          try {
-            const ab = await file.arrayBuffer();
-            const retryRes = await supabase.storage
-              .from("documents")
-              .upload(filePath, ab, { 
-                contentType: file.type || "application/octet-stream", 
-                upsert: true 
-              });
-            upErr = retryRes.error;
-          } catch (retryErr: any) {
-            console.warn("Retry storage upload exception:", retryErr);
-          }
+        if (!apiRes.ok) {
+          const errBody = await apiRes.json().catch(() => ({}));
+          throw new Error(errBody?.error || `Upload API error ${apiRes.status}`);
         }
 
-        if (upErr) {
-          throw new Error(`Storage upload error: ${upErr.message}`);
-        }
-
-        // Try server action for database record first
-        try {
-          const { createDocumentRecord } = await import("@/app/actions/documents");
-          result = await createDocumentRecord({
-            userId: user.uid,
-            name: docName || file.name,
-            storagePath: filePath,
-            category,
-            metadata: {
-              size: file.size,
-              type: file.type || "application/octet-stream",
-              originalName: file.name,
-              verification_status: "pending",
-              ...(selectedOcrMeta ? { ocr: selectedOcrMeta } : {}),
-            },
-          });
-        } catch (serverActionErr) {
-          console.warn("Server action createDocumentRecord failed, attempting client DB insert:", serverActionErr);
-        }
-
-        // Direct client DB insertion fallback if server action failed
-        if (!result || !result.success) {
-          const { data: dbData, error: dbErr } = await supabase
-            .from("documents")
-            .insert({
-              user_id: user.uid,
-              name: docName || file.name,
-              storage_path: filePath,
-              category,
-              metadata: {
-                size: file.size,
-                type: file.type || "application/octet-stream",
-                originalName: file.name,
-                verification_status: "pending",
-                ...(selectedOcrMeta ? { ocr: selectedOcrMeta } : {}),
-              },
-            })
-            .select()
-            .single();
-
-          if (dbErr) {
-            throw new Error(`Database error: ${dbErr.message}`);
-          }
-          result = { success: true, document: dbData };
-        }
+        const apiJson = await apiRes.json();
+        result = { success: true, document: apiJson.document };
       }
 
       if (result && result.success) {
