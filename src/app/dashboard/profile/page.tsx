@@ -215,7 +215,7 @@ export default function ProfilePage() {
                <div className="relative group">
                  <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center border-2 border-primary/20 overflow-hidden">
                    {profile?.avatar_url ? (
-                     <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                     <img src={profile.avatar_url} alt="User Profile Avatar" className="h-full w-full object-cover" />
                    ) : (
                      <User className="h-12 w-12 text-muted-foreground" />
                    )}

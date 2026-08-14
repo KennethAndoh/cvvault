@@ -51,7 +51,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     <div className="min-h-screen bg-muted/30 pb-12">
       <header className="bg-background border-b h-16 flex items-center px-4 lg:px-8">
          <Link href="/" className="flex items-center gap-2 font-bold">
-            <img src={logoUrl} alt="Logo" className="h-8 w-8 rounded" />
+            <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-8 w-8 rounded" />
             <span>CVVault</span>
          </Link>
       </header>
@@ -62,8 +62,16 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <div className="space-y-6">
              <Card>
                <CardContent className="pt-6 flex flex-col items-center text-center">
-                  <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <User className="h-12 w-12 text-primary" />
+                  <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 overflow-hidden border-2 border-primary/20">
+                    {profile.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt={`${profile.full_name || "Candidate"} Profile Avatar`} 
+                        className="h-full w-full object-cover" 
+                      />
+                    ) : (
+                      <User className="h-12 w-12 text-primary" />
+                    )}
                   </div>
                   <h1 className="text-xl font-bold">{profile.full_name}</h1>
                   <p className="text-sm text-muted-foreground flex items-center gap-1 justify-center mt-1">

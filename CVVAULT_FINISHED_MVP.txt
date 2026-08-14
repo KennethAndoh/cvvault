@@ -276,4 +276,93 @@ IMPACT:
     in any code path; fully eliminates RLS violation errors on Android.
 
 
+================================================================================
+NEW FEATURES (August 2026): Platform Quality & SEO Enhancement Sprint
+================================================================================
 
+[FEATURE 1: CUSTOM 404 NOT FOUND PAGE]
+File: src/app/not-found.tsx
+- Custom branded 404 page with CVVault design language (gradients, animations).
+- Quick-access navigation buttons: Dashboard, Home, Search, Help Center.
+- Framer Motion entrance animations and animated floating elements.
+- Auto-redirects to /dashboard if authenticated, otherwise /login.
+- Fully accessible with semantic HTML and landmark elements.
+
+[FEATURE 2: OFFLINE & ERROR STATE HANDLING (Web + Android)]
+Files:
+  - src/components/NetworkStatusListener.tsx (new)
+  - src/app/error.tsx (new)
+  - src/app/global-error.tsx (new)
+  - src/app/layout.tsx (updated - mounted NetworkStatusListener globally)
+- NetworkStatusListener: Floating animated offline banner that appears when
+  the user loses internet connectivity. Detects both browser window offline
+  events and Capacitor Network plugin signals (for Android native builds).
+  Shows a "Back Online!" success pulse when connectivity is restored.
+- error.tsx: Next.js app-level error boundary for route-level errors. Shows
+  branded error UI with retry button and navigation options.
+- global-error.tsx: Root-level global error boundary for catastrophic errors.
+
+[FEATURE 3: FAQ KNOWLEDGE BASE PAGE]
+Files:
+  - src/app/faq/page.tsx (new)
+  - src/app/page.tsx (updated - added FAQ accordion section + navigation links)
+- Dedicated /faq page with live search filtering, 6 category tabs, animated
+  accordion items, and a contact support card.
+- Categories: General, Security, Documents, Sharing, Employers, Mobile.
+- Landing page now includes an interactive FAQ accordion section (5 key items)
+  with smooth expand/collapse animations directly above the CTA banner.
+- Desktop and mobile navigation headers updated to include "FAQ" link.
+- Footer updated: Platform column now links to FAQ; Legal column replaced with
+  actual working links (/privacy, /faq) instead of "#" placeholders.
+
+[FEATURE 4: SEO & CRAWLER OPTIMIZATION (robots.txt + sitemap.xml)]
+Files:
+  - src/app/robots.ts (new - Next.js metadata route)
+  - public/robots.txt (new - static file fallback)
+  - src/app/sitemap.ts (new - Next.js dynamic sitemap)
+- robots.ts: Next.js 15 App Router metadata route generating /robots.txt
+  automatically. Allows crawling of /, /faq, /privacy, /p/, /verify/ paths.
+  Disallows dashboard, admin, API, share, auth routes from crawlers.
+  Includes Sitemap directive pointing to sitemap.xml.
+- sitemap.ts: Dynamic sitemap including all public pages (home, faq, privacy,
+  login, register) with lastModified dates and priority weights.
+- Googlebot-specific rules included for preferred crawl behavior.
+
+[FEATURE 5: COMPREHENSIVE IMAGE ALT TEXT AUDIT]
+Files updated with descriptive alt attributes:
+  - src/app/page.tsx (all logo and illustration images)
+  - src/app/(auth)/login/page.tsx: "CVVault Official Brand Logo"
+  - src/app/(auth)/register/page.tsx: "CVVault Official Brand Logo"
+  - src/app/(auth)/register/role/page.tsx: "CVVault Official Brand Logo"
+  - src/app/dashboard/layout.tsx: Logo → "CVVault Official Brand Logo",
+    all user avatar images → "User Profile Avatar" (sidebar, mobile header,
+    FAB mobile menu)
+  - src/app/dashboard/profile/page.tsx: "User Profile Avatar"
+  - src/app/p/[id]/page.tsx: Logo + dynamic avatar using profile full_name
+    (e.g. "Jane Doe Profile Avatar") + fallback User icon if no avatar
+  - src/app/verify/[id]/page.tsx: "CVVault Official Brand Logo"
+  - src/components/DocumentThumbnailPreview.tsx: "Preview of {documentName}"
+- Generic alt values ("Logo", "Avatar") replaced with descriptive, accessible,
+  SEO-friendly strings across the entire codebase.
+
+[FEATURE 6: PRIVACY POLICY PAGE]
+File: src/app/privacy/page.tsx (new)
+- Full GDPR & CCPA compliant Privacy Policy page at /privacy.
+- 9 structured sections:
+  1. Overview & Core Privacy Principles (zero data monetization, revocation, portability)
+  2. Information We Collect (account credentials, vault documents, OCR metadata,
+     recruiter interactions, audit logs)
+  3. How We Use & Process Your Data
+  4. Military-Grade Encryption & Vault Security (AES-256 at rest, TLS 1.3 in transit)
+  5. Tokenized Sharing & Access Expiration (cryptographic signed tokens, revocation)
+  6. Cloud Infrastructure & Sub-processors (Supabase, Firebase, Resend, Novu)
+  7. Your Rights (GDPR, CCPA & Data Deletion - access, rectification, erasure)
+  8. Cookies & Local Storage disclosure
+  9. Contact Data Protection Officer
+- Sticky navigation header with auth-aware Sign In / Dashboard button.
+- Clickable Table of Contents for all 9 sections.
+- Footer with links back to Home and FAQ.
+Links updated:
+  - Login page (/login): Added "By continuing, you agree to our Privacy Policy and FAQ" footnote.
+  - Register page (/register): Added "By creating an account, you agree to our Privacy Policy and FAQ" footnote.
+  - Landing page footer: Legal column now properly links to /privacy and /faq.

@@ -91,7 +91,7 @@ export default function RoleSelectionPage() {
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-6">
               <Link href="/">
-                <img src={logoUrl} alt="CVVault Logo" className="h-16 w-16 rounded-2xl shadow-lg transform hover:scale-105 transition-transform" />
+                <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-16 w-16 rounded-2xl shadow-lg transform hover:scale-105 transition-transform" />
               </Link>
             </div>
             <CardTitle className="text-3xl font-bold text-center tracking-tight">

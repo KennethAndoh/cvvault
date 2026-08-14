@@ -70,7 +70,7 @@ export default async function DocumentVerificationPage({
       {/* Top Header */}
       <header className="bg-background border-b h-16 flex items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <img src={logoUrl} alt="Logo" className="h-8 w-8 rounded" />
+          <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-8 w-8 rounded" />
           <span>CVVault <span className="text-xs font-normal text-muted-foreground ml-1">Verification Ledger</span></span>
         </Link>
         <Badge variant="outline" className="gap-1 border-primary/30 text-primary">

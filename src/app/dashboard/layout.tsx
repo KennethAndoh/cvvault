@@ -143,7 +143,7 @@ export default function DashboardLayout({
         >
           <img
             src={logoUrl}
-            alt="Logo"
+            alt="CVVault Official Brand Logo"
             className="h-8 w-8 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200"
           />
           <span className="font-bold text-lg gradient-text">CVVault</span>
@@ -241,7 +241,7 @@ export default function DashboardLayout({
           {avatarUrl ? (
             <img
               src={avatarUrl}
-              alt="Avatar"
+              alt="User Profile Avatar"
               className="h-8 w-8 rounded-full object-cover shrink-0 ring-2 ring-primary/20"
             />
           ) : (
@@ -318,7 +318,7 @@ export default function DashboardLayout({
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
-                    alt="Avatar"
+                    alt="User Profile Avatar"
                     className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/30 hover:ring-primary transition-all cursor-pointer shadow-sm"
                   />
                 ) : (
@@ -362,7 +362,7 @@ export default function DashboardLayout({
                   {/* Menu Header - User Info */}
                   <div className="flex items-center gap-3 pb-3 mb-3 border-b border-border/50">
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/30" />
+                      <img src={avatarUrl} alt="User Profile Avatar" className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/30" />
                     ) : (
                       <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-violet-500/30 flex items-center justify-center text-primary font-bold text-sm">
                         {(user.displayName || user.email || "?")[0].toUpperCase()}

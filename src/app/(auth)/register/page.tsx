@@ -207,7 +207,7 @@ export default function RegisterPage() {
             <Link href="/" className="flex items-center justify-center gap-2 mb-5">
               <img
                 src={logoUrl}
-                alt="CVVault"
+                alt="CVVault Official Brand Logo"
                 className="h-9 w-9 rounded-xl object-cover shadow"
               />
               <span className="text-xl font-extrabold tracking-tight text-indigo-700 dark:text-indigo-300">
@@ -355,6 +355,17 @@ export default function RegisterPage() {
                 className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
               >
                 Login
+              </Link>
+            </p>
+
+            <p className="text-center text-[11px] text-gray-400 dark:text-gray-500 mt-4">
+              By creating an account, you agree to our{" "}
+              <Link href="/privacy" className="underline hover:text-indigo-600 dark:hover:text-indigo-400">
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link href="/faq" className="underline hover:text-indigo-600 dark:hover:text-indigo-400">
+                FAQ
               </Link>
             </p>
           </div>

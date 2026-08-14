@@ -1,0 +1,15 @@
+# CVVault robots.txt
+User-agent: *
+Allow: /
+Allow: /faq
+Allow: /privacy
+Allow: /p/
+Allow: /verify/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /share/
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://cvvault.vercel.app/sitemap.xml

@@ -81,7 +81,7 @@ export function DocumentThumbnailPreview({
           <div className="relative w-full h-full overflow-hidden bg-slate-900">
             <img
               src={fileUrl}
-              alt={documentName}
+              alt={`Preview of ${documentName}`}
               onError={() => setImageError(true)}
               className="w-full h-full object-cover object-top transition-transform duration-500 ease-out group-hover/thumb:scale-125"
             />

@@ -19,6 +19,8 @@ import {
   TrendingUp,
   ShieldCheck,
   Rocket,
+  HelpCircle,
+  ChevronDown,
 } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
@@ -54,6 +56,7 @@ export default function LandingPage() {
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
   const [scrolled, setScrolled] = useState(false);
   const [isNative, setIsNative] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -161,6 +164,12 @@ export default function LandingPage() {
             ))}
             <Link
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              href="/faq"
+            >
+              FAQ
+            </Link>
+            <Link
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               href="/login"
             >
               Login
@@ -175,25 +184,31 @@ export default function LandingPage() {
             <ModeToggle />
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-xl">
+                <Button variant="ghost" size="icon" className="rounded-xl" aria-label="Open Navigation Menu">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] glass">
                 <SheetHeader className="text-left">
                   <SheetTitle className="flex items-center gap-2">
-                    <img src={logoUrl} alt="Logo" className="h-8 w-8 rounded-lg" />
+                    <img src={logoUrl} alt="CVVault Official Logo" className="h-8 w-8 rounded-lg" />
                     <span className="gradient-text">CVVault</span>
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col gap-3 mt-8">
-                  {["#features", "#pricing", "#security", "/login"].map((href, i) => (
+                  {[
+                    { href: "#features", label: "Features" },
+                    { href: "#pricing", label: "Pricing" },
+                    { href: "#security", label: "Security" },
+                    { href: "/faq", label: "FAQ" },
+                    { href: "/login", label: "Login" },
+                  ].map((item, i) => (
                     <Link
                       key={i}
                       className="text-base font-medium py-2 px-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
-                      href={href}
+                      href={item.href}
                     >
-                      {["Features", "Pricing", "Security", "Login"][i]}
+                      {item.label}
                     </Link>
                   ))}
                   <Button asChild className="rounded-full w-full mt-4">
@@ -673,6 +688,88 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── FAQ ACCORDION SECTION ── */}
+        <section id="faq" className="w-full py-20 border-t border-border/40 bg-muted/10">
+          <div className="container px-4 mx-auto max-w-4xl">
+            <div className="text-center space-y-3 mb-12">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+                <HelpCircle className="h-3.5 w-3.5" /> GOT QUESTIONS? WE&apos;VE GOT ANSWERS
+              </div>
+              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-foreground">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-muted-foreground text-base max-w-lg mx-auto">
+                Quick answers to common questions about credentials security, document verification, sharing, and mobile access.
+              </p>
+            </div>
+
+            <div className="space-y-3.5">
+              {[
+                {
+                  q: "What is CVVault and how does it protect my career credentials?",
+                  a: "CVVault is a secure, professional SaaS platform for storing, organizing, and sharing career credentials. All uploaded documents are encrypted with AES-256 at rest and TLS 1.3 in transit with strict Row-Level Security, giving you total control over who views your professional credentials.",
+                },
+                {
+                  q: "How does secure time-limited sharing work?",
+                  a: "When you share a document or your public profile, CVVault creates a cryptographically signed access link. You can set expiration limits (e.g. 24 hours, 7 days, 30 days) or revoke access anytime with one click.",
+                },
+                {
+                  q: "How does the OCR Auto-Parsing Engine work?",
+                  a: "When you upload credentials (degrees, AWS/Google certificates, IDs), our zero-latency OCR parser analyzes document text to extract issuing organizations, categories, dates, and skill tags automatically.",
+                },
+                {
+                  q: "Is CVVault free for candidates and job seekers?",
+                  a: "Yes! Job seekers and employees can use CVVault's core features completely free—including CV storage, document categorization, instant QR code exports, and public vanity portfolio links.",
+                },
+                {
+                  q: "Can I use CVVault on Android mobile devices?",
+                  a: "Yes, CVVault provides a native Android app powered by Capacitor featuring offline status detection, native document file pickers, push notifications, and biometric themes.",
+                },
+              ].map((faq, index) => {
+                const isOpen = openFaq === index;
+                return (
+                  <div
+                    key={index}
+                    className={`rounded-2xl border transition-all overflow-hidden ${
+                      isOpen
+                        ? "border-primary/40 bg-card shadow-sm"
+                        : "border-border/60 bg-card/60 hover:border-border hover:bg-card"
+                    }`}
+                  >
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : index)}
+                      className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 font-semibold text-sm md:text-base text-foreground focus:outline-hidden"
+                    >
+                      <span className="flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-primary/60 shrink-0" />
+                        {faq.q}
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${
+                          isOpen ? "rotate-180 text-primary" : ""
+                        }`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="px-6 pb-5 pt-1 text-sm text-muted-foreground leading-relaxed border-t border-border/30">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 text-center">
+              <Button asChild variant="outline" className="rounded-full px-6 text-xs font-semibold">
+                <Link href="/faq">
+                  View All Knowledge Base & FAQ Questions <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* ── CTA BANNER ── */}
         <section className="w-full py-24">
           <div className="container px-4 mx-auto">
@@ -720,7 +817,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-2">
               <Link className="flex items-center gap-2.5 mb-5" href="/">
-                <img src={logoUrl} alt="CVVault Logo" className="h-8 w-8 rounded-lg" />
+                <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-8 w-8 rounded-lg" />
                 <span className="text-lg font-bold gradient-text">CVVault</span>
               </Link>
               <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mb-6">
@@ -738,7 +835,7 @@ export default function LandingPage() {
                   { label: "Features", href: "#features" },
                   { label: "Pricing", href: "#pricing" },
                   { label: "Security", href: "#security" },
-                  { label: "Enterprise", href: "#pricing" },
+                  { label: "FAQ & Help", href: "/faq" },
                 ].map((item) => (
                   <li key={item.label}>
                     <Link href={item.href} className="text-muted-foreground hover:text-primary transition-colors">
@@ -749,12 +846,17 @@ export default function LandingPage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-sm mb-5 text-foreground">Legal</h4>
+              <h4 className="font-bold text-sm mb-5 text-foreground">Legal & Privacy</h4>
               <ul className="space-y-3 text-sm">
-                {["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR"].map((l) => (
-                  <li key={l}>
-                    <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      {l}
+                {[
+                  { label: "Privacy Policy", href: "/privacy" },
+                  { label: "FAQ Knowledge Base", href: "/faq" },
+                  { label: "Terms of Service", href: "/privacy" },
+                  { label: "Security & GDPR", href: "/privacy" },
+                ].map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href} className="text-muted-foreground hover:text-primary transition-colors">
+                      {l.label}
                     </Link>
                   </li>
                 ))}
