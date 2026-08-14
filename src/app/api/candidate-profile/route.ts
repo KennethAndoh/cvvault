@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { adminAuth } from "@/lib/firebase-admin";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200, headers: corsHeaders });
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -8,7 +17,7 @@ export async function GET(req: NextRequest) {
   const viewerId = searchParams.get("viewerId");
 
   if (!candidateId || !viewerId) {
-    return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
+    return NextResponse.json({ error: "Missing parameters" }, { status: 400, headers: corsHeaders });
   }
 
   // Verify the viewer is authenticated (Firebase UID exists in profiles)
@@ -19,12 +28,12 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (viewerError || !viewerProfile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
   }
 
   // Only employers and admins can access this endpoint
   if (viewerProfile.role !== "employer" && viewerProfile.role !== "admin") {
-    return NextResponse.json({ error: "Access denied. Only employers can view candidate profiles." }, { status: 403 });
+    return NextResponse.json({ error: "Access denied. Only employers can view candidate profiles." }, { status: 403, headers: corsHeaders });
   }
 
   // Fetch candidate profile
@@ -35,11 +44,11 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (profileError || !profile) {
-    return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+    return NextResponse.json({ error: "Candidate not found" }, { status: 404, headers: corsHeaders });
   }
 
   // Fetch all their documents (not just public ones — employer has legitimate access)
-  const { data: documents, error: docsError } = await supabaseAdmin
+  const { data: documents } = await supabaseAdmin
     .from("documents")
     .select("id, name, category, storage_path, metadata, created_at")
     .eq("user_id", candidateId)
@@ -65,5 +74,5 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     profile,
     documents: documentsWithUrls,
-  });
+  }, { status: 200, headers: corsHeaders });
 }

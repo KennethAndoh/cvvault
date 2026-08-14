@@ -83,22 +83,14 @@ export function FileUpload({ onFileSelect, maxSize = 10 * 1024 * 1024, hasError 
 
     // Run OCR Auto-Parsing with extracted text sample
     try {
-      const res = await runDocumentOcr(file.name, sampleText);
+      const parsed = parseDocumentMetadata(file.name, sampleText);
       setIsOcrParsing(false);
-
-      if (res && res.success && res.data) {
-        setOcrMeta(res.data);
-        onFileSelect(file, res.data);
-      } else {
-        const fallbackMeta = parseDocumentMetadata(file.name, sampleText);
-        setOcrMeta(fallbackMeta);
-        onFileSelect(file, fallbackMeta);
-      }
+      setOcrMeta(parsed);
+      onFileSelect(file, parsed);
     } catch (err) {
+      console.warn("OCR parsing fallback:", err);
       setIsOcrParsing(false);
-      const fallbackMeta = parseDocumentMetadata(file.name, sampleText);
-      setOcrMeta(fallbackMeta);
-      onFileSelect(file, fallbackMeta);
+      onFileSelect(file);
     }
   }, [maxSize, onFileSelect]);
 

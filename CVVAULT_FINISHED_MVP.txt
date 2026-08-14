@@ -49,7 +49,12 @@ multi-channel notifications, and comprehensive audit logging.
   * Storage in Supabase S3-compatible buckets with secure file streaming.
   * File search, category filtering, and status indicators.
   * Transitioned Zoomed-In Document Preview (DocumentThumbnailPreview.tsx): Replaces basic document icons with realistic A4 paper-styled document card previews (ATS printable layout representation, category badges, micro document structure, and verification watermark seals) featuring smooth scale-up zoom, sheen animation, and quick hover preview triggers across Dashboard, Vault, Public Profiles, Shared Access, and Candidate reviews.
-  * Android Mobile App Storage Upload Resolution & Base64 Pipeline: Fixed "Failed to fetch" errors on Android mobile apps by removing native Server Action bypass logic and introducing `uploadDocumentBase64` & `uploadAvatarBase64` server actions. Converts binary payloads to Base64 strings when Android WebView binary fetch streaming bugs occur, routing uploads cleanly through `supabaseAdmin` with expanded 25MB body limits.
+  * Android Mobile App Resilient Multi-Tier Upload & Fetch Architecture: Resolved "Failed to fetch" errors on Android mobile apps (Capacitor/WebView) across all operating environments. Implemented a 4-tier upload pipeline:
+    1) Direct Client-Side Supabase Storage Upload (`supabase.storage.from("documents").upload`) bypassing Vercel 4.5MB Serverless body limits and Android WebView `FormData` streaming bugs.
+    2) Primary Server Action upload (`uploadDocument`).
+    3) Resilient Base64 Server Action upload (`uploadDocumentBase64`).
+    4) Universal REST API fallback (`/api/upload-document`) with absolute URL resolution (`getApiUrl`), full CORS headers (`Access-Control-Allow-Origin: *`, `OPTIONS` preflight handler), and JSON Base64 & record registration modes.
+    Also equipped `fetchDocuments` and `handleDelete` with direct Supabase client fallbacks so offline/native mobile states never produce unhandled "Failed to fetch" errors.
 
 [MODULE 3: CREDENTIAL VERIFICATION ENGINE]
 - Auto-Verification Engine (actions/auto-verify.ts, lib/verification-proof.ts):

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDocuments, uploadDocument, uploadDocumentBase64, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument } from "@/app/actions/documents";
+import { getDocuments, uploadDocument, uploadDocumentBase64, deleteDocument, updateDocumentVisibility, getSignedUrlForDocument, createDocumentRecord } from "@/app/actions/documents";
 import { supabase } from "@/lib/supabase";
+import { getApiUrl } from "@/lib/api-url";
 import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,12 +189,56 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     setLoading(true);
-    const docsRes = await getDocuments(user!.uid);
+    let loaded = false;
+    try {
+      const docsRes = await getDocuments(user!.uid);
+      if (docsRes && docsRes.success) {
+        setDocuments(docsRes.documents || []);
+        loaded = true;
+      }
+    } catch (e) {
+      console.warn("getDocuments server action failed, falling back to client Supabase fetch:", e);
+    }
 
-    if (docsRes.success) {
-      setDocuments(docsRes.documents || []);
-    } else {
-      toast.error("Failed to fetch documents");
+    if (!loaded) {
+      try {
+        const { data, error } = await supabase
+          .from("documents")
+          .select("*")
+          .eq("user_id", user!.uid)
+          .order("created_at", { ascending: false });
+
+        if (!error && data) {
+          const paths = data.map((d: any) => d.storage_path).filter(Boolean);
+          const signedMap: Record<string, string> = {};
+          if (paths.length > 0) {
+            try {
+              const { data: signedData } = await supabase.storage
+                .from("documents")
+                .createSignedUrls(paths, 3600);
+              if (signedData) {
+                signedData.forEach((s) => {
+                  if (s.path && s.signedUrl) signedMap[s.path] = s.signedUrl;
+                });
+              }
+            } catch (signErr) {
+              console.warn("Client signed URL batch warning:", signErr);
+            }
+          }
+          const docsWithUrls = data.map((d: any) => ({
+            ...d,
+            url: signedMap[d.storage_path] || null,
+          }));
+          setDocuments(docsWithUrls);
+          loaded = true;
+        }
+      } catch (err) {
+        console.warn("Client documents fetch fallback failed:", err);
+      }
+    }
+
+    if (!loaded) {
+      toast.error("Could not refresh documents list. Please check your connection.");
     }
     setLoading(false);
   };
@@ -216,24 +261,131 @@ export default function DocumentsPage() {
     setFileError(false);
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("name", docName || file.name);
-      formData.append("category", category);
-      if (selectedOcrMeta) {
-        formData.append("ocr", JSON.stringify(selectedOcrMeta));
-      }
-
       let result: any = null;
 
-      // Tier 1: Primary Server Action upload (FormData) for all platforms (Web and Native Mobile)
+      // Tier 1: Direct Client-Side Supabase Storage Upload (Bypasses all Vercel payload limits & Android WebView stream bugs)
       try {
-        result = await uploadDocument(user.uid, formData);
-      } catch (err) {
-        console.warn("Primary Server Action upload (FormData) failed, attempting Base64 fallback:", err);
+        const fileExt = file.name.split(".").pop() || "bin";
+        const storageFileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        const filePath = `${user.uid}/${storageFileName}`;
+        const fileType = file.type || "application/octet-stream";
+
+        let uploadPayload: ArrayBuffer | Uint8Array | File = file;
+        try {
+          const ab = await file.arrayBuffer();
+          uploadPayload = new Uint8Array(ab);
+        } catch (abErr) {
+          console.warn("Could not convert file to Uint8Array, using file instance:", abErr);
+        }
+
+        const { error: upErr } = await supabase.storage
+          .from("documents")
+          .upload(filePath, uploadPayload, {
+            contentType: fileType,
+            upsert: true,
+          });
+
+        if (!upErr) {
+          // File is securely stored in Supabase Storage. Register document DB record:
+          // Try Server Action first
+          try {
+            const recRes = await createDocumentRecord({
+              userId: user.uid,
+              name: docName || file.name,
+              storagePath: filePath,
+              category,
+              metadata: {
+                size: file.size,
+                type: fileType,
+                originalName: file.name,
+                verification_status: "pending",
+                ...(selectedOcrMeta ? { ocr: selectedOcrMeta } : {}),
+              },
+            });
+            if (recRes && recRes.success) {
+              result = recRes;
+            }
+          } catch (recActionErr) {
+            console.warn("createDocumentRecord server action failed, trying API registration:", recActionErr);
+          }
+
+          // Fallback 1: Register via universal API endpoint
+          if (!result || !result.success) {
+            try {
+              const apiRes = await fetch(getApiUrl("/api/upload-document"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  action: "create_record",
+                  userId: user.uid,
+                  name: docName || file.name,
+                  storagePath: filePath,
+                  category,
+                  fileName: file.name,
+                  fileSize: file.size,
+                  fileType,
+                  ocr: selectedOcrMeta || undefined,
+                }),
+              });
+              if (apiRes.ok) {
+                const apiJson = await apiRes.json();
+                if (apiJson.success) {
+                  result = apiJson;
+                }
+              }
+            } catch (apiRegErr) {
+              console.warn("API registration failed, trying direct client insert:", apiRegErr);
+            }
+          }
+
+          // Fallback 2: Direct client Supabase table insert
+          if (!result || !result.success) {
+            const { data: clientDoc, error: clientDbErr } = await supabase
+              .from("documents")
+              .insert({
+                user_id: user.uid,
+                name: docName || file.name,
+                storage_path: filePath,
+                category,
+                metadata: {
+                  size: file.size,
+                  type: fileType,
+                  originalName: file.name,
+                  verification_status: "pending",
+                  ...(selectedOcrMeta ? { ocr: selectedOcrMeta } : {}),
+                },
+              })
+              .select()
+              .single();
+
+            if (!clientDbErr && clientDoc) {
+              result = { success: true, document: clientDoc };
+            }
+          }
+        } else {
+          console.warn("Direct Supabase storage upload failed, falling back to server actions/API:", upErr);
+        }
+      } catch (directUploadErr) {
+        console.warn("Tier 1 direct upload exception:", directUploadErr);
       }
 
-      // Tier 2: Resilient Base64 Server Action upload (bypasses Android WebView binary fetch streaming bugs)
+      // Tier 2: Primary Server Action upload (FormData)
+      if (!result || !result.success) {
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("name", docName || file.name);
+          formData.append("category", category);
+          if (selectedOcrMeta) {
+            formData.append("ocr", JSON.stringify(selectedOcrMeta));
+          }
+          result = await uploadDocument(user.uid, formData);
+        } catch (err) {
+          console.warn("Tier 2 Server Action upload failed, trying Base64 action:", err);
+        }
+      }
+
+      // Tier 3: Resilient Base64 Server Action upload
       if (!result || !result.success) {
         try {
           const reader = new FileReader();
@@ -254,34 +406,44 @@ export default function DocumentsPage() {
             ocr: selectedOcrMeta || undefined,
           });
         } catch (base64Err) {
-          console.warn("Base64 Server Action upload failed, attempting client-side fallback:", base64Err);
+          console.warn("Tier 3 Base64 Server Action failed, trying API route:", base64Err);
         }
       }
 
-      // Tier 3: API route fallback — uses service-role key server-side, no RLS issues
+      // Tier 4: Universal REST API Route with absolute URL and JSON Base64
       if (!result || !result.success) {
-        console.warn("Server actions unavailable, falling back to /api/upload-document route");
-        const apiFormData = new FormData();
-        apiFormData.append("file", file);
-        apiFormData.append("userId", user.uid);
-        apiFormData.append("name", docName || file.name);
-        apiFormData.append("category", category);
-        if (selectedOcrMeta) {
-          apiFormData.append("ocr", JSON.stringify(selectedOcrMeta));
+        try {
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (e) => reject(e);
+            reader.readAsDataURL(file);
+          });
+          const base64Data = await base64Promise;
+
+          const apiRes = await fetch(getApiUrl("/api/upload-document"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: user.uid,
+              name: docName || file.name,
+              category,
+              fileName: file.name,
+              fileType: file.type || "application/octet-stream",
+              base64Data,
+              ocr: selectedOcrMeta || undefined,
+            }),
+          });
+
+          if (apiRes.ok) {
+            const apiJson = await apiRes.json();
+            if (apiJson.success) {
+              result = apiJson;
+            }
+          }
+        } catch (apiErr) {
+          console.warn("Tier 4 API upload failed:", apiErr);
         }
-
-        const apiRes = await fetch("/api/upload-document", {
-          method: "POST",
-          body: apiFormData,
-        });
-
-        if (!apiRes.ok) {
-          const errBody = await apiRes.json().catch(() => ({}));
-          throw new Error(errBody?.error || `Upload API error ${apiRes.status}`);
-        }
-
-        const apiJson = await apiRes.json();
-        result = { success: true, document: apiJson.document };
       }
 
       if (result && result.success) {
@@ -293,11 +455,15 @@ export default function DocumentsPage() {
         setFileError(false);
         fetchDocuments();
       } else {
-        throw new Error(result?.error || "Upload failed");
+        throw new Error(result?.error || "Could not complete document upload. Please try again.");
       }
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error(error.message || "Upload failed. Please try again.");
+      const friendlyMsg =
+        error?.message?.includes("fetch") || error?.message?.includes("Network")
+          ? "Network connection issue. Please check your internet connection and try again."
+          : error.message || "Upload failed. Please try again.";
+      toast.error(friendlyMsg);
     } finally {
       setUploading(false);
     }
@@ -306,8 +472,29 @@ export default function DocumentsPage() {
   const handleDelete = async (id: string, path: string) => {
     if (!confirm("Are you sure you want to delete this document?")) return;
 
-    const result = await deleteDocument(id, path, user!.uid);
-    if (result.success) {
+    let deleted = false;
+    try {
+      const result = await deleteDocument(id, path, user!.uid);
+      if (result && result.success) {
+        deleted = true;
+      }
+    } catch (e) {
+      console.warn("deleteDocument server action failed, trying client deletion:", e);
+    }
+
+    if (!deleted) {
+      try {
+        await supabase.storage.from("documents").remove([path]);
+        const { error } = await supabase.from("documents").delete().eq("id", id).eq("user_id", user!.uid);
+        if (!error) {
+          deleted = true;
+        }
+      } catch (clientErr) {
+        console.warn("Client delete failed:", clientErr);
+      }
+    }
+
+    if (deleted) {
       toast.success("Document deleted");
       fetchDocuments();
     } else {
