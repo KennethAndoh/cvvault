@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getRedirectResult, signInWithCredential } from "firebase/auth";
 import { Capacitor } from "@capacitor/core";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import { auth } from "@/lib/firebase";
@@ -25,43 +25,44 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ── Vault illustration (inline SVG matching the design) ───────────────────
+// ── Pryvault Vault illustration ───────────────────────────────────────────
 const VaultIllustration = () => (
   <div className="relative w-36 h-36 shrink-0">
     {/* Safe body */}
     <svg viewBox="0 0 120 120" className="w-full h-full drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
       {/* Safe body */}
-      <rect x="20" y="30" width="80" height="75" rx="8" fill="#7C6FE1" />
-      <rect x="24" y="34" width="72" height="67" rx="6" fill="#9B91EA" />
+      <rect x="20" y="30" width="80" height="75" rx="10" fill="#0284C7" />
+      <rect x="24" y="34" width="72" height="67" rx="8" fill="#38BDF8" />
       {/* Door */}
-      <rect x="30" y="40" width="55" height="50" rx="4" fill="#6B5EDA" />
+      <rect x="30" y="40" width="55" height="50" rx="6" fill="#0369A1" />
       {/* Dial circle */}
-      <circle cx="57" cy="65" r="14" fill="#5449C8" stroke="#E0DEFF" strokeWidth="2" />
-      <circle cx="57" cy="65" r="8" fill="#7C6FE1" />
-      <line x1="57" y1="57" x2="57" y2="65" stroke="#E0DEFF" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="57" cy="65" r="14" fill="#0284C7" stroke="#E0F2FE" strokeWidth="2.5" />
+      <circle cx="57" cy="65" r="8" fill="#0369A1" />
+      <line x1="57" y1="57" x2="57" y2="65" stroke="#E0F2FE" strokeWidth="2" strokeLinecap="round"/>
       {/* Handle */}
-      <rect x="83" y="60" width="8" height="10" rx="2" fill="#4A3FB0" />
+      <rect x="83" y="60" width="8" height="10" rx="2" fill="#0C4A6E" />
       {/* Hinges */}
-      <rect x="28" y="45" width="5" height="7" rx="1" fill="#4A3FB0" />
-      <rect x="28" y="75" width="5" height="7" rx="1" fill="#4A3FB0" />
-      {/* CV paper sticking out top */}
-      <rect x="48" y="20" width="22" height="18" rx="2" fill="white" opacity="0.95"/>
-      <line x1="52" y1="26" x2="66" y2="26" stroke="#7C6FE1" strokeWidth="1.5"/>
-      <line x1="52" y1="30" x2="66" y2="30" stroke="#7C6FE1" strokeWidth="1.5"/>
-      <line x1="52" y1="34" x2="60" y2="34" stroke="#7C6FE1" strokeWidth="1.5"/>
+      <rect x="28" y="45" width="5" height="7" rx="1.5" fill="#0C4A6E" />
+      <rect x="28" y="75" width="5" height="7" rx="1.5" fill="#0C4A6E" />
+      {/* CV credential paper sticking out top */}
+      <rect x="48" y="20" width="22" height="18" rx="2" fill="white" opacity="0.98"/>
+      <line x1="52" y1="26" x2="66" y2="26" stroke="#0284C7" strokeWidth="1.5"/>
+      <line x1="52" y1="30" x2="66" y2="30" stroke="#0284C7" strokeWidth="1.5"/>
+      <line x1="52" y1="34" x2="60" y2="34" stroke="#0284C7" strokeWidth="1.5"/>
     </svg>
-    {/* Floating badge top-right */}
-    <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center shadow-md border border-indigo-200 dark:border-indigo-700">
-      <svg viewBox="0 0 24 24" className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" strokeWidth="2">
+    {/* Floating verified badge top-right */}
+    <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-sky-100 dark:bg-sky-950/80 flex items-center justify-center shadow-md border border-sky-200 dark:border-sky-800">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
       </svg>
     </div>
-    {/* Floating badge bottom-left */}
-    <div className="absolute -bottom-2 -left-2 w-9 h-9 rounded-full bg-pink-100 dark:bg-pink-900/50 flex items-center justify-center shadow-md border border-pink-200 dark:border-pink-700">
-      <svg viewBox="0 0 24 24" className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="8" r="6"/>
-        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+    {/* Floating golden padlock badge bottom-left (matching the Pryvault logo) */}
+    <div className="absolute -bottom-2 -left-2 w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-950/80 flex items-center justify-center shadow-md border border-amber-300 dark:border-amber-700">
+      <svg viewBox="0 0 24 24" className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" strokeWidth="2.2">
+        <rect x="5" y="11" width="14" height="10" rx="2"/>
+        <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
+        <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
       </svg>
     </div>
   </div>
@@ -101,8 +102,7 @@ export default function LoginPage() {
     }
   }, [user, authLoading, router, showOtpForm]);
 
-  const logoUrl =
-    "/logo.png";
+  const logoUrl = "/logo.png";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,14 +210,14 @@ export default function LoginPage() {
     <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{
-        background: "var(--auth-bg, linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #ede9fe 100%))",
+        background: "var(--auth-bg, linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%))",
       }}
     >
-      {/* Background blobs */}
+      {/* Background blobs matching Pryvault theme */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-indigo-200/40 dark:bg-indigo-900/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-violet-200/40 dark:bg-violet-900/20 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-pink-100/30 dark:bg-pink-900/10 blur-2xl" />
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-300/30 dark:bg-sky-900/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-blue-300/30 dark:bg-blue-900/20 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-amber-200/20 dark:bg-amber-900/10 blur-2xl" />
       </div>
 
       <motion.div
@@ -227,27 +227,27 @@ export default function LoginPage() {
         className="w-full max-w-[420px]"
       >
         {/* Card */}
-        <div className="rounded-3xl bg-white dark:bg-[#1a1a2e] shadow-2xl shadow-indigo-200/50 dark:shadow-indigo-900/40 overflow-hidden">
+        <div className="rounded-3xl bg-white dark:bg-[#0f172a] shadow-2xl shadow-sky-900/10 dark:shadow-black/60 border border-sky-100 dark:border-slate-800 overflow-hidden">
           <div className="px-8 pt-8 pb-6">
 
             {/* ── Header: logo + title + illustration ── */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex-1">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 mb-4 w-fit">
+                <Link href="/" className="flex items-center gap-2.5 mb-4 w-fit">
                   <img
                     src={logoUrl}
                     alt="Pryvault Official Brand Logo"
-                    className="h-9 w-9 rounded-xl object-cover shadow"
+                    className="h-9 w-9 rounded-xl object-contain shadow-sm"
                   />
-                  <span className="text-xl font-extrabold tracking-tight text-indigo-700 dark:text-indigo-300">
-                    Pry<span className="text-indigo-500">vault</span>
+                  <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    Pry<span className="text-sky-600 dark:text-sky-400">vault</span>
                   </span>
                 </Link>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
                   Welcome back
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                   Login to access your professional vault
                 </p>
               </div>
@@ -258,7 +258,7 @@ export default function LoginPage() {
             {showOtpForm ? (
               <form onSubmit={handleVerifyOtp} className="space-y-3">
                 <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
                     id="otp-code"
                     type="text"
@@ -266,25 +266,25 @@ export default function LoginPage() {
                     required
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-60 text-white font-semibold text-sm tracking-wide shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 transition-all duration-200"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:from-sky-700 active:to-blue-700 disabled:opacity-60 text-white font-semibold text-sm tracking-wide shadow-lg shadow-sky-500/25 transition-all duration-200"
                 >
                   {loading ? "Verifying…" : "Verify OTP"}
                 </button>
                 <p className="text-center text-xs mt-4">
-                   <button type="button" onClick={() => setShowOtpForm(false)} className="text-indigo-500 hover:underline">Go back to login</button>
+                   <button type="button" onClick={() => setShowOtpForm(false)} className="text-sky-600 dark:text-sky-400 hover:underline">Go back to login</button>
                 </p>
               </form>
             ) : (
             <form onSubmit={handleLogin} className="space-y-3">
               {/* Email */}
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   id="login-email"
                   type="email"
@@ -292,13 +292,13 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                 />
               </div>
 
               {/* Password */}
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   id="login-password"
                   type={showPassword ? "text" : "password"}
@@ -306,12 +306,12 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -319,18 +319,18 @@ export default function LoginPage() {
 
               {/* Remember me + Forgot */}
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer text-gray-600 dark:text-gray-400 select-none">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-600 dark:text-slate-400 select-none">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400 accent-indigo-600"
+                    className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 accent-sky-600"
                   />
                   Remember me
                 </label>
                 <Link
                   href="#"
-                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  className="text-sky-600 dark:text-sky-400 font-semibold hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -341,7 +341,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 id="login-submit"
-                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-60 text-white font-semibold text-sm tracking-wide shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 transition-all duration-200"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:from-sky-700 active:to-blue-700 disabled:opacity-60 text-white font-semibold text-sm tracking-wide shadow-lg shadow-sky-500/25 transition-all duration-200"
               >
                 {loading ? "Signing in…" : "Login"}
               </button>
@@ -350,9 +350,9 @@ export default function LoginPage() {
 
             {/* ── Divider ── */}
             <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs text-gray-400 whitespace-nowrap">or continue with</span>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+              <span className="text-xs text-slate-400 whitespace-nowrap">or continue with</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
 
             {/* ── Social button ── */}
@@ -361,7 +361,7 @@ export default function LoginPage() {
                 id="login-google"
                 variant="outline"
                 type="button"
-                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold transition-all shadow-sm"
+                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold transition-all shadow-sm hover:border-sky-300 dark:hover:border-sky-600"
                 onClick={handleGoogleLogin}
                 disabled={googleLoading || loading}
               >
@@ -371,23 +371,23 @@ export default function LoginPage() {
             </div>
 
             {/* ── Footer link ── */}
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-5">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-5">
               Don&apos;t have an account?{" "}
               <Link
                 href="/register"
-                className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                className="text-sky-600 dark:text-sky-400 font-semibold hover:underline"
               >
                 Sign up
               </Link>
             </p>
 
-            <p className="text-center text-[11px] text-gray-400 dark:text-gray-500 mt-4">
+            <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 mt-4">
               By continuing, you agree to our{" "}
-              <Link href="/privacy" className="underline hover:text-indigo-600 dark:hover:text-indigo-400">
+              <Link href="/privacy" className="underline hover:text-sky-600 dark:hover:text-sky-400">
                 Privacy Policy
               </Link>{" "}
               and{" "}
-              <Link href="/faq" className="underline hover:text-indigo-600 dark:hover:text-indigo-400">
+              <Link href="/faq" className="underline hover:text-sky-600 dark:hover:text-sky-400">
                 FAQ
               </Link>
             </p>

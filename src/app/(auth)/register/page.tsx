@@ -6,7 +6,6 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
   getRedirectResult,
   signInWithCredential,
 } from "firebase/auth";
@@ -18,7 +17,7 @@ import { getPostAuthRedirect } from "@/app/actions/auth";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Mail, Lock, Eye, EyeOff, User, Cloud, Briefcase, ShieldCheck } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -44,11 +43,11 @@ function FeatureItem({
 }) {
   return (
     <div className="flex flex-col items-center text-center gap-1.5">
-      <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-500 dark:text-indigo-300 shadow-sm">
+      <div className="w-11 h-11 rounded-2xl bg-sky-50 dark:bg-sky-950/60 border border-sky-100 dark:border-sky-800/60 flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-sm">
         {icon}
       </div>
-      <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-200 leading-tight">{title}</p>
-      <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">{desc}</p>
+      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 leading-tight">{title}</p>
+      <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{desc}</p>
     </div>
   );
 }
@@ -71,8 +70,7 @@ export default function RegisterPage() {
     }
   }, [user, authLoading, router]);
 
-  const logoUrl =
-    "/logo.png";
+  const logoUrl = "/logo.png";
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,16 +179,15 @@ export default function RegisterPage() {
     <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{
-        background: "var(--auth-bg, linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #ede9fe 100%))",
+        background: "var(--auth-bg, linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%))",
       }}
     >
-      {/* Background blobs */}
+      {/* Background blobs matching Pryvault theme */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-indigo-200/40 dark:bg-indigo-900/20 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-violet-200/40 dark:bg-violet-900/20 blur-3xl" />
-        {/* Bottom decorative wave blobs matching design */}
-        <div className="absolute bottom-0 left-0 w-72 h-48 rounded-tr-full bg-pink-200/40 dark:bg-pink-900/20 blur-2xl" />
-        <div className="absolute bottom-0 right-8 w-48 h-32 rounded-tl-full bg-indigo-200/30 dark:bg-indigo-900/20 blur-2xl" />
+        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-sky-300/30 dark:bg-sky-900/20 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-blue-300/30 dark:bg-blue-900/20 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-48 rounded-tr-full bg-amber-200/20 dark:bg-amber-900/10 blur-2xl" />
+        <div className="absolute bottom-0 right-8 w-48 h-32 rounded-tl-full bg-sky-200/30 dark:bg-sky-900/20 blur-2xl" />
       </div>
 
       <motion.div
@@ -200,25 +197,25 @@ export default function RegisterPage() {
         className="w-full max-w-[400px]"
       >
         {/* Card */}
-        <div className="rounded-3xl bg-white dark:bg-[#1a1a2e] shadow-2xl shadow-indigo-200/50 dark:shadow-indigo-900/40 overflow-hidden">
+        <div className="rounded-3xl bg-white dark:bg-[#0f172a] shadow-2xl shadow-sky-900/10 dark:shadow-black/60 border border-sky-100 dark:border-slate-800 overflow-hidden">
           <div className="px-8 pt-8 pb-7">
 
             {/* ── Logo ── */}
-            <Link href="/" className="flex items-center justify-center gap-2 mb-5">
+            <Link href="/" className="flex items-center justify-center gap-2.5 mb-5">
               <img
                 src={logoUrl}
                 alt="Pryvault Official Brand Logo"
-                className="h-9 w-9 rounded-xl object-cover shadow"
+                className="h-9 w-9 rounded-xl object-contain shadow-sm"
               />
-              <span className="text-xl font-extrabold tracking-tight text-indigo-700 dark:text-indigo-300">
-                Pry<span className="text-indigo-500">vault</span>
+              <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                Pry<span className="text-sky-600 dark:text-sky-400">vault</span>
               </span>
             </Link>
 
             {/* ── Title ── */}
             <div className="text-center mb-5">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create your account</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create your account</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 Start building your professional vault
               </p>
             </div>
@@ -246,7 +243,7 @@ export default function RegisterPage() {
             <form onSubmit={handleRegister} className="space-y-3">
               {/* Full name */}
               <div className="relative">
-                <User className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <User className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   id="register-name"
                   type="text"
@@ -254,13 +251,13 @@ export default function RegisterPage() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                 />
               </div>
 
               {/* Email */}
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   id="register-email"
                   type="email"
@@ -268,13 +265,13 @@ export default function RegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                 />
               </div>
 
               {/* Password */}
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   id="register-password"
                   type={showPassword ? "text" : "password"}
@@ -282,12 +279,12 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -295,7 +292,7 @@ export default function RegisterPage() {
 
               {/* Confirm Password */}
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   id="register-confirm-password"
                   type={showConfirm ? "text" : "password"}
@@ -303,12 +300,12 @@ export default function RegisterPage() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -319,7 +316,7 @@ export default function RegisterPage() {
                 id="register-submit"
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-60 text-white font-semibold text-sm tracking-wide shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 transition-all duration-200"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:from-sky-700 active:to-blue-700 disabled:opacity-60 text-white font-semibold text-sm tracking-wide shadow-lg shadow-sky-500/25 transition-all duration-200"
               >
                 {loading ? "Creating account…" : "Create Account"}
               </button>
@@ -327,9 +324,9 @@ export default function RegisterPage() {
 
             {/* ── Divider ── */}
             <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs text-gray-400 whitespace-nowrap">or sign up with</span>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+              <span className="text-xs text-slate-400 whitespace-nowrap">or sign up with</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
 
             {/* ── Social button ── */}
@@ -338,7 +335,7 @@ export default function RegisterPage() {
                 id="register-google"
                 variant="outline"
                 type="button"
-                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold transition-all shadow-sm"
+                className="w-full flex items-center justify-center gap-3 py-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold transition-all shadow-sm hover:border-sky-300 dark:hover:border-sky-600"
                 onClick={handleGoogleRegister}
                 disabled={googleLoading || loading}
               >
@@ -348,23 +345,23 @@ export default function RegisterPage() {
             </div>
 
             {/* ── Footer link ── */}
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-5">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-5">
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                className="text-sky-600 dark:text-sky-400 font-semibold hover:underline"
               >
                 Login
               </Link>
             </p>
 
-            <p className="text-center text-[11px] text-gray-400 dark:text-gray-500 mt-4">
+            <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 mt-4">
               By creating an account, you agree to our{" "}
-              <Link href="/privacy" className="underline hover:text-indigo-600 dark:hover:text-indigo-400">
+              <Link href="/privacy" className="underline hover:text-sky-600 dark:hover:text-sky-400">
                 Privacy Policy
               </Link>{" "}
               and{" "}
-              <Link href="/faq" className="underline hover:text-indigo-600 dark:hover:text-indigo-400">
+              <Link href="/faq" className="underline hover:text-sky-600 dark:hover:text-sky-400">
                 FAQ
               </Link>
             </p>
