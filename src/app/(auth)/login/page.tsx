@@ -241,7 +241,7 @@ export default function LoginPage() {
                     className="h-9 w-9 rounded-xl object-cover shadow"
                   />
                   <span className="text-xl font-extrabold tracking-tight text-indigo-700 dark:text-indigo-300">
-                    CV<span className="text-indigo-500">VAULT</span>
+                    Pry<span className="text-indigo-500">vault</span>
                   </span>
                 </Link>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">

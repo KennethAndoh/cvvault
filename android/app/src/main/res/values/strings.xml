@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Pryvault</string>
     <string name="title_activity_main">Pryvault</string>
-    <string name="package_name">io.pryvault.app</string>
-    <string name="custom_url_scheme">io.pryvault.app</string>
+    <string name="package_name">io.cvvault.app</string>
+    <string name="custom_url_scheme">io.cvvault.app</string>
     <string name="server_client_id">666493076753-web.apps.googleusercontent.com</string>
 </resources>
