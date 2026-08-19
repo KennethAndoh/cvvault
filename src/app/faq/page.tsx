@@ -44,38 +44,38 @@ const FAQ_CATEGORIES = [
 
 export const FAQ_DATA: FAQItem[] = [
   {
-    id: "what-is-cvvault",
+    id: "what-is-pryvault",
     category: "general",
-    question: "What is CVVault?",
-    answer: "CVVault is a secure, professional SaaS platform for storing, organizing, verifying, and sharing career credentials. It gives professionals complete ownership of their resumes, degree certificates, licenses, and transcripts while providing employers with instant, verifiable proof of qualifications.",
+    question: "What is Pryvault?",
+    answer: "Pryvault is a secure, professional SaaS platform for storing, organizing, verifying, and sharing career credentials. It gives professionals complete ownership of their resumes, degree certificates, licenses, and transcripts while providing employers with instant, verifiable proof of qualifications.",
     tags: ["overview", "about", "platform", "purpose"]
   },
   {
-    id: "is-cvvault-free",
+    id: "is-pryvault-free",
     category: "general",
-    question: "Is CVVault free to use for job seekers?",
-    answer: "Yes! CVVault offers a full-featured Free Tier for individual candidates and employees. You can upload your CVs, certificates, generate secure time-limited sharing links, export verifiable QR codes, and showcase your verified public profile at no cost.",
+    question: "Is Pryvault free to use for job seekers?",
+    answer: "Yes! Pryvault offers a full-featured Free Tier for individual candidates and employees. You can upload your CVs, certificates, generate secure time-limited sharing links, export verifiable QR codes, and showcase your verified public profile at no cost.",
     tags: ["pricing", "cost", "free tier", "candidate"]
   },
   {
     id: "how-secure-are-documents",
     category: "security",
     question: "How are my documents and sensitive credentials secured?",
-    answer: "All files uploaded to CVVault are encrypted both at rest using military-grade AES-256 encryption and in transit via TLS 1.3. Documents are stored in secure S3-compatible cloud storage buckets with strict Row-Level Security (RLS) policies. Only you and the specific individuals you share time-bound tokens with can view your files.",
+    answer: "All files uploaded to Pryvault are encrypted both at rest using military-grade AES-256 encryption and in transit via TLS 1.3. Documents are stored in secure S3-compatible cloud storage buckets with strict Row-Level Security (RLS) policies. Only you and the specific individuals you share time-bound tokens with can view your files.",
     tags: ["security", "encryption", "privacy", "aes-256", "safety"]
   },
   {
     id: "zero-knowledge-sharing",
     category: "security",
     question: "What happens when I share a credential link?",
-    answer: "When you share a document or your vault, CVVault generates a cryptographically signed, restricted-access token. You can configure precise expiration limits (e.g., 24 hours, 7 days, 30 days) or max view counts. Once expired or manually revoked, the link immediately ceases to work, preventing unauthorized forwarding or permanent copies.",
+    answer: "When you share a document or your vault, Pryvault generates a cryptographically signed, restricted-access token. You can configure precise expiration limits (e.g., 24 hours, 7 days, 30 days) or max view counts. Once expired or manually revoked, the link immediately ceases to work, preventing unauthorized forwarding or permanent copies.",
     tags: ["token", "expiration", "revoke", "access control"]
   },
   {
     id: "supported-file-formats",
     category: "documents",
     question: "What document formats and file sizes are supported?",
-    answer: "CVVault supports PDF, Microsoft Word (.docx, .doc), and high-resolution image formats (JPEG, PNG, WEBP) up to 25MB per document. We also support direct camera capture and native Android file pickers.",
+    answer: "Pryvault supports PDF, Microsoft Word (.docx, .doc), and high-resolution image formats (JPEG, PNG, WEBP) up to 25MB per document. We also support direct camera capture and native Android file pickers.",
     tags: ["file types", "pdf", "docx", "images", "size limit"]
   },
   {
@@ -89,20 +89,20 @@ export const FAQ_DATA: FAQItem[] = [
     id: "document-verification-status",
     category: "documents",
     question: "What do the document verification statuses mean?",
-    answer: "Documents in CVVault display three verification states: Pending (document uploaded and undergoing automated checksum / moderation review), Verified (credential verified with cryptographic seal and audit record), and Rejected (document could not be validated or requires re-upload).",
+    answer: "Documents in Pryvault display three verification states: Pending (document uploaded and undergoing automated checksum / moderation review), Verified (credential verified with cryptographic seal and audit record), and Rejected (document could not be validated or requires re-upload).",
     tags: ["verification", "badge", "status", "audit"]
   },
   {
     id: "qr-code-sharing",
     category: "sharing",
     question: "How do QR codes work for physical resumes and business cards?",
-    answer: "Every document and public profile has an instant QR code generator in CVVault. You can print or download the standalone QR badge onto physical resumes, portfolios, or business cards. When recruiters scan the QR code with their phone camera, they are routed to your verified credential proof page without needing to sign up.",
+    answer: "Every document and public profile has an instant QR code generator in Pryvault. You can print or download the standalone QR badge onto physical resumes, portfolios, or business cards. When recruiters scan the QR code with their phone camera, they are routed to your verified credential proof page without needing to sign up.",
     tags: ["qr code", "print", "mobile scan", "business card"]
   },
   {
     id: "employer-features",
     category: "employers",
-    question: "What features does CVVault offer to recruiters and employers?",
+    question: "What features does Pryvault offer to recruiters and employers?",
     answer: "Employers can post jobs, manage candidate applications through an interactive Kanban pipeline (Applied → Shortlisted → Interviewing → Offered → Hired), calculate AI Candidate Match Scores, review verified credentials with live preview zooms, and initiate real-time direct chats with applicants.",
     tags: ["recruiter", "jobs", "kanban", "match score", "hiring"]
   },
@@ -117,14 +117,14 @@ export const FAQ_DATA: FAQItem[] = [
     id: "android-app-support",
     category: "mobile",
     question: "Is there a native mobile app for Android?",
-    answer: "Yes! CVVault is available as an Android application powered by Capacitor. It includes offline status detection, native file and camera document pickers, push notifications for job updates and verification events, and responsive dark/light mode themes.",
+    answer: "Yes! Pryvault is available as an Android application powered by Capacitor. It includes offline status detection, native file and camera document pickers, push notifications for job updates and verification events, and responsive dark/light mode themes.",
     tags: ["android", "mobile", "capacitor", "notifications", "app"]
   },
   {
     id: "offline-mode",
     category: "mobile",
-    question: "Can I use CVVault when offline or with poor network connectivity?",
-    answer: "CVVault includes automatic network status detection. If you lose connection, cached credentials remain accessible and an offline status banner allows you to retry connection with one tap. Any document uploads will resume once internet connection is restored.",
+    question: "Can I use Pryvault when offline or with poor network connectivity?",
+    answer: "Pryvault includes automatic network status detection. If you lose connection, cached credentials remain accessible and an offline status banner allows you to retry connection with one tap. Any document uploads will resume once internet connection is restored.",
     tags: ["offline", "network", "cache", "connectivity"]
   }
 ];
@@ -134,11 +134,11 @@ export default function FAQPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({
-    "what-is-cvvault": true,
+    "what-is-pryvault": true,
     "how-secure-are-documents": true,
   });
 
-  const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+  const logoUrl = "/logo.png";
 
   const toggleItem = (id: string) => {
     setOpenItems(prev => ({
@@ -173,11 +173,11 @@ export default function FAQPage() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <img 
               src={logoUrl} 
-              alt="CVVault Official Brand Logo" 
+              alt="Pryvault Official Brand Logo" 
               className="h-8 w-8 rounded-lg object-contain transition-transform group-hover:scale-105" 
             />
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-primary via-blue-500 to-sky-400 bg-clip-text text-transparent">
-              CVVault
+              Pryvault
             </span>
           </Link>
 
@@ -215,7 +215,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </h1>
           <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto">
-            Everything you need to know about credentials security, document verification, sharing, and recruitment features on CVVault.
+            Everything you need to know about credentials security, document verification, sharing, and recruitment features on Pryvault.
           </p>
 
           {/* Search Input Bar */}
@@ -366,8 +366,8 @@ export default function FAQPage() {
       <footer className="border-t border-border/40 py-8 bg-muted/20 text-xs text-muted-foreground text-center">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="CVVault Logo" className="h-6 w-6 rounded-md" />
-            <span className="font-bold text-foreground">CVVault</span>
+            <img src={logoUrl} alt="Pryvault Logo" className="h-6 w-6 rounded-md" />
+            <span className="font-bold text-foreground">Pryvault</span>
             <span>• Verified Career Credentials</span>
           </div>
           <div className="flex items-center gap-4">

@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:666493076753:android:859664a092f53f8a0bb8b0",
         "android_client_info": {
-          "package_name": "io.cvvault.app"
+          "package_name": "io.pryvault.app"
         }
       },
       "oauth_client": [

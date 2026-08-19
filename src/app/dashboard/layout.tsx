@@ -53,7 +53,7 @@ const mobileMenuSecondaryItems = [
 ];
 
 const logoUrl =
-  "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+  "/logo.png";
 
 export default function DashboardLayout({
   children,
@@ -79,7 +79,7 @@ export default function DashboardLayout({
     if (user && profile) {
       const isNewRegistration =
         typeof window !== "undefined" &&
-        sessionStorage.getItem("cvvault_new_registration") === "true";
+        sessionStorage.getItem("pryvault_new_registration") === "true";
 
       if (!profile.onboarding_completed && isNewRegistration) {
         setShowOnboarding(true);
@@ -143,10 +143,10 @@ export default function DashboardLayout({
         >
           <img
             src={logoUrl}
-            alt="CVVault Official Brand Logo"
+            alt="Pryvault Official Brand Logo"
             className="h-8 w-8 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200"
           />
-          <span className="font-bold text-lg gradient-text">CVVault</span>
+          <span className="font-bold text-lg gradient-text">Pryvault</span>
         </Link>
       </div>
 
@@ -295,12 +295,12 @@ export default function DashboardLayout({
               {/* Mobile logo header */}
               <Link href="/dashboard" className="flex items-center gap-2 md:hidden">
                 <img src={logoUrl} alt="Logo" className="h-7 w-7 rounded-lg shadow-sm" />
-                <span className="font-extrabold text-base gradient-text">CVVault</span>
+                <span className="font-extrabold text-base gradient-text">Pryvault</span>
               </Link>
 
               {/* Breadcrumb on desktop */}
               <div className="hidden md:flex items-center gap-1.5 text-sm">
-                <span className="text-muted-foreground">CVVault</span>
+                <span className="text-muted-foreground">Pryvault</span>
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
                 <span className="font-semibold text-foreground">{currentPageLabel}</span>
               </div>

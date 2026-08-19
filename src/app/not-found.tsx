@@ -18,7 +18,7 @@ import { motion } from "framer-motion";
 
 export default function NotFound() {
   const { user } = useAuth();
-  const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+  const logoUrl = "/logo.png";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between selection:bg-primary/20 selection:text-primary relative overflow-hidden">
@@ -32,11 +32,11 @@ export default function NotFound() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <img 
               src={logoUrl} 
-              alt="CVVault Official Brand Logo" 
+              alt="Pryvault Official Brand Logo" 
               className="h-8 w-8 rounded-lg object-contain transition-transform group-hover:scale-105" 
             />
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-primary via-blue-500 to-sky-400 bg-clip-text text-transparent">
-              CVVault
+              Pryvault
             </span>
           </Link>
 
@@ -138,7 +138,7 @@ export default function NotFound() {
                 <ArrowLeft className="h-3.5 w-3.5 rotate-180 text-muted-foreground group-hover:text-primary transition-transform group-hover:translate-x-1" />
               </h4>
               <p className="text-xs text-muted-foreground mt-1">
-                Learn how CVVault encrypts and protects career documents.
+                Learn how Pryvault encrypts and protects career documents.
               </p>
             </Link>
           </div>
@@ -148,7 +148,7 @@ export default function NotFound() {
       {/* Footer */}
       <footer className="border-t border-border/40 py-6 text-center text-xs text-muted-foreground bg-background/50">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>© 2026 CVVault Inc. All rights reserved.</span>
+          <span>© 2026 Pryvault Inc. All rights reserved.</span>
           <div className="flex items-center gap-4">
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
             <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>

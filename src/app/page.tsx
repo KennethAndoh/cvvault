@@ -53,7 +53,7 @@ const staggerContainer = {
 
 export default function LandingPage() {
   const logoUrl =
-    "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+    "/logo.png";
   const [scrolled, setScrolled] = useState(false);
   const [isNative, setIsNative] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -114,7 +114,7 @@ export default function LandingPage() {
   ];
 
   const profileChecklist = [
-    "Customizable vanity URLs (cvvault.com/p/yourname)",
+    "Customizable vanity URLs (pryvault.com/p/yourname)",
     "One-click verification for recruiters",
   ];
 
@@ -122,9 +122,9 @@ export default function LandingPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-4">
         <div className="flex flex-col items-center gap-4">
-          <img src={logoUrl} alt="CVVault" className="h-14 w-14 rounded-2xl shadow-xl animate-pulse" />
+          <img src={logoUrl} alt="Pryvault" className="h-14 w-14 rounded-2xl shadow-xl animate-pulse" />
           <div className="h-8 w-8 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
-          <p className="text-sm text-slate-400 font-medium">Opening CVVault…</p>
+          <p className="text-sm text-slate-400 font-medium">Opening Pryvault…</p>
         </div>
       </div>
     );
@@ -144,11 +144,11 @@ export default function LandingPage() {
           <Link className="flex items-center gap-2.5 group" href="/">
             <img
               src={logoUrl}
-              alt="CVVault Logo"
+              alt="Pryvault Logo"
               className="h-9 w-9 rounded-xl shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md glow-sm"
             />
             <span className="text-xl font-bold tracking-tight gradient-text">
-              CVVault
+              Pryvault
             </span>
           </Link>
 
@@ -191,8 +191,8 @@ export default function LandingPage() {
               <SheetContent side="right" className="w-[280px] glass">
                 <SheetHeader className="text-left">
                   <SheetTitle className="flex items-center gap-2">
-                    <img src={logoUrl} alt="CVVault Official Logo" className="h-8 w-8 rounded-lg" />
-                    <span className="gradient-text">CVVault</span>
+                    <img src={logoUrl} alt="Pryvault Official Logo" className="h-8 w-8 rounded-lg" />
+                    <span className="gradient-text">Pryvault</span>
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col gap-3 mt-8">
@@ -312,7 +312,7 @@ export default function LandingPage() {
                     <div className="h-3 w-3 rounded-full bg-green-400" />
                   </div>
                   <div className="flex-1 mx-4 h-6 rounded-md bg-muted/60 flex items-center px-3">
-                    <span className="text-[11px] text-muted-foreground font-mono">cvvault.com/dashboard</span>
+                    <span className="text-[11px] text-muted-foreground font-mono">pryvault.com/dashboard</span>
                   </div>
                   <Lock className="h-3.5 w-3.5 text-green-500" />
                 </div>
@@ -411,7 +411,7 @@ export default function LandingPage() {
                 <span className="gradient-text">Modern Careers</span>
               </motion.h2>
               <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-lg leading-relaxed">
-                CVVault simplifies how you manage your professional documents with powerful, intuitive tools designed for the future of work.
+                Pryvault simplifies how you manage your professional documents with powerful, intuitive tools designed for the future of work.
               </motion.p>
             </motion.div>
 
@@ -466,7 +466,7 @@ export default function LandingPage() {
                 Free Today, <span className="gradient-text">Built for Scale</span>
               </motion.h2>
               <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-lg leading-relaxed">
-                CVVault is currently free during early access. As the platform matures, optional paid plans will be introduced for advanced features and corporate hiring.
+                Pryvault is currently free during early access. As the platform matures, optional paid plans will be introduced for advanced features and corporate hiring.
               </motion.p>
             </motion.div>
 
@@ -494,7 +494,7 @@ export default function LandingPage() {
                       "Unlimited Document Vault Storage",
                       "Smart Sharing Links with Expiration",
                       "Automated Credential Verification",
-                      "Vanity Profile URL (cvvault.com/p/you)",
+                      "Vanity Profile URL (pryvault.com/p/you)",
                       "Full Activity Auditing & Access Logs",
                     ].map((f, i) => (
                       <li key={i} className="flex items-center gap-2.5">
@@ -706,24 +706,24 @@ export default function LandingPage() {
             <div className="space-y-3.5">
               {[
                 {
-                  q: "What is CVVault and how does it protect my career credentials?",
-                  a: "CVVault is a secure, professional SaaS platform for storing, organizing, and sharing career credentials. All uploaded documents are encrypted with AES-256 at rest and TLS 1.3 in transit with strict Row-Level Security, giving you total control over who views your professional credentials.",
+                  q: "What is Pryvault and how does it protect my career credentials?",
+                  a: "Pryvault is a secure, professional SaaS platform for storing, organizing, and sharing career credentials. All uploaded documents are encrypted with AES-256 at rest and TLS 1.3 in transit with strict Row-Level Security, giving you total control over who views your professional credentials.",
                 },
                 {
                   q: "How does secure time-limited sharing work?",
-                  a: "When you share a document or your public profile, CVVault creates a cryptographically signed access link. You can set expiration limits (e.g. 24 hours, 7 days, 30 days) or revoke access anytime with one click.",
+                  a: "When you share a document or your public profile, Pryvault creates a cryptographically signed access link. You can set expiration limits (e.g. 24 hours, 7 days, 30 days) or revoke access anytime with one click.",
                 },
                 {
                   q: "How does the OCR Auto-Parsing Engine work?",
                   a: "When you upload credentials (degrees, AWS/Google certificates, IDs), our zero-latency OCR parser analyzes document text to extract issuing organizations, categories, dates, and skill tags automatically.",
                 },
                 {
-                  q: "Is CVVault free for candidates and job seekers?",
-                  a: "Yes! Job seekers and employees can use CVVault's core features completely free—including CV storage, document categorization, instant QR code exports, and public vanity portfolio links.",
+                  q: "Is Pryvault free for candidates and job seekers?",
+                  a: "Yes! Job seekers and employees can use Pryvault's core features completely free—including CV storage, document categorization, instant QR code exports, and public vanity portfolio links.",
                 },
                 {
-                  q: "Can I use CVVault on Android mobile devices?",
-                  a: "Yes, CVVault provides a native Android app powered by Capacitor featuring offline status detection, native document file pickers, push notifications, and biometric themes.",
+                  q: "Can I use Pryvault on Android mobile devices?",
+                  a: "Yes, Pryvault provides a native Android app powered by Capacitor featuring offline status detection, native document file pickers, push notifications, and biometric themes.",
                 },
               ].map((faq, index) => {
                 const isOpen = openFaq === index;
@@ -793,7 +793,7 @@ export default function LandingPage() {
                   Vault Your Career.<br />Own Your Story.
                 </h2>
                 <p className="text-white/80 text-lg mb-10 max-w-md mx-auto">
-                  Join 5,000+ professionals who trust CVVault with their career credentials.
+                  Join 5,000+ professionals who trust Pryvault with their career credentials.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button asChild size="lg" variant="secondary" className="rounded-full px-8 h-14 text-base font-semibold hover:scale-105 transition-transform shadow-xl">
@@ -817,8 +817,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-2">
               <Link className="flex items-center gap-2.5 mb-5" href="/">
-                <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-8 w-8 rounded-lg" />
-                <span className="text-lg font-bold gradient-text">CVVault</span>
+                <img src={logoUrl} alt="Pryvault Official Brand Logo" className="h-8 w-8 rounded-lg" />
+                <span className="text-lg font-bold gradient-text">Pryvault</span>
               </Link>
               <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mb-6">
                 The leading professional vault for career credentials and verified digital identity. Securely store and share your professional life.
@@ -864,7 +864,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-muted-foreground">© 2026 CVVault Inc. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground">© 2026 Pryvault Inc. All rights reserved.</p>
             <div className="flex gap-6 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Star className="h-3 w-3 fill-primary text-primary" />

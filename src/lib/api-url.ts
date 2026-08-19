@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 
-const FALLBACK_PROD_URL = "https://cvvault.vercel.app";
+const FALLBACK_PROD_URL = "https://pryvault.vercel.app";
 
 /**
  * Returns the absolute base API URL depending on whether the app

@@ -102,7 +102,7 @@ export default function LoginPage() {
   }, [user, authLoading, router, showOtpForm]);
 
   const logoUrl =
-    "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+    "/logo.png";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,7 +237,7 @@ export default function LoginPage() {
                 <Link href="/" className="flex items-center gap-2 mb-4 w-fit">
                   <img
                     src={logoUrl}
-                    alt="CVVault Official Brand Logo"
+                    alt="Pryvault Official Brand Logo"
                     className="h-9 w-9 rounded-xl object-cover shadow"
                   />
                   <span className="text-xl font-extrabold tracking-tight text-indigo-700 dark:text-indigo-300">

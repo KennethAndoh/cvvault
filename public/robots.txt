@@ -1,4 +1,4 @@
-# CVVault robots.txt
+# Pryvault robots.txt
 User-agent: *
 Allow: /
 Allow: /faq
@@ -12,4 +12,4 @@ Disallow: /share/
 Disallow: /login
 Disallow: /register
 
-Sitemap: https://cvvault.vercel.app/sitemap.xml
+Sitemap: https://pryvault.vercel.app/sitemap.xml

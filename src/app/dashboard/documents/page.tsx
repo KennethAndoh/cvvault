@@ -887,7 +887,7 @@ export default function DocumentsPage() {
           documentName={activeCertDoc.name}
           category={activeCertDoc.category}
           userName={profile?.full_name || "Verified Candidate"}
-          userEmail={user?.email || "candidate@cvvault.io"}
+          userEmail={user?.email || "candidate@pryvault.io"}
         />
       )}
 

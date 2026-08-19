@@ -176,7 +176,7 @@ export function KanbanApplicantPipeline({
                               )}
                             </div>
                             <span className="text-[11px] text-muted-foreground block truncate">
-                              {app.applicant?.email || "candidate@cvvault.io"}
+                              {app.applicant?.email || "candidate@pryvault.io"}
                             </span>
                           </div>
 

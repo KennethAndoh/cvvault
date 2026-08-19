@@ -22,7 +22,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 
 export default function PrivacyPolicyPage() {
   const { user } = useAuth();
-  const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+  const logoUrl = "/logo.png";
   const lastUpdated = "August 14, 2026";
 
   const sections = [
@@ -48,11 +48,11 @@ export default function PrivacyPolicyPage() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <img 
               src={logoUrl} 
-              alt="CVVault Official Brand Logo" 
+              alt="Pryvault Official Brand Logo" 
               className="h-8 w-8 rounded-lg object-contain transition-transform group-hover:scale-105" 
             />
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-primary via-blue-500 to-sky-400 bg-clip-text text-transparent">
-              CVVault
+              Pryvault
             </span>
           </Link>
 
@@ -88,7 +88,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            At CVVault, your career credentials and professional identity are your private property. We are committed to absolute transparency and data sovereignty.
+            At Pryvault, your career credentials and professional identity are your private property. We are committed to absolute transparency and data sovereignty.
           </p>
           <div className="text-xs text-muted-foreground">
             <strong>Effective Date:</strong> {lastUpdated} • <strong>Version:</strong> 2.4 (Enterprise & Mobile Edition)
@@ -122,7 +122,7 @@ export default function PrivacyPolicyPage() {
               Overview & Core Privacy Principles
             </h2>
             <p>
-              CVVault Inc. (&quot;CVVault&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) operates the CVVault web application, mobile applications, and credential verification infrastructure. This Privacy Policy outlines how we collect, process, encrypt, and safeguard the career documents and credentials you entrust to our platform.
+              Pryvault Inc. (&quot;Pryvault&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) operates the Pryvault web application, mobile applications, and credential verification infrastructure. This Privacy Policy outlines how we collect, process, encrypt, and safeguard the career documents and credentials you entrust to our platform.
             </p>
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
               <strong className="text-foreground text-xs uppercase tracking-wider block">Our Fundamental Guarantees:</strong>
@@ -181,7 +181,7 @@ export default function PrivacyPolicyPage() {
               Military-Grade Encryption & Vault Security
             </h2>
             <p>
-              Security is our core architectural pillar. All documents in CVVault are guarded by multiple layers of enterprise encryption:
+              Security is our core architectural pillar. All documents in Pryvault are guarded by multiple layers of enterprise encryption:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div className="p-4 rounded-xl border border-border bg-card">
@@ -210,7 +210,7 @@ export default function PrivacyPolicyPage() {
               Tokenized Sharing & Access Expiration
             </h2>
             <p>
-              When you generate a shared link or QR code, CVVault creates a cryptographically signed token. You have the right to set access durations (e.g. 24 hours, 7 days, 30 days) or revoke tokens on-demand. When a link expires, all future access attempts receive an immediate 404 response.
+              When you generate a shared link or QR code, Pryvault creates a cryptographically signed token. You have the right to set access durations (e.g. 24 hours, 7 days, 30 days) or revoke tokens on-demand. When a link expires, all future access attempts receive an immediate 404 response.
             </p>
           </section>
 
@@ -221,7 +221,7 @@ export default function PrivacyPolicyPage() {
               Cloud Infrastructure & Sub-processors
             </h2>
             <p>
-              CVVault partners with industry-leading, SOC 2 Type II compliant infrastructure providers:
+              Pryvault partners with industry-leading, SOC 2 Type II compliant infrastructure providers:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-xs text-muted-foreground">
               <li><strong>Supabase (PostgreSQL & Storage):</strong> Encrypted database records, row-level security, and private object buckets.</li>
@@ -268,10 +268,10 @@ export default function PrivacyPolicyPage() {
               If you have any questions, inquiries regarding your privacy rights, or data deletion requests, please contact our Data Protection Officer:
             </p>
             <div className="p-4 rounded-xl border border-border bg-card/80 space-y-2 text-xs">
-              <p><strong>CVVault Data Protection Office</strong></p>
+              <p><strong>Pryvault Data Protection Office</strong></p>
               <p className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-3.5 w-3.5 text-primary" />
-                <span>privacy@cvvault.app • support@cvvault.app</span>
+                <span>privacy@pryvault.app • support@pryvault.app</span>
               </p>
               <p className="text-muted-foreground">Response SLA: Within 48 hours for all data subject requests.</p>
             </div>
@@ -297,8 +297,8 @@ export default function PrivacyPolicyPage() {
       <footer className="border-t border-border/40 py-8 bg-muted/20 text-xs text-muted-foreground text-center">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="CVVault Logo" className="h-6 w-6 rounded-md" />
-            <span className="font-bold text-foreground">CVVault</span>
+            <img src={logoUrl} alt="Pryvault Logo" className="h-6 w-6 rounded-md" />
+            <span className="font-bold text-foreground">Pryvault</span>
             <span>• Verified Career Credentials</span>
           </div>
           <div className="flex items-center gap-4">

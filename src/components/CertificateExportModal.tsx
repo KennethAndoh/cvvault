@@ -29,7 +29,7 @@ export function CertificateExportModal({
   documentName,
   category = "Verified Credential",
   userName = "Verified Professional",
-  userEmail = "user@cvvault.io",
+  userEmail = "user@pryvault.io",
   verificationHash = "0x8F92A7C319E4B051287F",
   issueDate = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }),
 }: CertificateExportModalProps) {
@@ -44,7 +44,7 @@ export function CertificateExportModal({
       win.document.write(`
         <html>
           <head>
-            <title>CVVault Verified Credential Certificate - ${documentName}</title>
+            <title>Pryvault Verified Credential Certificate - ${documentName}</title>
             <script src="https://cdn.tailwindcss.com"></script>
             <style>
               @media print {
@@ -67,7 +67,7 @@ export function CertificateExportModal({
     }
   };
 
-  const verifyUrl = `${typeof window !== "undefined" ? window.location.origin : "https://cvvault.io"}/verify/${documentName.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+  const verifyUrl = `${typeof window !== "undefined" ? window.location.origin : "https://pryvault.io"}/verify/${documentName.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -101,7 +101,7 @@ export function CertificateExportModal({
             {/* Certificate Header */}
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2 text-sky-700 font-sans tracking-widest text-xs font-bold uppercase">
-                <ShieldCheck className="h-4 w-4" /> CVVault Authenticated Ledger System
+                <ShieldCheck className="h-4 w-4" /> Pryvault Authenticated Ledger System
               </div>
               <h1 className="text-3xl font-black tracking-wider text-slate-900 uppercase font-serif">
                 Certificate of Authenticity
@@ -146,7 +146,7 @@ export function CertificateExportModal({
                 <div className="w-16 h-16 rounded-full bg-linear-to-tr from-amber-600 via-amber-400 to-yellow-300 p-1 shadow-md flex items-center justify-center">
                   <div className="w-full h-full rounded-full border-2 border-dashed border-amber-900 flex flex-col items-center justify-center text-amber-950 font-bold text-[8px] tracking-tighter uppercase text-center p-1 bg-amber-100">
                     <ShieldCheck className="h-5 w-5 text-amber-800" />
-                    CVVAULT
+                    PRYVAULT
                   </div>
                 </div>
                 <span className="text-[9px] text-slate-500 font-bold mt-1">OFFICIAL SEAL</span>

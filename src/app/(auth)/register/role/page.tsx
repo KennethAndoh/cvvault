@@ -49,7 +49,7 @@ export default function RoleSelectionPage() {
       
       if (result.success) {
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("cvvault_new_registration", "true");
+          sessionStorage.setItem("pryvault_new_registration", "true");
         }
         toast.success("Account set up successfully!");
         router.push("/dashboard");
@@ -63,7 +63,7 @@ export default function RoleSelectionPage() {
     }
   };
 
-  const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+  const logoUrl = "/logo.png";
 
   if (loading || authLoading) {
     return (
@@ -91,14 +91,14 @@ export default function RoleSelectionPage() {
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-6">
               <Link href="/">
-                <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-16 w-16 rounded-2xl shadow-lg transform hover:scale-105 transition-transform" />
+                <img src={logoUrl} alt="Pryvault Official Brand Logo" className="h-16 w-16 rounded-2xl shadow-lg transform hover:scale-105 transition-transform" />
               </Link>
             </div>
             <CardTitle className="text-3xl font-bold text-center tracking-tight">
               One Last Step
             </CardTitle>
             <CardDescription className="text-center text-base">
-              Select how you'll be using CVVault
+              Select how you'll be using Pryvault
             </CardDescription>
           </CardHeader>
           

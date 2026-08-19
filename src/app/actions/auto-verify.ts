@@ -89,7 +89,7 @@ export async function autoVerifyDocument(docId: string, userId: string) {
                         }
                       },
                       {
-                        text: `You are an automated credential verification AI for CVVault.
+                        text: `You are an automated credential verification AI for Pryvault.
 Your task is to verify if the attached document matches the user's profile and appears to be a authentic document of the specified category.
 
 User profile name: "${fullName}"

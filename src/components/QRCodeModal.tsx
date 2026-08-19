@@ -72,7 +72,7 @@ export function QRCodeModal({
               className="w-48 h-48 rounded object-contain"
             />
             <div className="flex items-center gap-1.5 mt-3 text-xs text-emerald-600 font-semibold">
-              <ShieldCheck className="h-4 w-4" /> CVVault Ledger Authenticated
+              <ShieldCheck className="h-4 w-4" /> Pryvault Ledger Authenticated
             </div>
           </div>
 

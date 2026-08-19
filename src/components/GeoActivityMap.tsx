@@ -254,7 +254,7 @@ export function GeoActivityMap({ viewers = [] }: GeoActivityMapProps) {
 
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2.5 text-xs text-emerald-700 dark:text-emerald-300">
               <ShieldCheck className="h-4 w-4 shrink-0" />
-              <span>Real-time GeoIP coordinates verified by CVVault Audit Ledger.</span>
+              <span>Real-time GeoIP coordinates verified by Pryvault Audit Ledger.</span>
             </div>
           </div>
         </div>

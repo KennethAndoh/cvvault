@@ -1,26 +1,21 @@
-export const alt = "CVVault | Secure Career Credentials";
-export const contentType = "image/jpeg";
+import fs from "fs/promises";
+import path from "path";
+
+export const alt = "Pryvault | Secure Career Credentials";
+export const contentType = "image/png";
 
 export default async function Image() {
-  // Fetch the original logo directly from Supabase storage
-  const logoUrl =
-    "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg";
-
   try {
-    const response = await fetch(logoUrl);
-    if (!response.ok) {
-      throw new Error("Failed to fetch original logo");
-    }
-    const buffer = await response.arrayBuffer();
+    const logoFilePath = path.join(process.cwd(), "public", "logo.png");
+    const buffer = await fs.readFile(logoFilePath);
     return new Response(buffer, {
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": "image/png",
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });
   } catch (error) {
-    console.error("Error generating OG image from original logo:", error);
-    // Return a blank response fallback
+    console.error("Error generating OG image from logo:", error);
     return new Response(null, { status: 500 });
   }
 }

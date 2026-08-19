@@ -703,7 +703,7 @@ export default function DashboardPage() {
               </div>
               <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                 {isEmployer
-                  ? "Verified documents carry a CVVault seal of trust, speeding up your vetting process."
+                  ? "Verified documents carry a Pryvault seal of trust, speeding up your vetting process."
                   : "Share your entire verified profile with recruiters using a secure, time-limited link."}
               </p>
               <Button

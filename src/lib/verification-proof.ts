@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-const APP_SECRET = process.env.VERIFICATION_SECRET || "cvvault_secure_verification_secret_key_2026";
+const APP_SECRET = process.env.VERIFICATION_SECRET || "pryvault_secure_verification_secret_key_2026";
 
 export interface DocumentProofData {
   documentId: string;

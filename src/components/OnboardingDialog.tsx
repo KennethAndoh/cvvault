@@ -24,7 +24,7 @@ export function OnboardingDialog({ userId, isOpen, onClose }: OnboardingDialogPr
 
   const steps = [
     {
-      title: "Welcome to CVVault",
+      title: "Welcome to Pryvault",
       description: "Securely store and share your professional credentials. Let's get you set up in seconds.",
       icon: <CheckCircle2 className="h-12 w-12 text-primary" />
     },
@@ -43,7 +43,7 @@ export function OnboardingDialog({ userId, isOpen, onClose }: OnboardingDialogPr
   const handleComplete = async () => {
     await updateProfile(userId, { onboarding_completed: true });
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("cvvault_new_registration");
+      sessionStorage.removeItem("pryvault_new_registration");
     }
     onClose();
   };

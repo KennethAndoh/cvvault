@@ -35,7 +35,7 @@ export default async function DocumentVerificationPage({
             </div>
             <CardTitle className="text-xl">Document Not Found</CardTitle>
             <CardDescription>
-              The credential ID specified could not be verified in the CVVault ledger.
+              The credential ID specified could not be verified in the Pryvault ledger.
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
@@ -63,15 +63,15 @@ export default async function DocumentVerificationPage({
   const owner = doc.profiles;
   const isVerified = doc.verification_status === "verified";
 
-  const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+  const logoUrl = "/logo.png";
 
   return (
     <div className="min-h-screen bg-muted/30 pb-16">
       {/* Top Header */}
       <header className="bg-background border-b h-16 flex items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-8 w-8 rounded" />
-          <span>CVVault <span className="text-xs font-normal text-muted-foreground ml-1">Verification Ledger</span></span>
+          <img src={logoUrl} alt="Pryvault Official Brand Logo" className="h-8 w-8 rounded" />
+          <span>Pryvault <span className="text-xs font-normal text-muted-foreground ml-1">Verification Ledger</span></span>
         </Link>
         <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
           <ShieldCheck className="h-3.5 w-3.5" /> Public Verifier
@@ -126,7 +126,7 @@ export default async function DocumentVerificationPage({
                 <span className="text-xs text-muted-foreground uppercase font-semibold block mb-1">Credential Holder</span>
                 <p className="font-medium text-foreground flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  {owner?.full_name || "CVVault Member"}
+                  {owner?.full_name || "Pryvault Member"}
                 </p>
               </div>
 

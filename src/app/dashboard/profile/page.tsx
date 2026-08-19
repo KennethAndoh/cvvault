@@ -375,7 +375,7 @@ export default function ProfilePage() {
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
                   <Globe className="h-5 w-5 text-primary shrink-0" />
-                  <span className="text-sm font-medium truncate">cvvault.com/p/{user?.uid}</span>
+                  <span className="text-sm font-medium truncate">pryvault.com/p/{user?.uid}</span>
                 </div>
                 <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/p/${user?.uid}`);

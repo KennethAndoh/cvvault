@@ -113,7 +113,7 @@ export function DocumentThumbnailPreview({
               </div>
               <div className="text-[7px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-mono">
                 <ShieldCheck className="h-2.5 w-2.5 text-sky-600 shrink-0" />
-                <span>CVVault Ledger Verified Proof</span>
+                <span>Pryvault Ledger Verified Proof</span>
               </div>
             </div>
 

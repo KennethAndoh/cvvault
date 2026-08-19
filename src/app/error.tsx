@@ -13,7 +13,7 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("CVVault Runtime Error:", error);
+    console.error("Pryvault Runtime Error:", error);
   }, [error]);
 
   return (

@@ -25,7 +25,7 @@ export default function GlobalError({
               Application Error
             </h1>
             <p className="text-sm text-slate-400">
-              CVVault encountered an unexpected error. Please reload the application or try again.
+              Pryvault encountered an unexpected error. Please reload the application or try again.
             </p>
           </div>
 

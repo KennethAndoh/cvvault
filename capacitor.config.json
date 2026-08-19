@@ -1,9 +1,9 @@
 {
-  "appId": "io.cvvault.app",
-  "appName": "CVVault",
+  "appId": "io.pryvault.app",
+  "appName": "Pryvault",
   "webDir": "out",
   "server": {
-    "url": "https://cvvault.vercel.app",
+    "url": "https://pryvault.vercel.app",
     "androidScheme": "https",
     "cleartext": true
   },

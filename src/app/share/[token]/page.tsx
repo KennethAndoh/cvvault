@@ -124,7 +124,7 @@ export default async function SharedAccessPage({ params }: { params: Promise<{ t
     <div className="min-h-screen bg-muted/30 pb-12">
       <header className="bg-background border-b h-16 flex items-center px-8 sticky top-0 z-10">
         <Link href="/" className="flex items-center gap-2 font-bold">
-          <span className="text-primary font-bold">CVVault</span>
+          <span className="text-primary font-bold">Pryvault</span>
           <span className="text-muted-foreground font-normal">| Shared Access</span>
         </Link>
       </header>
@@ -152,7 +152,7 @@ export default async function SharedAccessPage({ params }: { params: Promise<{ t
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center pt-4 border-t border-border/50">
               <Lock className="h-3 w-3" />
-              Secure session monitored by CVVault Audit System
+              Secure session monitored by Pryvault Audit System
             </div>
           </CardContent>
         </Card>

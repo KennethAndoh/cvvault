@@ -45,14 +45,14 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     })
   );
 
-  const logoUrl = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/WhatsApp-Image-2025-11-05-at-13.03.39-1770063498606.jpeg?width=100&height=100&resize=contain";
+  const logoUrl = "/logo.png";
 
   return (
     <div className="min-h-screen bg-muted/30 pb-12">
       <header className="bg-background border-b h-16 flex items-center px-4 lg:px-8">
          <Link href="/" className="flex items-center gap-2 font-bold">
-            <img src={logoUrl} alt="CVVault Official Brand Logo" className="h-8 w-8 rounded" />
-            <span>CVVault</span>
+            <img src={logoUrl} alt="Pryvault Official Brand Logo" className="h-8 w-8 rounded" />
+            <span>Pryvault</span>
          </Link>
       </header>
       

@@ -26,18 +26,18 @@ export async function sendDocumentStatusEmail(
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2>CVVault Document Update</h2>
+      <h2>Pryvault Document Update</h2>
       <p>${greeting}</p>
       <p>${statusMessage}</p>
-      <p>Log in to your CVVault dashboard to see more details.</p>
+      <p>Log in to your Pryvault dashboard to see more details.</p>
       <br />
-      <p>Best regards,<br/>The CVVault Team</p>
+      <p>Best regards,<br/>The Pryvault Team</p>
     </div>
   `;
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'CVVault <onboarding@resend.dev>', // Use onboarding@resend.dev for testing if domain isn't verified
+      from: 'Pryvault <onboarding@resend.dev>', // Use onboarding@resend.dev for testing if domain isn't verified
       to: [to],
       subject,
       html,

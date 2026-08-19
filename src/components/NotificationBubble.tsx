@@ -33,7 +33,7 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: "3",
     title: "Share Link Accessed",
-    subtitle: "Hiring Manager opened cvvault.com/s/7x9",
+    subtitle: "Hiring Manager opened pryvault.com/s/7x9",
     time: "12 mins ago",
     type: "share",
     badge: "ACCESSED",
@@ -189,7 +189,7 @@ export function NotificationBubble({
                   {current.time}
                 </span>
                 <span className="text-[9px] text-primary/80 font-semibold group-hover:underline">
-                  CVVault Live
+                  Pryvault Live
                 </span>
               </div>
             </div>

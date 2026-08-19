@@ -297,7 +297,7 @@ export function TailoredResumeBuilder({
               <div className="border-b border-slate-300 pb-4 text-center">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-wide uppercase">{userName}</h1>
                 <p className="text-sm font-semibold text-sky-700 mt-0.5 uppercase tracking-wider">{targetTitle}</p>
-                <p className="text-xs text-slate-600 mt-1">{userEmail} • Verified CVVault Profile</p>
+                <p className="text-xs text-slate-600 mt-1">{userEmail} • Verified Pryvault Profile</p>
               </div>
 
               {/* Summary */}
@@ -345,7 +345,7 @@ export function TailoredResumeBuilder({
                 <div>
                   <h2 className="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1 mb-2 flex items-center justify-between">
                     <span>VERIFIED CREDENTIAL PROOFS</span>
-                    <span className="text-[10px] text-emerald-700 font-semibold uppercase">CVVault Ledger Authenticated</span>
+                    <span className="text-[10px] text-emerald-700 font-semibold uppercase">Pryvault Ledger Authenticated</span>
                   </h2>
                   <div className="space-y-2">
                     {selectedDocs.map((doc) => (

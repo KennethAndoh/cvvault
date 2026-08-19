@@ -30,33 +30,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://cvvault.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://pryvault.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
-  title: "CVVault | Secure Career Credentials",
+  title: "Pryvault | Secure Career Credentials",
   description:
     "Securely store, organize, and share your career credentials. Upload CVs, verify documents, and connect with employers — all in one place.",
   keywords: ["CV", "resume", "career credentials", "job application", "document vault"],
   openGraph: {
     type: "website",
     url: APP_URL,
-    title: "CVVault | Secure Career Credentials",
+    title: "Pryvault | Secure Career Credentials",
     description:
       "Securely store, organize, and share your career credentials. Upload CVs, verify documents, and connect with employers — all in one place.",
-    siteName: "CVVault",
+    siteName: "Pryvault",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "CVVault — Secure Career Credentials",
+        alt: "Pryvault — Secure Career Credentials",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CVVault | Secure Career Credentials",
+    title: "Pryvault | Secure Career Credentials",
     description:
       "Securely store, organize, and share your career credentials.",
     images: ["/opengraph-image"],
